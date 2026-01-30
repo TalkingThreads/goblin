@@ -7,6 +7,8 @@ import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Prompt, Resource, ResourceTemplate, Tool } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { createLogger } from "../observability/logger.js";
+import type { MetaToolDefinition } from "../tools/meta/types.js";
+import { toTool } from "../tools/meta/types.js";
 import type {
   PromptEntry,
   ResourceEntry,
@@ -39,10 +41,56 @@ export class Registry extends EventEmitter {
   private resources = new Map<string, ResourceEntry>(); // uri -> Entry
   private resourceTemplates = new Map<string, ResourceTemplateEntry>(); // uriTemplate -> Entry
 
+  private localTools = new Map<string, MetaToolDefinition>(); // id -> definition
+
   private serverTools = new Map<string, Set<string>>(); // serverId -> Set<toolId>
   private serverPrompts = new Map<string, Set<string>>(); // serverId -> Set<promptId>
   private serverResources = new Map<string, Set<string>>(); // serverId -> Set<uri>
   private serverTemplates = new Map<string, Set<string>>(); // serverId -> Set<uriTemplate>
+
+  // Caches for flat lists
+  private cachedTools: ToolEntry[] | null = null;
+  private cachedPrompts: PromptEntry[] | null = null;
+  private cachedResources: ResourceEntry[] | null = null;
+  private cachedResourceTemplates: ResourceTemplateEntry[] | null = null;
+
+  private invalidateCache(): void {
+    this.cachedTools = null;
+    this.cachedPrompts = null;
+    this.cachedResources = null;
+    this.cachedResourceTemplates = null;
+  }
+
+  /**
+   * Register a local meta tool
+   */
+  registerLocalTool(toolDef: MetaToolDefinition): void {
+    const id = toolDef.name; // Local tools don't need namespacing if unique?
+    // Or we should namespace them as "goblin_toolName"?
+    // The plan implies "catalog_list" directly.
+    // Let's assume meta tools reserve their names.
+
+    logger.info({ tool: id }, "Registering local tool");
+
+    // Add to local execution map
+    this.localTools.set(id, toolDef);
+
+    // Add to tool registry for listing
+    const tool = toTool(toolDef);
+    this.tools.set(id, {
+      id,
+      def: tool,
+      serverId: "goblin", // Virtual server ID for local tools
+    });
+
+    this.invalidateCache();
+    this.emit("tool-change");
+    this.emit("change");
+  }
+
+  getLocalTool(id: string): MetaToolDefinition | undefined {
+    return this.localTools.get(id);
+  }
 
   /**
    * Add a server and sync capabilities
@@ -96,6 +144,7 @@ export class Registry extends EventEmitter {
       this.serverTemplates.delete(serverId);
     }
 
+    this.invalidateCache();
     this.emit("change");
   }
 
@@ -113,6 +162,13 @@ export class Registry extends EventEmitter {
     return this.tools.get(id);
   }
 
+  getAllTools(): ToolEntry[] {
+    if (!this.cachedTools) {
+      this.cachedTools = Array.from(this.tools.values());
+    }
+    return this.cachedTools;
+  }
+
   // --- Prompts ---
 
   listPrompts(): PromptEntry[] {
@@ -123,14 +179,35 @@ export class Registry extends EventEmitter {
     return this.prompts.get(id);
   }
 
+  getAllPrompts(): PromptEntry[] {
+    if (!this.cachedPrompts) {
+      this.cachedPrompts = Array.from(this.prompts.values());
+    }
+    return this.cachedPrompts;
+  }
+
   // --- Resources ---
 
   listResources(): ResourceEntry[] {
-    return Array.from(this.resources.values());
+    return this.getAllResources();
   }
 
   listResourceTemplates(): ResourceTemplateEntry[] {
-    return Array.from(this.resourceTemplates.values());
+    return this.getAllResourceTemplates();
+  }
+
+  getAllResources(): ResourceEntry[] {
+    if (!this.cachedResources) {
+      this.cachedResources = Array.from(this.resources.values());
+    }
+    return this.cachedResources;
+  }
+
+  getAllResourceTemplates(): ResourceTemplateEntry[] {
+    if (!this.cachedResourceTemplates) {
+      this.cachedResourceTemplates = Array.from(this.resourceTemplates.values());
+    }
+    return this.cachedResourceTemplates;
   }
 
   getResource(uri: string): ResourceEntry | undefined {
@@ -233,6 +310,8 @@ export class Registry extends EventEmitter {
         if (!newTemplateUris.has(uri)) this.resourceTemplates.delete(uri);
     }
     this.serverTemplates.set(serverId, newTemplateUris);
+
+    this.invalidateCache();
 
     logger.info(
       { serverId, tools: tools.length, prompts: prompts.length, resources: resources.length },

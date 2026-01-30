@@ -4,6 +4,7 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type { Prompt, Resource, ResourceTemplate, Tool } from "@modelcontextprotocol/sdk/types.js";
 import {
   CallToolRequestSchema,
   ErrorCode,
@@ -24,6 +25,10 @@ const logger = createLogger("gateway-server");
 
 export class GatewayServer {
   private server: Server;
+  private cachedToolList: Tool[] | null = null;
+  private cachedPromptList: Prompt[] | null = null;
+  private cachedResourceList: Resource[] | null = null;
+  private cachedResourceTemplateList: ResourceTemplate[] | null = null;
 
   constructor(
     private registry: Registry,
@@ -75,16 +80,14 @@ export class GatewayServer {
     // --- Tools ---
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       logger.debug("Handling tools/list request");
-      const tools = this.registry.listTools().map((card) => {
-        const entry = this.registry.getTool(card.name);
-        if (!entry) throw new McpError(ErrorCode.InternalError, "Inconsistent registry state");
-        return {
+      if (!this.cachedToolList) {
+        this.cachedToolList = this.registry.getAllTools().map((entry) => ({
           name: entry.id,
           description: entry.def.description,
           inputSchema: entry.def.inputSchema,
-        };
-      });
-      return { tools };
+        }));
+      }
+      return { tools: this.cachedToolList };
     });
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -100,12 +103,14 @@ export class GatewayServer {
     // --- Prompts ---
     this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       logger.debug("Handling prompts/list request");
-      const prompts = this.registry.listPrompts().map((entry) => ({
-        name: entry.id,
-        description: entry.def.description,
-        arguments: entry.def.arguments,
-      }));
-      return { prompts };
+      if (!this.cachedPromptList) {
+        this.cachedPromptList = this.registry.getAllPrompts().map((entry) => ({
+          name: entry.id,
+          description: entry.def.description,
+          arguments: entry.def.arguments,
+        }));
+      }
+      return { prompts: this.cachedPromptList };
     });
 
     this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
@@ -125,14 +130,20 @@ export class GatewayServer {
     // --- Resources ---
     this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       logger.debug("Handling resources/list request");
-      const resources = this.registry.listResources().map((entry) => entry.def);
-      return { resources };
+      if (!this.cachedResourceList) {
+        this.cachedResourceList = this.registry.getAllResources().map((entry) => entry.def);
+      }
+      return { resources: this.cachedResourceList };
     });
 
     this.server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
       logger.debug("Handling resources/templates/list request");
-      const resourceTemplates = this.registry.listResourceTemplates().map((entry) => entry.def);
-      return { resourceTemplates };
+      if (!this.cachedResourceTemplateList) {
+        this.cachedResourceTemplateList = this.registry
+          .getAllResourceTemplates()
+          .map((entry) => entry.def);
+      }
+      return { resourceTemplates: this.cachedResourceTemplateList };
     });
 
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
@@ -149,14 +160,18 @@ export class GatewayServer {
   private setupEvents(): void {
     // Notify connected clients when registry changes
     this.registry.on("tool-change", () => {
+      this.cachedToolList = null;
       this.server.notification({ method: "notifications/tools/list_changed" });
     });
 
     this.registry.on("prompt-change", () => {
+      this.cachedPromptList = null;
       this.server.notification({ method: "notifications/prompts/list_changed" });
     });
 
     this.registry.on("resource-change", () => {
+      this.cachedResourceList = null;
+      this.cachedResourceTemplateList = null;
       this.server.notification({ method: "notifications/resources/list_changed" });
     });
   }

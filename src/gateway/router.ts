@@ -6,7 +6,7 @@ import {
   type ReadResourceResult,
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { Config } from "../config/index.js";
+import type { Config, ServerConfig } from "../config/index.js";
 import { createLogger } from "../observability/logger.js";
 import type { TransportPool } from "../transport/index.js";
 import type { Registry } from "./registry.js";
@@ -14,16 +14,65 @@ import type { Registry } from "./registry.js";
 const logger = createLogger("router");
 
 export class Router {
+  private serverMap = new Map<string, ServerConfig>();
+
   constructor(
     private registry: Registry,
     private transportPool: TransportPool,
     private config: Config,
-  ) {}
+  ) {
+    this.rebuildServerMap();
+  }
+
+  private rebuildServerMap(): void {
+    this.serverMap.clear();
+    for (const server of this.config.servers) {
+      this.serverMap.set(server.name, server);
+    }
+  }
 
   /**
    * Route a tool call to the appropriate backend
    */
   async callTool(name: string, args: Record<string, unknown>): Promise<CallToolResult> {
+    // 0. Check for local tool
+    const localTool = this.registry.getLocalTool(name);
+    if (localTool) {
+      logger.info({ tool: name }, "Executing local tool");
+      try {
+        // Execute local tool with context
+        const result = await localTool.execute(args, {
+          registry: this.registry,
+          config: this.config,
+          router: this,
+        });
+
+        // Format result as CallToolResult (content array)
+        // If result is already { content: ... }, use it?
+        // Most meta tools return objects. We should wrap them in JSON content.
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        logger.error({ tool: name, error }, "Local tool execution failed");
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
     return this.executeRequest(
       "tool",
       name,
@@ -88,7 +137,7 @@ export class Router {
       const originalName = def.name || id;
 
       // 2. Get transport
-      const serverConfig = this.config.servers.find((s) => s.name === serverId);
+      const serverConfig = this.serverMap.get(serverId);
       if (!serverConfig) {
         throw new Error(`Server configuration not found for: ${serverId}`);
       }

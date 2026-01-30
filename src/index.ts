@@ -1,6 +1,10 @@
 import { ConfigWatcher, generateSchema, loadConfig } from "./config/index.js";
 import { HttpGateway, Registry, Router } from "./gateway/index.js";
 import { createLogger } from "./observability/logger.js";
+import { catalogList, catalogSearch } from "./tools/meta/catalog.js";
+import { health } from "./tools/meta/health.js";
+import { describeServer, searchServers } from "./tools/meta/server.js";
+import { describeTool, invokeTool } from "./tools/meta/tool.js";
 import { TransportPool } from "./transport/index.js";
 
 const logger = createLogger("goblin");
@@ -19,6 +23,16 @@ async function main(): Promise<void> {
   const transportPool = new TransportPool();
   const registry = new Registry();
   const router = new Router(registry, transportPool, config);
+
+  // Register Meta Tools
+  logger.info("Registering meta tools");
+  registry.registerLocalTool(catalogList);
+  registry.registerLocalTool(catalogSearch);
+  registry.registerLocalTool(health);
+  registry.registerLocalTool(describeServer);
+  registry.registerLocalTool(searchServers);
+  registry.registerLocalTool(describeTool);
+  registry.registerLocalTool(invokeTool);
 
   // Start HTTP Gateway
   const httpGateway = new HttpGateway(registry, router, config);
