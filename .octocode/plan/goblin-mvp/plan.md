@@ -240,6 +240,9 @@ class Router {
 - Gateway advertises correct capabilities
 - Tool list updates propagate from Backend -> Registry -> Gateway -> Client
 - No protocol violation errors
+- Gateway advertises correct capabilities
+- Tool list updates propagate from Backend -> Registry -> Gateway -> Client
+- No protocol violation errors
 
 ---
 
@@ -411,18 +414,30 @@ interface ToolCompactCard {
 
 **Dependencies:** v1-1
 
-#### v1-4.1: Skill Indexing
+#### v1-4.1: NLP & Search Foundation
+- [ ] Install `@orama/orama` for hybrid search
+- [ ] Install `@nlpjs/{core,lang-en,ner,utils,similarity}`
+- [ ] Implement `TextRankSummarizer` for smart descriptions
+- [ ] Define `ToolCompactCard` with summary and intent score
+
+#### v1-4.2: Skill Indexing
 - [ ] Scan local directories/GitHub
 - [ ] Parse `SKILL.md`
-- [ ] Compute/cache embeddings
+- [ ] Index content in Orama (Schema: title, description, content)
+- [ ] Train NLP.js manager on skill intents
 
-#### v1-4.2: Skill Tools
-- [ ] `find_skills` - Semantic search (local)
+#### v1-4.3: Skill Tools
+- [ ] `find_skills` - Hybrid search (Orama) + Intent matching (NLP.js)
 - [ ] `discover_skills` - Semantic search (marketplace)
 - [ ] `retrieve_skill` - Download/install skill
 - [ ] `use_skill` - Load instructions/resources
 - [ ] `load_skill_resource` - Load specific files
 - [ ] `list_skills` - Inventory view
+
+**Acceptance:**
+- Skills discovered from configured directories
+- `find_skills` returns ranked results (Orama score + NLP intent confidence)
+- Summaries generated via TextRank (<10ms)
 
 ---
 
