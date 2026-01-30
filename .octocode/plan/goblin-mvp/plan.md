@@ -1,3 +1,10 @@
+<!-- GUIDANCE:START -->
+# ⚠️ Agent Instructions
+1. **Check Unknowns:** Before starting any task, verify requirements against `docs/GOBLIN.md`. The plan is a roadmap, but the doc is the specification.
+2. **Clarify Ambiguity:** If a task description is vague, consult the detailed feature specifications in `docs/GOBLIN.md` or ask the user.
+3. **Plan Updates:** If you discover missing features during implementation, update this plan to reflect reality.
+<!-- GUIDANCE:END -->
+
 # Goblin MCP - Implementation Plan
 
 > Full roadmap: MVP + v1 milestones
@@ -199,11 +206,11 @@ class Router {
 **Dependencies:** MVP-2
 
 #### MVP-3.1: MCP Server (to clients)
-- [ ] Implement gateway `McpServer` that exposes aggregated tools
-- [ ] Handle `tools/list` by querying registry
-- [ ] Handle `tools/call` by routing via Router
-- [ ] Forward notifications from backends to clients
-- [ ] Support compatibility mode (freeze tool list)
+- [X] Implement gateway `McpServer` that exposes aggregated tools
+- [X] Handle `tools/list` by querying registry
+- [X] Handle `tools/call` by routing via Router
+- [X] Forward notifications from backends to clients
+- [X] Support compatibility mode (freeze tool list)
 
 **Acceptance:**
 - Client connects and lists tools from all backends
@@ -224,10 +231,10 @@ class Router {
 - Request/response logged with correlation IDs
 
 #### MVP-3.3: Compliance Fixes
-- [ ] Remove unsupported capabilities (`prompts`, `resources`) from GatewayServer
-- [ ] Implement `Registry.subscribeToBackend` for dynamic updates
-- [ ] Implement `GatewayServer.sendToolListChanged` notification
-- [ ] Verify error handling consistency
+- [X] Remove unsupported capabilities (`prompts`, `resources`) from GatewayServer
+- [X] Implement `Registry.subscribeToBackend` for dynamic updates
+- [X] Implement `GatewayServer.sendToolListChanged` notification
+- [X] Verify error handling consistency
 
 **Acceptance:**
 - Gateway advertises correct capabilities
@@ -241,20 +248,20 @@ class Router {
 **Dependencies:** MVP-3
 
 #### MVP-4.1: Prompts Support
-- [ ] Implement `Registry.listPrompts` and `Registry.getPrompt`
-- [ ] Add `Prompts` handlers to `GatewayServer`
-- [ ] Sync prompts from backends in `Registry`
-- [ ] Aggregate prompts in `listPrompts` handler
+- [X] Implement `Registry.listPrompts` and `Registry.getPrompt`
+- [X] Add `Prompts` handlers to `GatewayServer`
+- [X] Sync prompts from backends in `Registry`
+- [X] Aggregate prompts in `listPrompts` handler
 
 **Acceptance:**
 - Clients can list aggregated prompts
 - Clients can retrieve prompt content
 
 #### MVP-4.2: Resources Support
-- [ ] Implement `Registry` support for Resources
-- [ ] Add `Resources` handlers (`list`, `read`, `templates`) to `GatewayServer`
-- [ ] Sync resources from backends
-- [ ] Implement resource reading proxy
+- [X] Implement `Registry` support for Resources
+- [X] Add `Resources` handlers (`list`, `read`, `templates`) to `GatewayServer`
+- [X] Sync resources from backends
+- [X] Implement resource reading proxy
 
 **Acceptance:**
 - Clients can list resources
@@ -267,26 +274,26 @@ class Router {
 **Dependencies:** MVP-4
 
 #### MVP-5.1: Core Meta Tools
-- [ ] `catalog_list` - List all tools with compact cards
-- [ ] `catalog_search` - Keyword search tools
-- [ ] `describe_tool` - Get full schema for a tool
-- [ ] `invoke_tool` - Call tool with validation (wrapper)
-- [ ] `health` - Gateway and server health status
+- [X] `search_servers` - Advanced search (fuzzy/keyword) for MCP servers
+- [X] `describe_server` - Get detailed info about a server
+- [X] `catalog_list` - List all tools with "Compact Cards" (summarized)
+- [X] `catalog_search` - Advanced search (fuzzy/keyword) for tools
+- [X] `describe_tool` - Get full schema for a tool
+- [X] `invoke_tool` - Call tool with validation (wrapper)
+- [X] `health` - Gateway and server health status
 
-**Meta Tool Pattern (FastMCP-inspired):**
+**Search Implementation:**
+- Use `minisearch` for lightweight full-text/fuzzy search.
+- Index name, description, and server ID.
+
+**Compact Card Definition:**
 ```typescript
-const catalogList = defineMetaTool({
-  name: "catalog_list",
-  description: "List all available tools",
-  parameters: z.object({
-    serverId: z.string().optional(),
-    compact: z.boolean().default(true),
-  }),
-  execute: async ({ serverId, compact }, ctx) => {
-    const tools = ctx.registry.listTools(compact);
-    return { tools: serverId ? tools.filter(t => t.serverId === serverId) : tools };
-  },
-});
+interface ToolCompactCard {
+  name: string;
+  summary: string; // Truncated/first-sentence description
+  args: string[];  // Argument names only
+  serverId: string;
+}
 ```
 
 **Acceptance:**
@@ -297,41 +304,25 @@ const catalogList = defineMetaTool({
 
 ---
 
-### MVP-6: Observability
+### MVP-6: Observability & Optimization
 
 **Dependencies:** MVP-3
 
-#### MVP-6.1: Health Endpoints
+#### MVP-6.1: Health & Metrics
 - [ ] `GET /health` - Gateway health + per-server status
-- [ ] Health check probes for each backend
-- [ ] Degraded state detection
+- [ ] Prometheus metrics (requests, latency, pool, circuit breaker)
+- [ ] Structured logging (pino, correlation IDs, redaction)
 
-**Health Response:**
-```json
-{
-  "status": "ok|degraded|down",
-  "servers": [
-    { "id": "backend-1", "status": "ok", "latencyMs": 12 }
-  ]
-}
-```
-
-#### MVP-6.2: Prometheus Metrics
-- [ ] Request count per tool/server
-- [ ] Latency histogram per endpoint
-- [ ] Connection pool utilization
-- [ ] Circuit breaker state (for v1 prep)
-
-#### MVP-6.3: Structured Logging
-- [ ] pino logger with JSON output
-- [ ] Correlation IDs per request
-- [ ] Redaction of sensitive fields
-- [ ] Log levels configurable
+#### MVP-6.2: Lazy Loading Policies
+- [ ] Implement `Stateless` mode (connect per call)
+- [ ] Implement `Stateful` mode (keep connected)
+- [ ] Implement `Smart` mode (idle eviction)
+- [ ] Configurable idle timeouts
 
 **Acceptance:**
 - `/health` returns correct status
-- `/metrics` returns Prometheus format
-- Logs include `requestId`, `serverId`, `toolId`
+- Metrics exposed in Prometheus format
+- Servers unload after idle timeout (if Smart/Stateless)
 
 ---
 
@@ -340,24 +331,13 @@ const catalogList = defineMetaTool({
 **Dependencies:** MVP-6
 
 #### MVP-7.1: CLI Foundation
-- [ ] CLI entry point with subcommands
-- [ ] `goblin start` - Start gateway
-- [ ] `goblin status` - Show health
-- [ ] `goblin tools` - List tools
-- [ ] `--json` flag for all commands
+- [ ] CLI entry point (`goblin start`, `status`, `tools`)
+- [ ] JSON output flag
 
 #### MVP-7.2: TUI Basic Views
-- [ ] Main layout with 3 panes (servers, tools, logs)
-- [ ] Server list with status indicators
-- [ ] Tool list with search
-- [ ] Log viewer (tail mode)
-- [ ] Keyboard navigation (j/k, Enter, q)
-
-**Acceptance:**
-- `goblin start` launches gateway
-- `goblin tools --json` outputs JSON
-- TUI displays live server status
-- TUI updates on config hot reload
+- [ ] Main layout (servers, tools, logs)
+- [ ] Live status updates
+- [ ] Log viewer
 
 ---
 
@@ -366,30 +346,10 @@ const catalogList = defineMetaTool({
 **Dependencies:** MVP-5
 
 #### MVP-8.1: Sequential Execution
-- [ ] Parse virtual tool definitions from config
+- [ ] Parse virtual tool definitions
 - [ ] Execute sub-ops sequentially
-- [ ] Aggregate results into single response
-- [ ] Timeout enforcement per virtual tool
-- [ ] Stop-on-error semantics
-
-**Virtual Tool Config:**
-```json
-{
-  "id": "fetch_and_summarize",
-  "ops": [
-    { "tool": "web_fetch", "args": { "url": "{{input.url}}" } },
-    { "tool": "summarize", "args": { "text": "{{prev.content}}" } }
-  ],
-  "timeoutMs": 60000,
-  "stopOnError": true
-}
-```
-
-**Acceptance:**
-- Virtual tool executes 2+ sub-ops
-- Results aggregated correctly
-- Timeout terminates execution
-- Error in sub-op stops chain (if configured)
+- [ ] Result aggregation
+- [ ] Timeout/Error handling
 
 ---
 
@@ -402,21 +362,14 @@ const catalogList = defineMetaTool({
 **Dependencies:** MVP complete
 
 #### v1-1.1: OAuth 2.1 Support
-- [ ] OAuth middleware for Hono
+- [ ] OAuth middleware (Hono)
 - [ ] Token validation (JWT)
-- [ ] Scope extraction and enforcement
-- [ ] Dev mode bypass option
+- [ ] Scope enforcement
 
 #### v1-1.2: Role-Based Access Control
-- [ ] Define roles: admin, operator, readonly, agent
-- [ ] Map OAuth scopes to roles
-- [ ] `canAccess` guards on tools (FastMCP pattern)
-- [ ] Audit log for role-based actions
-
-**Acceptance:**
-- OAuth tokens validated correctly
-- Admin tools require admin role
-- Unauthorized attempts logged and rejected
+- [ ] Roles: admin, operator, readonly, agent
+- [ ] Map scopes to roles
+- [ ] `canAccess` guards
 
 ---
 
@@ -425,20 +378,17 @@ const catalogList = defineMetaTool({
 **Dependencies:** v1-1
 
 #### v1-2.1: Basic Self-Config
-- [ ] `list_servers` - List configured servers
+- [ ] `list_servers` - List servers
+- [ ] `discover_servers` - Find servers in marketplace
+- [ ] `provision_server` - Install/configure server
 - [ ] `enable_server` / `disable_server`
-- [ ] `reload_config` - Force config reload
-- [ ] All tools admin-scoped
+- [ ] `remove_server`
+- [ ] `reload_config`
 
 #### v1-2.2: Advanced Self-Config
 - [ ] `show_servers_config_schema` - Display JSON Schema
 - [ ] `show_servers_config` - Get current config
 - [ ] `set_servers_config` - Update config with validation
-
-**Acceptance:**
-- Admin can enable/disable servers via tools
-- Config changes persisted and hot-reloaded
-- All operations audited
 
 ---
 
@@ -447,21 +397,13 @@ const catalogList = defineMetaTool({
 **Dependencies:** v1-2
 
 #### v1-3.1: Provisioning Queue
-- [ ] Queue data structure (in-memory + optional SQLite)
-- [ ] `provision_server` tool queues request
-- [ ] Request metadata: source, risk score, diff preview
-- [ ] Admin approval/rejection via TUI or tool
+- [ ] In-memory queue + optional SQLite
+- [ ] `provision_server` queues requests
+- [ ] Admin approval UI/API
 
 #### v1-3.2: Audit Trail
-- [ ] Structured audit log for all admin actions
-- [ ] Actor, timestamp, action, diff
-- [ ] Export capability (JSON)
-- [ ] Optional SQLite persistence
-
-**Acceptance:**
-- Provisioning requests visible in queue
-- Only approved requests execute
-- Full audit trail for compliance
+- [ ] Structured audit logs
+- [ ] Export capability
 
 ---
 
@@ -469,45 +411,28 @@ const catalogList = defineMetaTool({
 
 **Dependencies:** v1-1
 
-#### v1-4.1: Local Skill Indexing
-- [ ] Scan local directories for SKILL.md files
-- [ ] Parse skill metadata
-- [ ] Build keyword index for search
-- [ ] Cache skill data
+#### v1-4.1: Skill Indexing
+- [ ] Scan local directories/GitHub
+- [ ] Parse `SKILL.md`
+- [ ] Compute/cache embeddings
 
 #### v1-4.2: Skill Tools
-- [ ] `find_skills` - Keyword search local skills
-- [ ] `use_skill` - Load skill instructions
+- [ ] `find_skills` - Semantic search (local)
+- [ ] `discover_skills` - Semantic search (marketplace)
+- [ ] `retrieve_skill` - Download/install skill
+- [ ] `use_skill` - Load instructions/resources
 - [ ] `load_skill_resource` - Load specific files
 - [ ] `list_skills` - Inventory view
 
-**Acceptance:**
-- Skills discovered from configured directories
-- `find_skills` returns ranked results
-- Progressive disclosure (metadata first)
-
 ---
 
-### v1-5: Circuit Breaker & Rate Limiting
+### v1-5: Reliability
 
 **Dependencies:** MVP complete
 
-#### v1-5.1: Circuit Breaker
-- [ ] Per-server circuit breaker state machine
-- [ ] Configurable failure threshold
-- [ ] Cooldown period before retry
-- [ ] Metrics for trips/resets
-
-#### v1-5.2: Rate Limiting
-- [ ] Token bucket per server
-- [ ] Per-API-key limits (if using API key auth)
-- [ ] Configurable quotas
-- [ ] 429 responses with retry-after
-
-**Acceptance:**
-- Circuit breaker trips after N failures
-- Rate limit enforced correctly
-- Metrics exposed for monitoring
+#### v1-5.1: Circuit Breaker & Rate Limiting
+- [ ] Per-server circuit breaker
+- [ ] Token bucket rate limiting
 
 ---
 
@@ -516,15 +441,8 @@ const catalogList = defineMetaTool({
 **Dependencies:** v1-3
 
 #### v1-6.1: Optional SQLite Backend
-- [ ] Schema for config, audit, sessions
+- [ ] Config/Audit/Session persistence
 - [ ] Migration system
-- [ ] JSON <-> SQLite sync
-- [ ] CLI command for migration
-
-**Acceptance:**
-- SQLite enabled via config
-- Data survives restarts
-- Migration between JSON and SQLite works
 
 ---
 
@@ -535,19 +453,24 @@ const catalogList = defineMetaTool({
 #### v1-7.1: Admin Features
 - [ ] Approval queue view
 - [ ] Audit log viewer
-- [ ] Server health dashboard
-- [ ] Circuit breaker status
+- [ ] Health dashboard
 
 #### v1-7.2: MCP Browser
-- [ ] Tool schema explorer
+- [ ] Schema explorer
 - [ ] Test invocation panel
-- [ ] Resource browser
-- [ ] Request/response inspector
 
-**Acceptance:**
-- TUI shows approval queue
-- Can approve/reject from TUI
-- Tool testing works
+---
+
+### v1-8: Kits Management
+
+**Dependencies:** v1-4
+
+#### v1-8.1: Kits Tools
+- [ ] `load_kit` - Load bundle
+- [ ] `unload_kit` - Remove bundle
+- [ ] `list_kits` - Inventory
+- [ ] `search_kit` - Semantic search
+- [ ] `kit_info` - Metadata
 
 ---
 
@@ -567,55 +490,22 @@ MVP-2 (Registry)                            │
         v
 MVP-3 (Gateway Server)
   ├── MVP-3.1 MCP Server
-  ├── MVP-3.2 HTTP Server (Hono)
-  └── MVP-3.3 Compliance Fixes
-        │
-        v
-MVP-4 (Extended Capabilities)
-  ├── MVP-4.1 Prompts
-  └── MVP-4.2 Resources
-        │
-        ├───────────────────┐
-        v                   v
-MVP-5 (Meta Tools)    MVP-6 (Observability)
-        │                   │
-        └─────────┬─────────┘
-                  v
-        MVP-7 (TUI/CLI)
-                  │
-                  v
-        MVP-8 (Virtual Tools)
-                  │
-    ══════════════╪═══════════════
-    MVP COMPLETE  │
-                  v
-```
-MVP-1 (Foundation)
-  ├── MVP-1.1 Bootstrap
-  ├── MVP-1.2 Config ──────────────────────┐
-  └── MVP-1.3 Transport                    │
-        │                                   │
-        v                                   │
-MVP-2 (Registry)                            │
-  ├── MVP-2.1 Registry <────────────────────┘
-  └── MVP-2.2 Router
-        │
-        v
-MVP-3 (Gateway Server)
-  ├── MVP-3.1 MCP Server
   └── MVP-3.2 HTTP Server (Hono)
         │
         ├───────────────────┐
         v                   v
-MVP-4 (Meta Tools)    MVP-5 (Observability)
-        │                   │
-        └─────────┬─────────┘
-                  v
-        MVP-6 (TUI/CLI)
-                  │
-                  v
-        MVP-7 (Virtual Tools)
-                  │
+MVP-4 (Extended)      MVP-6 (Observability)
+  │                     │
+  └─────────┬───────────┘
+            v
+MVP-5 (Meta Tools)
+            │
+            v
+MVP-7 (TUI/CLI)
+            │
+            v
+MVP-8 (Virtual Tools)
+            │
     ══════════════╪═══════════════
     MVP COMPLETE  │
                   v
@@ -624,10 +514,11 @@ MVP-4 (Meta Tools)    MVP-5 (Observability)
         ┌─────────┼─────────┐
         v         v         v
    v1-2       v1-4       v1-5
-(Self-Config) (Skills)  (Circuit Breaker)
-        │
-        v
-   v1-3 (Approval Queue)
+(Self-Config) (Skills)  (Reliability)
+        │         │
+        v         v
+   v1-3       v1-8
+(Approval)    (Kits)
         │
         v
    v1-6 (SQLite)
@@ -635,100 +526,6 @@ MVP-4 (Meta Tools)    MVP-5 (Observability)
         v
    v1-7 (Enhanced TUI)
 ```
-
----
-
-## Patterns Reference (from FastMCP)
-
-### Tool Registration Helper
-
-```typescript
-// Adopt FastMCP's declarative pattern
-function defineMetaTool<T extends z.ZodType>(config: {
-  name: string;
-  description: string;
-  parameters: T;
-  canAccess?: (session: Session) => boolean;
-  execute: (args: z.infer<T>, ctx: ToolContext) => Promise<ToolResult>;
-}): MetaToolDefinition {
-  return {
-    ...config,
-    schema: zodToJsonSchema(config.parameters),
-  };
-}
-```
-
-### Context Injection
-
-```typescript
-// Rich context passed to tool execution
-interface ToolContext {
-  log: Logger;
-  session: Session;
-  sessionId: string;
-  registry: Registry;
-  reportProgress: (progress: Progress) => Promise<void>;
-}
-```
-
-### Content Helpers
-
-```typescript
-// Adopt FastMCP's media helpers
-export async function imageContent(
-  input: { url: string } | { path: string } | { buffer: Buffer }
-): Promise<ImageContent> {
-  const data = await resolveToBuffer(input);
-  const mimeType = await detectMimeType(data);
-  return { type: "image", data: data.toString("base64"), mimeType };
-}
-```
-
-### Session Tracking
-
-```typescript
-// Session manager pattern
-class SessionManager {
-  private sessions = new Map<string, GoblinSession>();
-  
-  create(transport: Transport): GoblinSession {
-    const id = crypto.randomUUID();
-    const session = new GoblinSession(id, transport);
-    this.sessions.set(id, session);
-    return session;
-  }
-  
-  get(id: string): GoblinSession | undefined {
-    return this.sessions.get(id);
-  }
-  
-  destroy(id: string): void {
-    this.sessions.get(id)?.cleanup();
-    this.sessions.delete(id);
-  }
-}
-```
-
----
-
-## Risk Areas
-
-| Risk | Mitigation |
-|------|------------|
-| SDK v2 breaking changes | Pin to specific version, monitor releases |
-| Zod version conflicts | Use single Zod version, test with SDK |
-| SSE session state in multi-instance | Document limitation, sticky sessions |
-| STDIO process zombies | Implement proper cleanup, process monitoring |
-| Large tool response buffering | Stream responses, enforce size limits |
-
----
-
-## Next Steps
-
-1. **Bootstrap project** (MVP-1.1)
-2. **Implement config system** (MVP-1.2)
-3. **Add first transport adapter** (MVP-1.3)
-4. **Iterate through MVP milestones**
 
 ---
 
