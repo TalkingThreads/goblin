@@ -57,20 +57,45 @@ bun run start
 
 ## Configuration
 
-Create a configuration file to define your MCP backends:
+Goblin looks for a configuration file in the standard OS location:
+- **Linux**: `~/.config/goblin/config.json`
+- **macOS**: `~/Library/Application Support/goblin/config.json`
+- **Windows**: `%APPDATA%\goblin\config.json`
+
+### Example Config
 
 ```json
 {
+  "$schema": "./config.schema.json",
   "servers": [
     {
       "name": "filesystem",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allow"]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allow"],
+      "enabled": true
     }
-  ]
+  ],
+  "gateway": {
+    "port": 3000,
+    "host": "127.0.0.1"
+  },
+  "auth": {
+    "mode": "dev"
+  },
+  "policies": {
+    "outputSizeLimit": 65536,
+    "defaultTimeout": 30000
+  }
 }
 ```
+
+### Features
+- **Hot Reload**: Changes to the config file are applied automatically (atomic updates).
+- **Type Safety**: Validated against a strict schema on load.
+- **Editor Support**: Generated JSON Schema provides autocomplete and validation in VS Code.
+
+See [docs/example-config.json](docs/example-config.json) for a full example.
 
 ## Development
 

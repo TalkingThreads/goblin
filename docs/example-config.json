@@ -1,0 +1,31 @@
+{
+  "$schema": "./config.schema.json",
+  "servers": [
+    {
+      "name": "filesystem",
+      "description": "Local filesystem access",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allow"],
+      "enabled": true
+    },
+    {
+      "name": "example-http",
+      "description": "Example HTTP MCP server",
+      "transport": "http",
+      "url": "http://localhost:8080/mcp",
+      "enabled": false
+    }
+  ],
+  "gateway": {
+    "port": 3000,
+    "host": "127.0.0.1"
+  },
+  "auth": {
+    "mode": "dev"
+  },
+  "policies": {
+    "outputSizeLimit": 65536,
+    "defaultTimeout": 30000
+  }
+}

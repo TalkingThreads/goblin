@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Configuration System**: Robust config loading with Zod validation
+- **Hot Reload**: Automatic config reloading with atomic updates and rollback
+- **JSON Schema**: Auto-generated schema for editor autocomplete and validation
+- **OS-Standard Paths**: Config file resolution using XDG/OS standards via `env-paths`
 - Initial project structure with Bun, TypeScript, and Hono
 - Structured logging with Pino
 - OpenSpec workflow integration for spec-driven development
