@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Tool Router**: Intelligent request routing and execution policy enforcement
+  - Routes namespaced tool calls (`server_tool`) to correct backend
+  - Enforces execution timeouts via configuration
+  - Handles request cancellation and error propagation
 - **Tool Registry**: Central registry for discovering and syncing tools from backend servers
   - Automatic tool synchronization with pagination support
   - Tool namespacing (`serverId_toolName`) to prevent collisions
