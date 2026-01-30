@@ -9,6 +9,7 @@ import { logger as honoLogger } from "hono/logger";
 import { streamSSE } from "hono/streaming";
 import type { Config } from "../config/index.js";
 import { createLogger } from "../observability/logger.js";
+import { httpRequestDuration, httpRequestsTotal, register } from "../observability/metrics.js";
 import { createHonoSseTransport } from "../transport/hono-adapter.js";
 import type { Registry } from "./registry.js";
 import type { Router } from "./router.js";
@@ -32,12 +33,34 @@ export class HttpGateway {
 
   private setupMiddleware(): void {
     this.app.use("*", honoLogger());
-    this.app.use("*", cors()); // TODO: Configure CORS from config
+    this.app.use("*", cors());
+
+    // Metrics middleware
+    this.app.use("*", async (c, next) => {
+      const start = performance.now();
+      const method = c.req.method;
+      const route = c.req.path;
+
+      try {
+        await next();
+      } finally {
+        const duration = (performance.now() - start) / 1000;
+        const status = c.res.status.toString();
+
+        httpRequestsTotal.inc({ method, route, status });
+        httpRequestDuration.observe({ method, route, status }, duration);
+      }
+    });
   }
 
   private setupRoutes(): void {
     // Health check
     this.app.get("/health", (c) => c.json({ status: "ok" }));
+
+    // Metrics endpoint
+    this.app.get("/metrics", async (c) => {
+      return c.text(await register.metrics());
+    });
 
     // SSE Endpoint
     this.app.get("/sse", async (c) => {

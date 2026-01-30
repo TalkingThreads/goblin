@@ -49,6 +49,11 @@ export const ServerConfigSchema = z.object({
   env: z.record(z.string(), z.string()).optional(),
 
   /**
+   * Lifecycle mode for the server
+   */
+  mode: z.enum(["stateless", "stateful", "smart"]).default("stateful"),
+
+  /**
    * Whether the server is enabled
    */
   enabled: z.boolean().default(true),

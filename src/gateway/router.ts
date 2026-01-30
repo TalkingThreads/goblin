@@ -8,6 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config, ServerConfig } from "../config/index.js";
 import { createLogger } from "../observability/logger.js";
+import { mcpToolCallsTotal, mcpToolDuration } from "../observability/metrics.js";
 import type { TransportPool } from "../transport/index.js";
 import type { Registry } from "./registry.js";
 
@@ -40,16 +41,17 @@ export class Router {
     if (localTool) {
       logger.info({ tool: name }, "Executing local tool");
       try {
+        const start = performance.now();
         // Execute local tool with context
         const result = await localTool.execute(args, {
           registry: this.registry,
           config: this.config,
           router: this,
         });
+        const duration = (performance.now() - start) / 1000;
 
-        // Format result as CallToolResult (content array)
-        // If result is already { content: ... }, use it?
-        // Most meta tools return objects. We should wrap them in JSON content.
+        mcpToolCallsTotal.inc({ server: "goblin", tool: name, status: "success" });
+        mcpToolDuration.observe({ server: "goblin", tool: name, status: "success" }, duration);
 
         return {
           content: [
@@ -60,6 +62,7 @@ export class Router {
           ],
         };
       } catch (error) {
+        mcpToolCallsTotal.inc({ server: "goblin", tool: name, status: "error" });
         logger.error({ tool: name, error }, "Local tool execution failed");
         return {
           content: [
@@ -157,7 +160,12 @@ export class Router {
       const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
 
       try {
+        const startTool = performance.now();
         const result = await executeFn(client, originalName, abortController.signal);
+        const duration = (performance.now() - startTool) / 1000;
+
+        mcpToolCallsTotal.inc({ server: serverId, tool: id, status: "success" });
+        mcpToolDuration.observe({ server: serverId, tool: id, status: "success" }, duration);
 
         logger.info(
           { type, id, server: serverId, durationMs: performance.now() - start },
@@ -169,6 +177,7 @@ export class Router {
         clearTimeout(timeoutId);
       }
     } catch (error) {
+      mcpToolCallsTotal.inc({ server: id.split("_")[0], tool: id, status: "error" });
       const durationMs = performance.now() - start;
       logger.error({ type, id, error, durationMs }, "Request failed");
       throw error;
