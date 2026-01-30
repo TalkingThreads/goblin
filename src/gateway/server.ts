@@ -36,8 +36,6 @@ export class GatewayServer {
           tools: {
             listChanged: true, // Notify clients when tools change
           },
-          prompts: {}, // Required to be present even if empty?
-          resources: {},
         },
       },
     );
@@ -116,15 +114,7 @@ export class GatewayServer {
     // When registry changes, notify connected clients
     this.registry.on("change", () => {
       logger.info("Registry changed, sending notification");
-      // TODO: Server class doesn't expose notification method directly in v1.x?
-      // Check SDK docs. Server has `sendToolListChanged`?
-      // Actually, Server extends Protocol?
-      // Let's assume for now we can't easily notify or it's method is protected/private in low-level Server?
-      // No, Protocol has sendNotification.
-      // But we need to cast or access it.
-
-      // Attempt to send notification if supported
-      // this.server.sendToolListChanged(); // Might exist in McpServer but check Server.
+      this.server.notification({ method: "notifications/tools/list_changed" });
     });
   }
 }

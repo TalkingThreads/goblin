@@ -5,10 +5,21 @@
 import { EventEmitter } from "node:events";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
 import { createLogger } from "../observability/logger.js";
 import type { ToolCard, ToolEntry } from "./types.js";
 
 const logger = createLogger("registry");
+
+// Schema for tool list change notification
+const ToolListChangedNotificationSchema = z.object({
+  method: z.literal("notifications/tools/list_changed"),
+  params: z
+    .object({
+      _meta: z.object({}).passthrough().optional(),
+    })
+    .optional(),
+});
 
 export class Registry extends EventEmitter {
   private tools = new Map<string, ToolEntry>();
@@ -21,31 +32,13 @@ export class Registry extends EventEmitter {
     logger.info({ serverId }, "Adding server to registry");
 
     try {
-      const tools = await this.fetchTools(client);
+      // Initial sync
+      await this.syncServer(serverId, client);
 
-      const toolIds = new Set<string>();
-
-      for (const tool of tools) {
-        // Namespace tool to avoid collisions: serverId_toolName
-        // TODO: Allow custom aliasing via config
-        const id = `${serverId}_${tool.name}`;
-
-        const entry: ToolEntry = {
-          id,
-          def: tool,
-          serverId,
-        };
-
-        this.tools.set(id, entry);
-        toolIds.add(id);
-      }
-
-      this.serverTools.set(serverId, toolIds);
-
-      logger.info({ serverId, count: tools.length }, "Synced tools from server");
-      this.emit("change");
+      // Subscribe to updates
+      this.subscribeToBackend(serverId, client);
     } catch (error) {
-      logger.error({ serverId, error }, "Failed to sync tools from server");
+      logger.error({ serverId, error }, "Failed to add server to registry");
       throw error;
     }
   }
@@ -85,6 +78,56 @@ export class Registry extends EventEmitter {
    */
   getTool(id: string): ToolEntry | undefined {
     return this.tools.get(id);
+  }
+
+  /**
+   * Sync tools from a backend server
+   */
+  private async syncServer(serverId: string, client: Client): Promise<void> {
+    const tools = await this.fetchTools(client);
+
+    // Calculate new tool IDs
+    const newToolIds = new Set<string>();
+    const entries: ToolEntry[] = [];
+
+    for (const tool of tools) {
+      const id = `${serverId}_${tool.name}`;
+      newToolIds.add(id);
+      entries.push({ id, def: tool, serverId });
+    }
+
+    // Remove old tools that are gone
+    const oldToolIds = this.serverTools.get(serverId);
+    if (oldToolIds) {
+      for (const id of oldToolIds) {
+        if (!newToolIds.has(id)) {
+          this.tools.delete(id);
+        }
+      }
+    }
+
+    // Add/Update new tools
+    for (const entry of entries) {
+      this.tools.set(entry.id, entry);
+    }
+
+    this.serverTools.set(serverId, newToolIds);
+    logger.info({ serverId, count: tools.length }, "Synced tools from server");
+    this.emit("change");
+  }
+
+  /**
+   * Subscribe to backend notifications
+   */
+  private subscribeToBackend(serverId: string, client: Client): void {
+    client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
+      logger.info({ serverId }, "Received tool list change notification");
+      try {
+        await this.syncServer(serverId, client);
+      } catch (error) {
+        logger.error({ serverId, error }, "Failed to re-sync tools from backend");
+      }
+    });
   }
 
   /**

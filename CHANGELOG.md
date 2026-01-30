@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Compliance Updates**: Fixed protocol compliance gaps
+  - Removed advertising of unimplemented capabilities (prompts, resources)
+  - Implemented dynamic tool synchronization across the gateway
+  - Added support for `notifications/tools/list_changed` propagation
+
 ### Added
 - **HTTP Gateway**: Hono-based HTTP server for remote client connections
   - SSE endpoint (`/sse`) for persistent server-sent events

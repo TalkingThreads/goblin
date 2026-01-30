@@ -22,6 +22,7 @@ describe("Registry", () => {
         }
         return { tools: [] };
       }),
+      setNotificationHandler: mock(),
     } as unknown as Client;
 
     await registry.addServer("server1", client);
@@ -34,6 +35,7 @@ describe("Registry", () => {
     expect(tools.find((t) => t.name === "server1_tool2")).toBeDefined();
 
     expect(client.listTools).toHaveBeenCalledTimes(2);
+    expect(client.setNotificationHandler).toHaveBeenCalled();
   });
 
   test("should remove server and its tools", async () => {
@@ -42,6 +44,7 @@ describe("Registry", () => {
       listTools: async () => ({
         tools: [{ name: "tool1", inputSchema: {} }],
       }),
+      setNotificationHandler: () => {},
     } as unknown as Client;
 
     await registry.addServer("server1", client);
@@ -58,6 +61,7 @@ describe("Registry", () => {
       listTools: async () => ({
         tools: [toolDef],
       }),
+      setNotificationHandler: () => {},
     } as unknown as Client;
 
     await registry.addServer("server1", client);
