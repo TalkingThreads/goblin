@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Tool Registry**: Central registry for discovering and syncing tools from backend servers
+  - Automatic tool synchronization with pagination support
+  - Tool namespacing (`serverId_toolName`) to prevent collisions
+  - Compact tool cards for efficient listing
+  - Event-driven updates (`change` event)
+- **Transport Layer**: Core abstraction for connecting to backend MCP servers
+  - `StdioTransport`: Support for spawning local MCP servers as child processes
+  - `HttpTransport`: Support for connecting to remote MCP servers via SSE/HTTP
+  - `TransportPool`: Connection pooling and lifecycle management
 - **Configuration System**: Robust config loading with Zod validation
 - **Hot Reload**: Automatic config reloading with atomic updates and rollback
 - **JSON Schema**: Auto-generated schema for editor autocomplete and validation
