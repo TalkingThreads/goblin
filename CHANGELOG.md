@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Added
+- **Extended Capabilities**: Support for Prompts and Resources primitives
+  - **Prompts**: List and Get prompts aggregated from backends
+  - **Resources**: List, Read, and Template support for resources
+  - Full routing and timeout support for new primitives
 - **Compliance Updates**: Fixed protocol compliance gaps
   - Removed advertising of unimplemented capabilities (prompts, resources)
   - Implemented dynamic tool synchronization across the gateway

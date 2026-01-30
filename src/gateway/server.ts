@@ -7,8 +7,13 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   CallToolRequestSchema,
   ErrorCode,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+  ListResourcesRequestSchema,
+  ListResourceTemplatesRequestSchema,
   ListToolsRequestSchema,
   McpError,
+  ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../config/index.js";
 import { createLogger } from "../observability/logger.js";
@@ -26,6 +31,7 @@ export class GatewayServer {
     config: Config,
   ) {
     void config; // Suppress unused warning
+
     this.server = new Server(
       {
         name: "goblin-gateway",
@@ -34,7 +40,14 @@ export class GatewayServer {
       {
         capabilities: {
           tools: {
-            listChanged: true, // Notify clients when tools change
+            listChanged: true,
+          },
+          prompts: {
+            listChanged: true,
+          },
+          resources: {
+            listChanged: true,
+            subscribe: false, // TODO: Support subscription proxying
           },
         },
       },
@@ -59,62 +72,106 @@ export class GatewayServer {
   }
 
   private setupHandlers(): void {
-    // Handle tools/list
+    // --- Tools ---
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       logger.debug("Handling tools/list request");
-
       const tools = this.registry.listTools().map((card) => {
         const entry = this.registry.getTool(card.name);
-        if (!entry) {
-          // Should not happen as listTools() derives from entries
-          throw new McpError(ErrorCode.InternalError, "Inconsistent registry state");
-        }
-
-        // Return full tool definition from backend
-        // We might want to override description or add metadata?
+        if (!entry) throw new McpError(ErrorCode.InternalError, "Inconsistent registry state");
         return {
-          name: entry.id, // Namespaced ID
+          name: entry.id,
           description: entry.def.description,
           inputSchema: entry.def.inputSchema,
         };
       });
-
       return { tools };
     });
 
-    // Handle tools/call
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-
       logger.info({ tool: name }, "Handling tools/call request");
-
       try {
-        const result = await this.router.callTool(name, args || {});
-        return result;
-      } catch (error: unknown) {
-        logger.error({ tool: name, error }, "Tool call failed");
+        return await this.router.callTool(name, args || {});
+      } catch (error) {
+        throw this.mapError(error);
+      }
+    });
 
-        if (error instanceof Error) {
-          // Map Router errors to McpError if needed
-          if (error.message.includes("not found")) {
-            throw new McpError(ErrorCode.MethodNotFound, error.message);
-          }
-          if (error.message.includes("timeout")) {
-            throw new McpError(ErrorCode.RequestTimeout, "Tool execution timed out");
-          }
-          throw new McpError(ErrorCode.InternalError, error.message);
-        }
+    // --- Prompts ---
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
+      logger.debug("Handling prompts/list request");
+      const prompts = this.registry.listPrompts().map((entry) => ({
+        name: entry.id,
+        description: entry.def.description,
+        arguments: entry.def.arguments,
+      }));
+      return { prompts };
+    });
 
-        throw new McpError(ErrorCode.InternalError, "Unknown error occurred");
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+      logger.info({ prompt: name }, "Handling prompts/get request");
+      try {
+        // Router needs to support getPrompt
+        // We cast args to Record<string, string> as prompts use string args
+        // If router expects unknown, we need to fix router or cast here.
+        // Prompt args are string->string usually? No, SDK says arguments?: Record<string, string>.
+        return await this.router.getPrompt(name, args as Record<string, string>);
+      } catch (error) {
+        throw this.mapError(error);
+      }
+    });
+
+    // --- Resources ---
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      logger.debug("Handling resources/list request");
+      const resources = this.registry.listResources().map((entry) => entry.def);
+      return { resources };
+    });
+
+    this.server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
+      logger.debug("Handling resources/templates/list request");
+      const resourceTemplates = this.registry.listResourceTemplates().map((entry) => entry.def);
+      return { resourceTemplates };
+    });
+
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      const { uri } = request.params;
+      logger.info({ uri }, "Handling resources/read request");
+      try {
+        return await this.router.readResource(uri);
+      } catch (error) {
+        throw this.mapError(error);
       }
     });
   }
 
   private setupEvents(): void {
-    // When registry changes, notify connected clients
-    this.registry.on("change", () => {
-      logger.info("Registry changed, sending notification");
+    // Notify connected clients when registry changes
+    this.registry.on("tool-change", () => {
       this.server.notification({ method: "notifications/tools/list_changed" });
     });
+
+    this.registry.on("prompt-change", () => {
+      this.server.notification({ method: "notifications/prompts/list_changed" });
+    });
+
+    this.registry.on("resource-change", () => {
+      this.server.notification({ method: "notifications/resources/list_changed" });
+    });
+  }
+
+  private mapError(error: unknown): McpError {
+    if (error instanceof Error) {
+      if (error.message.includes("not found")) {
+        return new McpError(ErrorCode.MethodNotFound, error.message);
+      }
+      if (error.message.includes("timeout")) {
+        return new McpError(ErrorCode.RequestTimeout, "Execution timed out");
+      }
+      // TODO: Handle user rejection etc
+      return new McpError(ErrorCode.InternalError, error.message);
+    }
+    return new McpError(ErrorCode.InternalError, "Unknown error occurred");
   }
 }
