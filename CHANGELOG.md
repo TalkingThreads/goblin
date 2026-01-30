@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **HTTP Gateway**: Hono-based HTTP server for remote client connections
+  - SSE endpoint (`/sse`) for persistent server-sent events
+  - Messages endpoint (`/messages`) for client JSON-RPC requests
+  - Session management for multi-client support
+  - Custom `HonoSseTransport` adapter for SDK integration
 - **Gateway Server**: Core MCP server implementation for downstream clients
   - Aggregates tools from all backend servers into a unified catalog
   - Dynamically handles tool listing and execution requests

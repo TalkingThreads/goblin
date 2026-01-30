@@ -1,5 +1,5 @@
 import { ConfigWatcher, generateSchema, loadConfig } from "./config/index.js";
-import { GatewayServer, Registry, Router } from "./gateway/index.js";
+import { HttpGateway, Registry, Router } from "./gateway/index.js";
 import { createLogger } from "./observability/logger.js";
 import { TransportPool } from "./transport/index.js";
 
@@ -19,8 +19,10 @@ async function main(): Promise<void> {
   const transportPool = new TransportPool();
   const registry = new Registry();
   const router = new Router(registry, transportPool, config);
-  const gatewayServer = new GatewayServer(registry, router, config);
-  void gatewayServer; // Suppress unused warning until MVP-3.2
+
+  // Start HTTP Gateway
+  const httpGateway = new HttpGateway(registry, router, config);
+  httpGateway.start();
 
   // Connect to enabled servers
   for (const server of config.servers) {
@@ -41,8 +43,6 @@ async function main(): Promise<void> {
     // TODO: Apply config changes to running services
   });
   watcher.start();
-
-  // TODO: MVP-3.2 - Start HTTP server (Hono) and connect gatewayServer
 
   logger.info("Goblin MCP Gateway ready");
 }
