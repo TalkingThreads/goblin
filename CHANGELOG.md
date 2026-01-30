@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Gateway Server**: Core MCP server implementation for downstream clients
+  - Aggregates tools from all backend servers into a unified catalog
+  - Dynamically handles tool listing and execution requests
+  - Maps routing errors to standard MCP error codes
 - **Tool Router**: Intelligent request routing and execution policy enforcement
   - Routes namespaced tool calls (`server_tool`) to correct backend
   - Enforces execution timeouts via configuration
