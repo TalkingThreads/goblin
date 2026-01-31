@@ -5,17 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2026-01-30
 
 ### Added
-- **Extended Capabilities**: Support for Prompts and Resources primitives
-  - **Prompts**: List and Get prompts aggregated from backends
+- **Complete MCP Gateway**: Production-ready gateway aggregating multiple MCP servers
+  - Gateway Server with full MCP protocol implementation
+  - Unified tool catalog with namespacing to prevent collisions
+  - Dynamic tool discovery and synchronization
+- **Extended Capabilities**: Full support for all MCP primitives
+  - **Tools**: List and Call with intelligent routing
+  - **Prompts**: List and Get prompts aggregated from backends  
   - **Resources**: List, Read, and Template support for resources
-  - Full routing and timeout support for new primitives
-- **Compliance Updates**: Fixed protocol compliance gaps
-  - Removed advertising of unimplemented capabilities (prompts, resources)
-  - Implemented dynamic tool synchronization across the gateway
-  - Added support for `notifications/tools/list_changed` propagation
+  - Full namespacing (`serverId_promptName`, `serverId_resourceName`)
+- **HTTP Gateway**: Remote client connectivity via Hono framework
+  - Server-Sent Events endpoint (`/sse`) for persistent connections
+  - Messages endpoint (`/messages`) for JSON-RPC requests
+  - Session management for multi-client support
+  - Custom HonoSseTransport adapter for MCP SDK integration
+- **Intelligent Router**: Request routing and execution policy enforcement
+  - Namespaced tool calls (`server_tool`) routed to correct backend
+  - Configurable timeout enforcement and error propagation
+  - Request cancellation and graceful error handling
+- **Tool Registry**: Central registry with event-driven discovery
+  - Automatic tool synchronization with pagination support
+  - Compact tool cards for efficient client discovery
+  - Change event propagation for dynamic updates
+- **Transport Layer**: Multi-transport support with connection management
+  - **StdioTransport**: Local MCP server execution as child processes
+  - **HttpTransport**: Remote MCP server connectivity
+  - **TransportPool**: Connection pooling, lifecycle management, and reconnection logic
+- **Configuration System**: Robust, hot-reloadable configuration
+  - JSON Schema validation with editor autocomplete support
+  - Atomic hot reload with rollback capability
+  - OS-standard path resolution (XDG/Windows standards)
+  - Environment variable override support
+- **Production Observability**: Complete monitoring and logging stack
+  - Structured JSON logging with Pino
+  - Prometheus metrics for HTTP requests and transport pool
+  - Component-based loggers with proper context
+  - Request tracing and performance monitoring
+- **MCP Compliance**: Full protocol compliance with proper error handling
+  - Removed advertising of unimplemented capabilities
+  - Dynamic capability synchronization across gateway
+  - Support for `notifications/tools/list_changed` propagation
+  - Standard MCP error codes and messages
+- **Development Tooling**: Complete development environment
+  - 26 comprehensive unit and integration tests
+  - TypeScript strict mode with full type safety
+  - Biome for linting, formatting, and code quality
+  - Hot reload development server with fast compilation
+  - Full documentation and AGENTS.md for AI assistance
 
 ### Added
 - **HTTP Gateway**: Hono-based HTTP server for remote client connections
@@ -65,10 +104,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A
 
-## [0.1.0] - YYYY-MM-DD
+## [Unreleased]
 
 ### Added
-- Initial release (placeholder - not yet released)
+- Documentation updates reflecting v0.1.0 release state
+
+### Changed
+- Updated README.md to accurately represent implemented features
+- Updated CHANGELOG.md with complete v0.1.0 feature summary
 
 ---
 

@@ -8,21 +8,25 @@
 
 ## Overview
 
-Goblin is a **Model Context Protocol (MCP) gateway** that solves tool sprawl, context bloat, and brittle integrations in agentic AI systems by providing:
+Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-ready solution for aggregating multiple MCP servers behind a single unified endpoint:
 
-- 🔌 **Single unified endpoint** aggregating multiple MCP backend servers
-- 🎛️ **Fine-grained control** over tool exposure and aliasing
-- 🔒 **Secure tool invocation** with admin approval workflows
-- 🚀 **Low-friction discovery** and provisioning of new capabilities
+- 🔌 **Complete MCP aggregation** of Tools, Prompts, and Resources from multiple backends
+- 🎛️ **Intelligent routing** with namespacing and timeout enforcement
+- 🚀 **Multiple transport support** including STDIO, HTTP, and Server-Sent Events
+- 🔧 **Hot-reload configuration** with JSON Schema validation
+- 📊 **Production observability** with structured logging and Prometheus metrics
 
 ## Features
 
-- **Gateway Pattern**: Acts as MCP server to clients and MCP client to backends
-- **Registry-Based Discovery**: Central registry with compact capability cards
-- **Transport Abstraction**: Support for STDIO, SSE, and HTTP transports
-- **Config-Driven**: Hot-reloadable JSON configuration
-- **Meta-Tool Oriented**: Minimal context footprint via meta-tools
-- **Production Ready**: Structured logging, Prometheus metrics, observability
+- **Complete MCP Gateway**: Fully functional gateway aggregating multiple MCP servers
+- **Extended Capabilities**: Full support for Tools, Prompts, and Resources aggregation
+- **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints
+- **Gateway Server**: Core MCP server implementation with unified tool catalog
+- **Intelligent Router**: Request routing with namespacing (`server_tool`) and timeout enforcement
+- **Tool Registry**: Dynamic synchronization with event-driven updates and compact cards
+- **Transport Layer**: STDIO, HTTP, and SSE transports with connection pooling
+- **Configuration System**: Hot-reloadable config with JSON Schema validation
+- **Production Ready**: Pino logging, Prometheus metrics, full observability stack
 
 ## Quick Start
 
@@ -34,15 +38,33 @@ Goblin is a **Model Context Protocol (MCP) gateway** that solves tool sprawl, co
 ### Installation
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/TalkingThreads/goblin.git
 cd goblin
 
 # Install dependencies
 bun install
 
-# Run in development mode
+# Run in development mode (with hot reload)
 bun run dev
+```
+
+### Building for Production
+
+```bash
+# Build project (TypeScript compilation)
+bun run build
+
+# Run production build
+bun run start
+```
+
+### Quick Test
+
+```bash
+# Run the test suite to verify installation
+bun test
+# Expected: 26 passing tests
 ```
 
 ### Building for Production
