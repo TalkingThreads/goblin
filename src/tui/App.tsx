@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import PromptsPanel from "./PromptsPanel.js";
+import ResourcesPanel from "./ResourcesPanel.js";
 
 /**
  * MOCK DATA
@@ -144,6 +145,7 @@ const App = () => {
       <Box flexGrow={1} height={18}>
         <ServersPane />
         <PromptsPanel />
+        <ResourcesPanel />
         <LogsPane />
       </Box>
       <Footer />

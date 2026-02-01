@@ -52,7 +52,8 @@ describe("Registry", () => {
     const resources = registry.listResources();
     expect(resources.length).toBe(1);
     expect(resources[0].def.uri).toBe("file:///test.txt");
-    expect(registry.getResource("file:///test.txt")).toBeDefined();
+    // Resources are now stored with namespaced URIs
+    expect(registry.getResource("mcp://server1/file%3A%2F%2F%2Ftest.txt")).toBeDefined();
 
     // Verify Templates
     const templates = registry.listResourceTemplates();
@@ -111,7 +112,7 @@ describe("Registry", () => {
     const promptEntry = registry.getPrompt("server1_prompt1");
     expect(promptEntry?.def).toEqual(promptDef as any);
 
-    const resourceEntry = registry.getResource("res://1");
+    const resourceEntry = registry.getResource("mcp://server1/res%3A%2F%2F1");
     expect(resourceEntry?.def).toEqual(resourceDef as any);
   });
 });

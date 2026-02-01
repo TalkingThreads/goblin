@@ -56,3 +56,62 @@ export interface ResourceTemplateEntry {
   def: ResourceTemplate;
   serverId: string;
 }
+
+/**
+ * Namespaced URI format: mcp://{serverId}/{originalUri}
+ * This prevents collisions when multiple servers expose the same URI
+ */
+export const RESOURCE_URI_SCHEME = "mcp";
+
+/**
+ * Create a namespaced URI from server ID and original URI
+ * @param serverId - The server ID
+ * @param rawUri - The original URI (e.g., "file:///path/to/file.txt")
+ * @returns Namespaced URI (e.g., "mcp://filesystem/file%3A%2F%2F%2Fpath%2Fto%2Ffile.txt")
+ */
+export function namespaceUri(serverId: string, rawUri: string): string {
+  // URL-encode the original URI to handle special characters
+  const encodedUri = encodeURIComponent(rawUri);
+  return `${RESOURCE_URI_SCHEME}://${serverId}/${encodedUri}`;
+}
+
+/**
+ * Parse a namespaced URI into server ID and original URI
+ * @param namespacedUri - The namespaced URI
+ * @returns Object with serverId and rawUri, or null if invalid format
+ */
+export function parseNamespacedUri(
+  namespacedUri: string,
+): { serverId: string; rawUri: string } | null {
+  try {
+    const pattern = `^${RESOURCE_URI_SCHEME}://([^/]+)/(.+)$`;
+    const match = namespacedUri.match(new RegExp(pattern));
+    if (!match || match.length < 3) {
+      return null;
+    }
+    const serverId = match[1]!;
+    const rawUri = decodeURIComponent(match[2]!);
+    return { serverId, rawUri };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check if a URI is namespaced
+ * @param uri - The URI to check
+ * @returns true if the URI is namespaced
+ */
+export function isNamespacedUri(uri: string): boolean {
+  return uri.startsWith(`${RESOURCE_URI_SCHEME}://`);
+}
+
+/**
+ * Extract server ID from a namespaced URI
+ * @param namespacedUri - The namespaced URI
+ * @returns The server ID, or null if invalid format
+ */
+export function getServerIdFromUri(namespacedUri: string): string | null {
+  const parsed = parseNamespacedUri(namespacedUri);
+  return parsed?.serverId ?? null;
+}

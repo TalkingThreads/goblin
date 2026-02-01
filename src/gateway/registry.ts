@@ -9,15 +9,35 @@ import { z } from "zod";
 import { createLogger } from "../observability/logger.js";
 import type { MetaToolDefinition } from "../tools/meta/types.js";
 import { toTool } from "../tools/meta/types.js";
-import type {
-  PromptEntry,
-  ResourceEntry,
-  ResourceTemplateEntry,
-  ToolCard,
-  ToolEntry,
+import {
+  namespaceUri,
+  type PromptEntry,
+  parseNamespacedUri,
+  type ResourceEntry,
+  type ResourceTemplateEntry,
+  type ToolCard,
+  type ToolEntry,
 } from "./types.js";
 
 const logger = createLogger("registry");
+
+/**
+ * Match a URI against a URI template
+ * Supports simple templates like file:///{path} or s3://{bucket}/{key}
+ * @param uri - The URI to match
+ * @param template - The URI template pattern
+ * @returns true if the URI matches the template
+ */
+function matchUriTemplate(uri: string, template: string): boolean {
+  // Convert template to regex
+  // Replace {var} patterns with regex capture groups
+  const regexPattern = template
+    .replace(/[.+?^${}()|[\]\\]/g, "\\$&") // Escape special regex chars
+    .replace(/\\\{[^}]+\\\}/g, "([^/]+)"); // Replace {var} with capture group
+
+  const regex = new RegExp(`^${regexPattern}$`);
+  return regex.test(uri);
+}
 
 // Schema for notifications
 const ToolListChangedNotificationSchema = z.object({
@@ -33,6 +53,14 @@ const PromptListChangedNotificationSchema = z.object({
 const ResourceListChangedNotificationSchema = z.object({
   method: z.literal("notifications/resources/list_changed"),
   params: z.object({ _meta: z.object({}).passthrough().optional() }).optional(),
+});
+
+const ResourceUpdatedNotificationSchema = z.object({
+  method: z.literal("notifications/resources/updated"),
+  params: z.object({
+    uri: z.string(),
+    _meta: z.object({}).passthrough().optional(),
+  }),
 });
 
 export class Registry extends EventEmitter {
@@ -223,13 +251,20 @@ export class Registry extends EventEmitter {
   // Or just iterate all servers and ask them? (Inefficient).
 
   findServerForResource(uri: string): string | undefined {
-    // 1. Exact match
+    // 1. Exact match (could be namespaced or raw URI)
     const resource = this.resources.get(uri);
     if (resource) return resource.serverId;
 
-    // 2. Template match (TODO: Implement proper URI template matching)
-    // For now, naive check if any template prefix matches? No, URI templates are complex.
-    // We can skip template matching for now or assume simple prefix if needed.
+    // 2. Try parsing as namespaced URI to get raw URI for template matching
+    const parsed = parseNamespacedUri(uri);
+    const rawUri = parsed?.rawUri ?? uri;
+
+    // 3. Template match - iterate templates and try to match
+    for (const [templateUri, templateEntry] of this.resourceTemplates) {
+      if (matchUriTemplate(rawUri, templateUri)) {
+        return templateEntry.serverId;
+      }
+    }
 
     return undefined;
   }
@@ -286,11 +321,10 @@ export class Registry extends EventEmitter {
     // Sync Resources
     const newResourceUris = new Set<string>();
     for (const resource of resources) {
-      // We don't namespace URIs, we assume they are unique or last-writer-wins?
-      // Or we should verify collision?
-      // For now, simple map.
-      this.resources.set(resource.uri, { def: resource, serverId });
-      newResourceUris.add(resource.uri);
+      // Namespace the URI to prevent collisions between servers
+      const namespacedUri = namespaceUri(serverId, resource.uri);
+      this.resources.set(namespacedUri, { def: resource, serverId });
+      newResourceUris.add(namespacedUri);
     }
     const oldResourceUris = this.serverResources.get(serverId);
     if (oldResourceUris) {
@@ -339,6 +373,12 @@ export class Registry extends EventEmitter {
     client.setNotificationHandler(ResourceListChangedNotificationSchema, async () => {
       logger.info({ serverId }, "Received resource list change");
       await this.syncServer(serverId, client);
+    });
+
+    client.setNotificationHandler(ResourceUpdatedNotificationSchema, async (notification) => {
+      logger.info({ serverId, uri: notification.params.uri }, "Received resource update");
+      // Emit event for gateway server to handle subscription routing
+      this.emit("resource-updated", serverId, notification.params.uri);
     });
   }
 

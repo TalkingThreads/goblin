@@ -22,7 +22,10 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
 - **Complete MCP Gateway**: Fully functional gateway aggregating multiple MCP servers
 - **Extended Capabilities**: Tools, Prompts, and Resources aggregation
 - **Resource Subscriptions**: Full subscription support with `resources/subscribe`, `resources/unsubscribe`, and `notifications/resources/updated`
-- **Prompt Meta Tools**: Discovery tools (`catalog_prompts`, `describe_prompt`, `search_prompts`) for prompt discovery and management
+- **Resource Namespacing**: URI namespacing (`mcp://{serverId}/{encodedUri}`) to prevent resource collisions
+- **Prompt Meta Tools**: Discovery tools (`catalog_prompts`, `describe_prompt`, `search_prompts`) for prompt discovery
+- **Resource Meta Tools**: Discovery tools (`catalog_resources`, `describe_resource`, `search_resources`, `catalog_resource_templates`) for resource discovery
+- **TUI Integration**: Interactive TUI with Servers, Tools, Prompts, and Resources panels
 - **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints  
 - **Gateway Server**: Core MCP server implementation with unified tool catalog
 - **Intelligent Router**: Request routing with namespacing (`server_tool`) and timeout enforcement

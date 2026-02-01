@@ -120,6 +120,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `describe_prompt`: Get detailed information about a specific prompt
   - `search_prompts`: Fuzzy search prompts by name or description
   - All tools support server filtering and return namespaced prompt IDs
+- **Resource Namespacing**: URI namespacing to prevent resource URI collisions
+  - `namespaceUri()` function to create namespaced URIs in `mcp://{serverId}/{encodedUri}` format
+  - `parseNamespacedUri()` function to extract server ID and original URI from namespaced URIs
+  - Registry updated to store resources with namespaced URIs
+  - Template matching support for dynamic resource routing
+- **Resource Meta Tools**: Discovery and management tools for MCP resources
+  - `catalog_resources`: List all resources with compact cards (uri, description, mimeType, serverId)
+  - `describe_resource`: Get detailed information about a specific resource
+  - `search_resources`: Fuzzy search resources by URI or description
+  - `catalog_resource_templates`: List all resource templates with compact cards
+  - All tools support server and MIME type filtering
+- **TUI Resources Panel**: Interactive TUI panel for resource management
+  - Display resources with server and MIME type filtering
+  - Keyboard navigation for resource selection
+  - URI display for selected resources
+  - Consistent styling with Tools and Prompts panels
 
 ### Changed
 - Updated README.md to accurately represent implemented features

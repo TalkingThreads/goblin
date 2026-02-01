@@ -4,13 +4,13 @@ import {
   type GetPromptResult,
   GetPromptResultSchema,
   type ReadResourceResult,
-  ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config, ServerConfig } from "../config/index.js";
 import { createLogger } from "../observability/logger.js";
 import { mcpToolCallsTotal, mcpToolDuration } from "../observability/metrics.js";
 import type { TransportPool } from "../transport/index.js";
 import type { Registry } from "./registry.js";
+import { parseNamespacedUri } from "./types.js";
 
 const logger = createLogger("router");
 
@@ -107,22 +107,41 @@ export class Router {
    */
   async readResource(uri: string): Promise<ReadResourceResult> {
     // For resources, "name" is URI.
-    // Registry lookup might need to handle templates in future.
-    return this.executeRequest(
-      "resource",
-      uri,
-      () => this.registry.getResource(uri),
-      (client, _originalUri, signal) =>
-        client.readResource({ uri }, ReadResourceResultSchema, {
-          signal,
-        }) as Promise<ReadResourceResult>,
-    );
+    // Handle both namespaced and raw URIs.
+    const parsed = parseNamespacedUri(uri);
+    const rawUri = parsed?.rawUri ?? uri;
+    const serverId = parsed?.serverId ?? this.registry.findServerForResource(uri);
+
+    if (!serverId) {
+      throw new Error(`Resource not found: ${uri}`);
+    }
+
+    const serverConfig = this.serverMap.get(serverId);
+    if (!serverConfig) {
+      throw new Error(`Server configuration not found for: ${serverId}`);
+    }
+
+    const transport = await this.transportPool.getTransport(serverConfig);
+
+    if (!transport.isConnected()) {
+      throw new Error(`Transport not connected for server: ${serverId}`);
+    }
+
+    const client = transport.getClient();
+
+    const start = performance.now();
+    const result = await client.readResource({ uri: rawUri });
+    const duration = performance.now() - start;
+
+    logger.debug({ uri: rawUri, serverId, duration }, "Read resource");
+
+    return result;
   }
 
   private async executeRequest<T>(
     type: string,
     id: string,
-    lookupFn: () => { serverId: string; def: { name?: string } } | undefined,
+    lookupFn: () => { serverId: string; def?: { name?: string } } | undefined,
     executeFn: (client: any, originalName: string, signal: AbortSignal) => Promise<T>,
   ): Promise<T> {
     const start = performance.now();
@@ -137,7 +156,7 @@ export class Router {
 
       const { serverId, def } = entry;
       // Use name from definition if available, otherwise use ID (for resources uri)
-      const originalName = def.name || id;
+      const originalName = def?.name || id;
 
       // 2. Get transport
       const serverConfig = this.serverMap.get(serverId);

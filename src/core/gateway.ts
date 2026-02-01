@@ -4,6 +4,12 @@ import { createLogger } from "../observability/logger.js";
 import { catalogList, catalogSearch } from "../tools/meta/catalog.js";
 import { health } from "../tools/meta/health.js";
 import { catalogPrompts, describePrompt, searchPrompts } from "../tools/meta/prompts.js";
+import {
+  catalogResources,
+  catalogResourceTemplates,
+  describeResource,
+  searchResources,
+} from "../tools/meta/resources.js";
 import { describeServer, searchServers } from "../tools/meta/server.js";
 import { describeTool, invokeTool } from "../tools/meta/tool.js";
 import { createVirtualToolDefinition } from "../tools/virtual/registry-adapter.js";
@@ -109,5 +115,9 @@ export class GoblinGateway {
     this.registry.registerLocalTool(catalogPrompts);
     this.registry.registerLocalTool(describePrompt);
     this.registry.registerLocalTool(searchPrompts);
+    this.registry.registerLocalTool(catalogResources);
+    this.registry.registerLocalTool(describeResource);
+    this.registry.registerLocalTool(searchResources);
+    this.registry.registerLocalTool(catalogResourceTemplates);
   }
 }
