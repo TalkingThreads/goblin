@@ -35,6 +35,8 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
   - TUI real-time log viewing with log buffer integration
   - Request/response logging middleware with correlation IDs
   - File destination support with path resolution
+  - Consistent logging patterns with error codes and structured context
+  - Log level discipline (trace, debug, info, warn, error, fatal)
 - **Custom Metrics**: Zero-dependency in-memory metrics with JSON endpoint
   - Real-time TUI metrics panel (press 'm' to toggle)
   - Request counters, latency histograms, connection gauges

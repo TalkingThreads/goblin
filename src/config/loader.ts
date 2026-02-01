@@ -39,7 +39,7 @@ export async function loadConfig(): Promise<Config> {
 
   // Use default config if file doesn't exist
   if (!existsSync(configPath)) {
-    logger.info({ configPath }, "Config file not found, using defaults");
+    logger.info({ configPath }, "Configuration file not found");
     return DEFAULT_CONFIG;
   }
 
@@ -52,7 +52,7 @@ export async function loadConfig(): Promise<Config> {
     const result = ConfigSchema.safeParse(raw);
 
     if (result.success) {
-      logger.info({ configPath }, "Config loaded successfully");
+      logger.info({ configPath }, "Configuration loaded");
       return result.data;
     }
 
@@ -62,18 +62,15 @@ export async function loadConfig(): Promise<Config> {
         configPath,
         errors: result.error.format(),
       },
-      "Config validation failed, using defaults",
+      "Configuration validation failed",
     );
     return DEFAULT_CONFIG;
   } catch (error: unknown) {
     // File read or JSON parse error
     if (error instanceof SyntaxError) {
-      logger.error(
-        { configPath, error: error.message },
-        "Config file contains invalid JSON, using defaults",
-      );
+      logger.error({ configPath, error: error.message }, "Configuration parsing failed");
     } else {
-      logger.error({ configPath, error }, "Failed to read config file, using defaults");
+      logger.error({ configPath, error }, "Configuration read failed");
     }
     return DEFAULT_CONFIG;
   }
@@ -92,6 +89,6 @@ export function validateConfig(raw: unknown): Config | null {
     return result.data;
   }
 
-  logger.error({ errors: result.error.format() }, "Config validation failed");
+  logger.error({ errors: result.error.format() }, "Configuration validation failed");
   return null;
 }

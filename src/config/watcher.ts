@@ -37,7 +37,7 @@ export class ConfigWatcher extends EventEmitter {
   start(): void {
     const configPath = getConfigPath();
 
-    logger.info({ configPath }, "Starting config file watcher");
+    logger.info({ configPath }, "Configuration watcher started");
 
     this.watcher = watch(configPath, (event) => {
       if (event === "change") {
@@ -46,7 +46,7 @@ export class ConfigWatcher extends EventEmitter {
     });
 
     this.watcher.on("error", (error: Error) => {
-      logger.error({ error }, "Config watcher error");
+      logger.error({ error }, "Configuration watcher failed");
       this.emit("error", error);
     });
   }
@@ -56,7 +56,7 @@ export class ConfigWatcher extends EventEmitter {
    */
   stop(): void {
     if (this.watcher !== null) {
-      logger.info("Stopping config file watcher");
+      logger.info({ configPath: getConfigPath() }, "Configuration watcher stopped");
       this.watcher.close();
       this.watcher = null;
     }
@@ -96,7 +96,7 @@ export class ConfigWatcher extends EventEmitter {
     const configPath = getConfigPath();
 
     try {
-      logger.debug({ configPath }, "Reloading config");
+      logger.debug({ configPath }, "Configuration reload started");
 
       // Read and parse JSON
       const content = await readFile(configPath, "utf-8");
@@ -109,21 +109,18 @@ export class ConfigWatcher extends EventEmitter {
         // Atomic swap - only update if validation succeeded
         this.currentConfig = validatedConfig;
 
-        logger.info({ configPath }, "Config reloaded successfully");
+        logger.info({ configPath }, "Configuration reloaded");
         this.emit("updated", this.currentConfig);
       } else {
         // Validation failed - rollback (keep current config)
-        logger.warn({ configPath }, "Config validation failed, keeping previous config");
+        logger.warn({ configPath }, "Configuration validation failed");
       }
     } catch (error: unknown) {
       // File read or JSON parse error - rollback
       if (error instanceof SyntaxError) {
-        logger.error(
-          { configPath, error: error.message },
-          "Invalid JSON in config file, keeping previous config",
-        );
+        logger.error({ configPath, error: error.message }, "Configuration parsing failed");
       } else {
-        logger.error({ configPath, error }, "Failed to reload config, keeping previous config");
+        logger.error({ configPath, error }, "Configuration reload failed");
       }
     }
   }

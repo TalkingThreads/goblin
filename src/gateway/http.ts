@@ -8,6 +8,7 @@ import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
 import { streamSSE } from "hono/streaming";
 import type { Config } from "../config/index.js";
+import { getOrCreateRequestId, getRequestId } from "../observability/correlation.js";
 import { createLogger } from "../observability/logger.js";
 import {
   httpRequestDuration,
@@ -39,6 +40,12 @@ export class HttpGateway {
     this.app.use("*", honoLogger());
     this.app.use("*", cors());
 
+    // Request ID middleware
+    this.app.use("*", async (c, next) => {
+      getOrCreateRequestId(c.req.header());
+      await next();
+    });
+
     // Metrics middleware
     this.app.use("*", async (c, next) => {
       const start = performance.now();
@@ -49,10 +56,13 @@ export class HttpGateway {
         await next();
       } finally {
         const duration = (performance.now() - start) / 1000;
-        const status = c.res.status.toString();
+        const status = c.res.status;
+        const requestId = getRequestId();
 
-        httpRequestsTotal.inc({ method, route, status });
-        httpRequestDuration.observe(duration, { method, route, status });
+        httpRequestsTotal.inc({ method, route, status: status.toString() });
+        httpRequestDuration.observe(duration, { method, route, status: status.toString() });
+
+        logger.info({ requestId, method, path: route, status, duration }, "Request completed");
       }
     });
   }
@@ -71,7 +81,8 @@ export class HttpGateway {
       const sessionId = crypto.randomUUID();
 
       return streamSSE(c, async (stream) => {
-        logger.info({ sessionId }, "New SSE connection");
+        const requestId = getRequestId();
+        logger.info({ sessionId, requestId }, "SSE connection established");
 
         // Create transport
         const transport = createHonoSseTransport("/messages", c, stream);
@@ -92,7 +103,8 @@ export class HttpGateway {
 
         // Cleanup on disconnect
         stream.onAbort(async () => {
-          logger.info({ sessionId }, "SSE connection closed");
+          const requestId = getRequestId();
+          logger.info({ sessionId, requestId }, "SSE connection closed");
           const session = this.sessions.get(sessionId);
           if (session) {
             await session.server.close();
@@ -123,7 +135,8 @@ export class HttpGateway {
         const body = await c.req.json();
         await transport.handleMessage(body);
       } catch (error) {
-        logger.error({ sessionId, error }, "Failed to handle message");
+        const requestId = getRequestId();
+        logger.error({ sessionId, error, requestId }, "Message handling failed");
         return c.json({ error: "Internal error" }, 500);
       }
 
@@ -138,7 +151,7 @@ export class HttpGateway {
     const port = this.config.gateway.port;
     const hostname = this.config.gateway.host;
 
-    logger.info({ port, hostname }, "Starting HTTP server");
+    logger.info({ port, hostname }, "HTTP server startup initiated");
 
     Bun.serve({
       fetch: this.app.fetch,

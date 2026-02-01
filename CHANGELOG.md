@@ -157,6 +157,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Request/response logging middleware with correlation IDs
   - File destination support with path resolution (~, env vars)
   - Added `pino-pretty` dev dependency for development mode
+- **Logging Best Practices**: Consistent logging patterns and conventions across codebase
+  - Error code system (CONN-*, TOOL-*, CFG-*, TRANSPORT-*, etc.) for structured error logging
+  - Request correlation ID propagation for distributed tracing
+  - Standardized log message conventions (action-oriented past tense)
+  - Structured context patterns for different operation types
+  - Component naming standards (kebab-case reflecting directory structure)
+  - Log level discipline guidelines (trace, debug, info, warn, error, fatal)
+  - AGENTS.md documentation with comprehensive logging examples
 - **Test Suite**: Expanded to 81 comprehensive unit and integration tests
 - Updated README.md to accurately represent implemented features
 - Updated CHANGELOG.md with complete v0.1.0 feature summary

@@ -141,17 +141,99 @@ function handleError(error: unknown): void {
 
 ### Logging
 
-Use pino with component-based child loggers:
+Use pino with component-based child loggers and follow these conventions:
+
+#### Message Conventions
+- Use action-oriented, past tense messages
+- Include context object with relevant fields
+- Message format: `{action} {entity}` or `{action} {entity} {result}`
 
 ```typescript
 import { createLogger } from "./observability/logger.js";
 
 const logger = createLogger("component-name");
 
-// Structured logging - context object first, message second
-logger.info({ userId, action }, "User performed action");
-logger.error({ error, requestId }, "Request failed");
-logger.debug({ data }, "Debug information");
+// ✅ Correct: Action-oriented, past tense, with context
+logger.info({ serverId, toolName }, "Tool invoked");
+logger.error({ error, serverId, requestId }, "Connection failed");
+logger.debug({ duration, attempt, maxRetries }, "Retry attempt failed");
+logger.info({ configPath }, "Configuration reloaded");
+
+// ❌ Avoid: Plain strings, present tense, no context
+logger.info("Starting server");
+logger.error("Error occurred");
+logger.debug("Processing request");
+```
+
+#### Context Standards
+Include relevant context fields for different operation types:
+
+```typescript
+// Success operations
+logger.info({ serverId, toolName }, "Tool invoked");
+
+// Error operations - always include error object
+logger.error({ error, serverId, toolName, requestId }, "Tool invocation failed");
+
+// HTTP operations
+logger.info({ requestId, method, path, status, duration }, "Request completed");
+
+// Retry operations
+logger.warn({ attempt, maxRetries, error }, "Retry attempt failed");
+
+// Configuration operations
+logger.info({ configPath }, "Configuration reloaded");
+```
+
+#### Log Level Guidelines
+- **trace**: Detailed debugging, entering/exiting functions, all variable values
+- **debug**: Technical debugging, request/response details, internal state
+- **info**: Normal operations, successful actions, state changes
+- **warn**: Recoverable issues, degraded performance, invalid inputs handled
+- **error**: Failures, exceptions, timeouts, broken invariants
+- **fatal**: Process-threatening errors, shutdown scenarios
+
+#### Component Naming
+Use kebab-case component names reflecting directory structure:
+
+```typescript
+const logger = createLogger("gateway-server");  // src/gateway/server.ts
+const logger = createLogger("http-gateway");    // src/gateway/http.ts
+const logger = createLogger("config-loader");   // src/config/loader.ts
+const logger = createLogger("transport-pool");  // src/transport/pool.ts
+```
+
+#### Error Logging with Error Codes
+Use the error code system for consistent error identification:
+
+```typescript
+import { logError, ERROR_CODES } from "./observability/utils.js";
+import { createLogger } from "./observability/logger.js";
+
+const logger = createLogger("router");
+
+// ✅ Correct: Use error codes with context
+logError(logger, ERROR_CODES.TOOL_NOT_FOUND, error, { toolName: "unknown" });
+
+// Error codes follow format: {CATEGORY}-{NUMBER}
+// CONN-xxx: Connection errors
+// TOOL-xxx: Tool invocation errors
+// CFG-xxx: Configuration errors
+// TRANSPORT-xxx: Transport layer errors
+// INTERNAL-xxx: Internal server errors
+```
+
+#### Request Correlation
+Propagate request IDs for distributed tracing:
+
+```typescript
+import { getRequestId, createRequestLogger } from "./observability/correlation.js";
+
+// Create child logger with request context
+const requestLogger = createRequestLogger(logger);
+
+// All logs from this request include requestId
+requestLogger.info({ path: c.req.path }, "Request received");
 ```
 
 ### Async/Await

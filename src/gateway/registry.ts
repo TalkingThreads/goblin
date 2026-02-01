@@ -7,6 +7,7 @@ import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Prompt, Resource, ResourceTemplate, Tool } from "@modelcontextprotocol/sdk/types.js";
 import MiniSearch from "minisearch";
 import { z } from "zod";
+import { getRequestId } from "../observability/correlation.js";
 import { createLogger } from "../observability/logger.js";
 import type { MetaToolDefinition } from "../tools/meta/types.js";
 import { toTool } from "../tools/meta/types.js";
@@ -124,7 +125,7 @@ export class Registry extends EventEmitter {
     // The plan implies "catalog_list" directly.
     // Let's assume meta tools reserve their names.
 
-    logger.info({ tool: id }, "Registering local tool");
+    logger.info({ toolId: id, requestId: getRequestId() }, "Local tool registered");
 
     // Add to local execution map
     this.localTools.set(id, toolDef);
@@ -150,7 +151,7 @@ export class Registry extends EventEmitter {
    * Add a server and sync capabilities
    */
   async addServer(serverId: string, client: Client): Promise<void> {
-    logger.info({ serverId }, "Adding server to registry");
+    logger.info({ serverId, requestId: getRequestId() }, "Server added");
 
     try {
       // Initial sync
@@ -159,7 +160,7 @@ export class Registry extends EventEmitter {
       // Subscribe to updates
       this.subscribeToBackend(serverId, client);
     } catch (error) {
-      logger.error({ serverId, error }, "Failed to add server to registry");
+      logger.error({ serverId, error, requestId: getRequestId() }, "Server addition failed");
       throw error;
     }
   }
@@ -168,7 +169,7 @@ export class Registry extends EventEmitter {
    * Remove a server and its capabilities
    */
   removeServer(serverId: string): void {
-    logger.info({ serverId }, "Removing server from registry");
+    logger.info({ serverId, requestId: getRequestId() }, "Server removed");
 
     // Remove tools
     const toolIds = this.serverTools.get(serverId);
@@ -249,7 +250,7 @@ export class Registry extends EventEmitter {
         })),
       );
 
-      logger.debug({ toolCount: allTools.length }, "Built search index");
+      logger.debug({ toolCount: allTools.length, requestId: getRequestId() }, "Search index built");
     }
     return this.searchIndex;
   }
@@ -347,19 +348,19 @@ export class Registry extends EventEmitter {
     // We can sync in parallel
     const [tools, prompts, resources, templates] = await Promise.all([
       this.fetchTools(client).catch((e) => {
-        logger.warn({ serverId, error: e }, "Failed to fetch tools");
+        logger.warn({ serverId, error: e, requestId: getRequestId() }, "Tools fetch failed");
         return [];
       }),
       this.fetchPrompts(client).catch((e) => {
-        logger.warn({ serverId, error: e }, "Failed to fetch prompts");
+        logger.warn({ serverId, error: e, requestId: getRequestId() }, "Prompts fetch failed");
         return [];
       }),
       this.fetchResources(client).catch((e) => {
-        logger.warn({ serverId, error: e }, "Failed to fetch resources");
+        logger.warn({ serverId, error: e, requestId: getRequestId() }, "Resources fetch failed");
         return [];
       }),
       this.fetchResourceTemplates(client).catch((e) => {
-        logger.warn({ serverId, error: e }, "Failed to fetch templates");
+        logger.warn({ serverId, error: e, requestId: getRequestId() }, "Templates fetch failed");
         return [];
       }),
     ]);
@@ -420,8 +421,14 @@ export class Registry extends EventEmitter {
     this.invalidateCache();
 
     logger.info(
-      { serverId, tools: tools.length, prompts: prompts.length, resources: resources.length },
-      "Synced capabilities",
+      {
+        serverId,
+        tools: tools.length,
+        prompts: prompts.length,
+        resources: resources.length,
+        requestId: getRequestId(),
+      },
+      "Capabilities synced",
     );
 
     // Emit specific changes
@@ -433,22 +440,25 @@ export class Registry extends EventEmitter {
 
   private subscribeToBackend(serverId: string, client: Client): void {
     client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
-      logger.info({ serverId }, "Received tool list change");
+      logger.info({ serverId, requestId: getRequestId() }, "Tool list change received");
       await this.syncServer(serverId, client);
     });
 
     client.setNotificationHandler(PromptListChangedNotificationSchema, async () => {
-      logger.info({ serverId }, "Received prompt list change");
+      logger.info({ serverId, requestId: getRequestId() }, "Prompt list change received");
       await this.syncServer(serverId, client);
     });
 
     client.setNotificationHandler(ResourceListChangedNotificationSchema, async () => {
-      logger.info({ serverId }, "Received resource list change");
+      logger.info({ serverId, requestId: getRequestId() }, "Resource list change received");
       await this.syncServer(serverId, client);
     });
 
     client.setNotificationHandler(ResourceUpdatedNotificationSchema, async (notification) => {
-      logger.info({ serverId, uri: notification.params.uri }, "Received resource update");
+      logger.info(
+        { serverId, uri: notification.params.uri, requestId: getRequestId() },
+        "Resource update received",
+      );
       // Emit event for gateway server to handle subscription routing
       this.emit("resource-updated", serverId, notification.params.uri);
     });

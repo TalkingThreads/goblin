@@ -14,6 +14,7 @@ import {
   ServerNotFoundError,
   ToolNotFoundError,
 } from "../errors/types.js";
+import { getRequestId } from "../observability/correlation.js";
 import { createLogger } from "../observability/logger.js";
 import { mcpToolCallsTotal, mcpToolDuration } from "../observability/metrics.js";
 import type { TransportPool } from "../transport/index.js";
@@ -47,7 +48,7 @@ export class Router {
     // 0. Check for local tool
     const localTool = this.registry.getLocalTool(name);
     if (localTool) {
-      logger.info({ tool: name }, "Executing local tool");
+      logger.info({ toolName: name, requestId: getRequestId() }, "Local tool execution started");
       try {
         const start = performance.now();
         // Execute local tool with context
@@ -71,7 +72,10 @@ export class Router {
         };
       } catch (error) {
         mcpToolCallsTotal.inc({ server: "goblin", tool: name, status: "error" });
-        logger.error({ tool: name, error }, "Local tool execution failed");
+        logger.error(
+          { toolName: name, error, requestId: getRequestId() },
+          "Local tool execution failed",
+        );
         return {
           content: [
             {
@@ -141,7 +145,10 @@ export class Router {
     const result = await client.readResource({ uri: rawUri });
     const duration = performance.now() - start;
 
-    logger.debug({ uri: rawUri, serverId, duration }, "Read resource");
+    logger.debug(
+      { uri: rawUri, serverId, durationMs: duration, requestId: getRequestId() },
+      "Resource read completed",
+    );
 
     return result;
   }
@@ -190,7 +197,7 @@ export class Router {
       }
 
       // 3. Execute with timeout
-      logger.info({ type, id, server: serverId }, `Routing ${type} request`);
+      logger.info({ type, id, serverId, requestId: getRequestId() }, "Request routed to backend");
 
       const client = transport.getClient();
       const abortController = new AbortController();
@@ -207,7 +214,13 @@ export class Router {
         mcpToolDuration.observe(duration, { server: serverId, tool: id, status: "success" });
 
         logger.info(
-          { type, id, server: serverId, durationMs: performance.now() - start },
+          {
+            type,
+            id,
+            server: serverId,
+            durationMs: performance.now() - start,
+            requestId: getRequestId(),
+          },
           "Request successful",
         );
 
@@ -223,7 +236,7 @@ export class Router {
 
       mcpToolCallsTotal.inc({ server: id.split("_")[0] || "unknown", tool: id, status: "error" });
       const durationMs = performance.now() - start;
-      logger.error({ type, id, error, durationMs }, "Request failed");
+      logger.error({ type, id, error, durationMs, requestId: getRequestId() }, "Request failed");
       throw error;
     }
   }

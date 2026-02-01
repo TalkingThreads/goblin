@@ -20,6 +20,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../config/index.js";
 import { isGoblinError } from "../errors/types.js";
+import { getRequestId } from "../observability/correlation.js";
 import { createLogger } from "../observability/logger.js";
 import type { Registry } from "./registry.js";
 import type { Router } from "./router.js";
@@ -87,7 +88,7 @@ export class GatewayServer {
   private setupHandlers(): void {
     // --- Tools ---
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      logger.debug("Handling tools/list request");
+      logger.debug({ requestId: getRequestId() }, "Tools listed");
       if (!this.cachedToolList) {
         this.cachedToolList = this.registry.getAllTools().map((entry) => ({
           name: entry.id,
@@ -100,7 +101,7 @@ export class GatewayServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      logger.info({ tool: name }, "Handling tools/call request");
+      logger.info({ toolName: name, requestId: getRequestId() }, "Tool called");
       try {
         return await this.router.callTool(name, args || {});
       } catch (error) {
@@ -110,7 +111,7 @@ export class GatewayServer {
 
     // --- Prompts ---
     this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
-      logger.debug("Handling prompts/list request");
+      logger.debug({ requestId: getRequestId() }, "Prompts listed");
       if (!this.cachedPromptList) {
         this.cachedPromptList = this.registry.getAllPrompts().map((entry) => ({
           name: entry.id,
@@ -123,7 +124,7 @@ export class GatewayServer {
 
     this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      logger.info({ prompt: name }, "Handling prompts/get request");
+      logger.info({ promptName: name, requestId: getRequestId() }, "Prompt requested");
       try {
         // Router needs to support getPrompt
         // We cast args to Record<string, string> as prompts use string args
@@ -137,7 +138,7 @@ export class GatewayServer {
 
     // --- Resources ---
     this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
-      logger.debug("Handling resources/list request");
+      logger.debug({ requestId: getRequestId() }, "Resources listed");
       if (!this.cachedResourceList) {
         this.cachedResourceList = this.registry.getAllResources().map((entry) => entry.def);
       }
@@ -145,7 +146,7 @@ export class GatewayServer {
     });
 
     this.server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
-      logger.debug("Handling resources/templates/list request");
+      logger.debug({ requestId: getRequestId() }, "Resource templates listed");
       if (!this.cachedResourceTemplateList) {
         this.cachedResourceTemplateList = this.registry
           .getAllResourceTemplates()
@@ -156,7 +157,7 @@ export class GatewayServer {
 
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const { uri } = request.params;
-      logger.info({ uri }, "Handling resources/read request");
+      logger.info({ uri, requestId: getRequestId() }, "Resource read");
       try {
         return await this.router.readResource(uri);
       } catch (error) {
@@ -167,7 +168,7 @@ export class GatewayServer {
     // --- Resource Subscriptions ---
     this.server.setRequestHandler(SubscribeRequestSchema, async (request) => {
       const { uri } = request.params;
-      logger.info({ uri }, "Handling resources/subscribe request");
+      logger.info({ uri, requestId: getRequestId() }, "Resource subscription created");
 
       // Validate that the resource exists
       const resource = this.registry.getResource(uri);
@@ -185,7 +186,7 @@ export class GatewayServer {
 
     this.server.setRequestHandler(UnsubscribeRequestSchema, async (request) => {
       const { uri } = request.params;
-      logger.info({ uri }, "Handling resources/unsubscribe request");
+      logger.info({ uri, requestId: getRequestId() }, "Resource subscription removed");
 
       const clientId = this.getCurrentClientId();
       const unsubscribed = this.subscriptionManager.unsubscribe(clientId, uri);
@@ -248,13 +249,16 @@ export class GatewayServer {
     const subscribers = this.subscriptionManager.getSubscribers(uri);
 
     if (subscribers.length === 0) {
-      logger.debug({ uri, serverId }, "No subscribers for resource update");
+      logger.debug(
+        { uri, serverId, requestId: getRequestId() },
+        "Resource update skipped: no subscribers",
+      );
       return;
     }
 
     logger.info(
-      { uri, serverId, subscriberCount: subscribers.length },
-      "Forwarding resource update to subscribers",
+      { uri, serverId, subscriberCount: subscribers.length, requestId: getRequestId() },
+      "Resource update forwarded",
     );
 
     // Forward notification to all subscribed clients
@@ -265,7 +269,10 @@ export class GatewayServer {
           params: { uri },
         });
       } catch (error) {
-        logger.warn({ clientId, uri, error }, "Failed to send resource update to client");
+        logger.warn(
+          { clientId, uri, error, requestId: getRequestId() },
+          "Resource update delivery failed",
+        );
       }
     }
   }
@@ -275,7 +282,10 @@ export class GatewayServer {
    */
   public cleanupClient(clientId: string): void {
     const count = this.subscriptionManager.cleanupClient(clientId);
-    logger.info({ clientId, count }, "Cleaned up client subscriptions on disconnect");
+    logger.info(
+      { clientId, subscriptionCount: count, requestId: getRequestId() },
+      "Client subscriptions cleaned up",
+    );
   }
 
   private mapError(error: unknown): McpError {

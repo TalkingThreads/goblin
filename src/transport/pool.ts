@@ -50,7 +50,10 @@ export class TransportPool {
     if (existingEntry) {
       existingEntry.lastUsed = Date.now();
       if (!existingEntry.transport.isConnected()) {
-        logger.info({ server: serverName }, "Reconnecting existing transport");
+        logger.info(
+          { serverName, transport: existingEntry.config.transport },
+          "Transport reconnection initiated",
+        );
         try {
           await existingEntry.transport.connect();
           mcpActiveConnections.set(1, { server: serverName, transport: serverConfig.transport });
@@ -64,11 +67,11 @@ export class TransportPool {
     // Check if a connection is already in progress
     const pendingConnection = this.pendingConnections.get(serverName);
     if (pendingConnection) {
-      logger.debug({ server: serverName }, "Returning existing pending connection");
+      logger.debug({ serverName }, "Pending connection returned");
       return pendingConnection;
     }
 
-    logger.info({ server: serverName }, "Creating new transport");
+    logger.info({ serverName, transport: serverConfig.transport }, "Transport created");
     const transport = this.createTransport(serverConfig);
 
     // Store the connection promise before initiating
@@ -132,9 +135,12 @@ export class TransportPool {
       // Smart mode: evict if idle
       if (entry.config.mode === "smart") {
         if (now - entry.lastUsed > this.IDLE_TIMEOUT_MS) {
-          logger.info({ server: name }, "Evicting idle transport (smart mode)");
+          logger.info(
+            { serverName: name, transport: entry.config.transport, mode: entry.config.mode },
+            "Idle transport evicted",
+          );
           this.releaseTransport(name).catch((err) =>
-            logger.error({ server: name, error: err }, "Failed to evict transport"),
+            logger.error({ error: err, serverName: name }, "Transport eviction failed"),
           );
         }
       }
