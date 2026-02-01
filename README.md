@@ -48,13 +48,12 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
 - **Tool Registry**: Dynamic synchronization with event-driven updates and compact cards
 - **Transport Layer**: STDIO, HTTP, and SSE transports with connection pooling
 - **Configuration System**: Hot-reloadable config with JSON Schema validation
-- **Production Ready**: Pino structured logging and custom in-memory metrics with JSON endpoint
+- **Production Ready**: Pino structured logging, custom in-memory metrics, and comprehensive CLI
 
 ### 🚧 **In Development**
 - **Sampling Support**: LLM completion requests from backends to clients
 - **Elicitation**: User input requests from backends
 - **Parameter Completion**: Argument completion for tools and resources
-- **TUI/CLI**: Interactive management interface and command-line tools
 - **Self-Configuration**: Admin tools for dynamic server management
 - **Advanced Features**: Skills service, RBAC, OAuth integration
 
@@ -82,11 +81,54 @@ bun run dev
 ### Building for Production
 
 ```bash
-# Build project (TypeScript compilation)
+# Build the project (main app + CLI)
 bun run build
+bun run build:cli
 
-# Run production build
-bun run start
+# Run production build with Node.js
+node dist/index.js
+
+# Or use the CLI directly
+node dist/cli/index.js --help
+```
+
+### CLI Commands
+
+Goblin provides a comprehensive command-line interface for gateway management:
+
+```bash
+# Start the Gateway
+goblin start                    # Start with default settings
+goblin start --tui              # Enable TUI mode
+goblin start --port 3000        # Custom port
+goblin start --config path.json # Custom config path
+
+# Show Gateway status
+goblin status                   # Human-readable output
+goblin status --json            # JSON output
+goblin status --url http://localhost:3000  # Remote gateway
+
+# List available tools
+goblin tools                    # List all tools
+goblin tools --server server1   # Filter by server
+goblin tools --search "file"    # Search tools
+
+# List configured servers
+goblin servers                  # List all servers
+goblin servers --status online  # Filter by status
+
+# Configuration management
+goblin config validate          # Validate config file
+goblin config show              # Display current config
+
+# View logs
+goblin logs                     # Show recent logs
+goblin logs -f                  # Follow log output
+goblin logs --level error       # Filter by level
+
+# Health check
+goblin health                   # Detailed health status
+goblin health --json            # JSON output
 ```
 
 ### Quick Test
@@ -197,7 +239,8 @@ goblin/
 | HTTP Server | Hono | Lightweight web framework |
 | Validation | Zod | Runtime type validation |
 | Logging | Pino | Structured JSON logging |
-| Metrics | prom-client | Prometheus metrics |
+| Metrics | Custom (zero-dep) | In-memory metrics with JSON endpoint |
+| CLI | Commander.js | Command-line interface |
 
 ## Environment Variables
 
