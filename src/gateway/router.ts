@@ -6,6 +6,14 @@ import {
   type ReadResourceResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config, ServerConfig } from "../config/index.js";
+import {
+  ConnectionError,
+  PromptNotFoundError,
+  RequestTimeoutError,
+  ResourceNotFoundError,
+  ServerNotFoundError,
+  ToolNotFoundError,
+} from "../errors/types.js";
 import { createLogger } from "../observability/logger.js";
 import { mcpToolCallsTotal, mcpToolDuration } from "../observability/metrics.js";
 import type { TransportPool } from "../transport/index.js";
@@ -145,13 +153,24 @@ export class Router {
     executeFn: (client: any, originalName: string, signal: AbortSignal) => Promise<T>,
   ): Promise<T> {
     const start = performance.now();
+    const timeoutMs = this.config.policies.defaultTimeout;
 
     try {
       // 1. Resolve target
       const entry = lookupFn();
 
       if (!entry) {
-        throw new Error(`${type} not found: ${id}`);
+        // Use type-specific error classes
+        switch (type) {
+          case "tool":
+            throw new ToolNotFoundError(id);
+          case "prompt":
+            throw new PromptNotFoundError(id);
+          case "resource":
+            throw new ResourceNotFoundError(id);
+          default:
+            throw new Error(`${type} not found: ${id}`);
+        }
       }
 
       const { serverId, def } = entry;
@@ -161,27 +180,28 @@ export class Router {
       // 2. Get transport
       const serverConfig = this.serverMap.get(serverId);
       if (!serverConfig) {
-        throw new Error(`Server configuration not found for: ${serverId}`);
+        throw new ServerNotFoundError(serverId);
       }
 
       const transport = await this.transportPool.getTransport(serverConfig);
 
       if (!transport.isConnected()) {
-        throw new Error(`Transport not connected for server: ${serverId}`);
+        throw new ConnectionError(serverId, "Transport not connected");
       }
 
       // 3. Execute with timeout
       logger.info({ type, id, server: serverId }, `Routing ${type} request`);
 
       const client = transport.getClient();
-      const timeoutMs = this.config.policies.defaultTimeout;
       const abortController = new AbortController();
       const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
+
+      let duration = 0;
 
       try {
         const startTool = performance.now();
         const result = await executeFn(client, originalName, abortController.signal);
-        const duration = (performance.now() - startTool) / 1000;
+        duration = (performance.now() - startTool) / 1000;
 
         mcpToolCallsTotal.inc({ server: serverId, tool: id, status: "success" });
         mcpToolDuration.observe({ server: serverId, tool: id, status: "success" }, duration);
@@ -196,6 +216,11 @@ export class Router {
         clearTimeout(timeoutId);
       }
     } catch (error) {
+      // Handle timeout errors specifically
+      if (error instanceof DOMException && error.name === "AbortError") {
+        throw new RequestTimeoutError(timeoutMs, `${type}: ${id}`);
+      }
+
       mcpToolCallsTotal.inc({ server: id.split("_")[0], tool: id, status: "error" });
       const durationMs = performance.now() - start;
       logger.error({ type, id, error, durationMs }, "Request failed");

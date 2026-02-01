@@ -25,6 +25,9 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
 - **Resource Namespacing**: URI namespacing (`mcp://{serverId}/{encodedUri}`) to prevent resource collisions
 - **Prompt Meta Tools**: Discovery tools (`catalog_prompts`, `describe_prompt`, `search_prompts`) for prompt discovery
 - **Resource Meta Tools**: Discovery tools (`catalog_resources`, `describe_resource`, `search_resources`, `catalog_resource_templates`) for resource discovery
+- **Tool Catalog Search**: Fuzzy search tools by name/description with cached MiniSearch index for O(1) search performance
+- **Error Handling**: Structured error hierarchy with `GoblinError` base class and type-specific error codes
+- **Connection Pooling**: Smart transport pool with pending connection tracking to prevent duplicate connection attempts
 - **TUI Integration**: Interactive TUI with Servers, Tools, Prompts, and Resources panels
 - **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints  
 - **Gateway Server**: Core MCP server implementation with unified tool catalog
@@ -78,7 +81,7 @@ bun run start
 ```bash
 # Run the test suite to verify installation
 bun test
-# Expected: 56 passing tests
+# Expected: 81 passing tests
 ```
 
 ### Building for Production

@@ -138,6 +138,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Consistent styling with Tools and Prompts panels
 
 ### Changed
+- **Connection Pooling**: Added `pendingConnections` Map to track in-flight connection attempts and prevent duplicate connection requests for the same server
+- **Build Optimization**: Updated build script with `--minify` and `--sourcemap=external` flags for production builds (reduces bundle size and separates source maps)
+- **Error Handling**: Implemented structured error class hierarchy with `GoblinError` base class and type-specific subclasses (`ToolNotFoundError`, `ServerNotFoundError`, `ConnectionError`, `RequestTimeoutError`, etc.)
+- **Metadata Search**: Implemented lazy-initialized MiniSearch index in Registry with incremental updates on tool changes (eliminates per-request index rebuild bottleneck)
+- **Test Suite**: Expanded to 81 comprehensive unit and integration tests
 - Updated README.md to accurately represent implemented features
 - Updated CHANGELOG.md with complete v0.1.0 feature summary
 

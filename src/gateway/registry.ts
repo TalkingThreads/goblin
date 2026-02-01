@@ -5,6 +5,7 @@
 import { EventEmitter } from "node:events";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Prompt, Resource, ResourceTemplate, Tool } from "@modelcontextprotocol/sdk/types.js";
+import MiniSearch from "minisearch";
 import { z } from "zod";
 import { createLogger } from "../observability/logger.js";
 import type { MetaToolDefinition } from "../tools/meta/types.js";
@@ -20,6 +21,27 @@ import {
 } from "./types.js";
 
 const logger = createLogger("registry");
+
+/**
+ * Document structure for tool search index
+ */
+interface ToolSearchDocument {
+  id: string;
+  name: string;
+  description: string;
+  serverId: string;
+}
+
+/**
+ * Search result from tool catalog
+ */
+interface ToolSearchResult {
+  id: string;
+  name: string;
+  description: string;
+  serverId: string;
+  score: number;
+}
 
 /**
  * Match a URI against a URI template
@@ -76,7 +98,10 @@ export class Registry extends EventEmitter {
   private serverResources = new Map<string, Set<string>>(); // serverId -> Set<uri>
   private serverTemplates = new Map<string, Set<string>>(); // serverId -> Set<uriTemplate>
 
-  // Caches for flat lists
+  // Search index for tool catalog (lazy initialized)
+  private searchIndex: MiniSearch<ToolSearchDocument> | null = null;
+
+  // Cache for flat lists
   private cachedTools: ToolEntry[] | null = null;
   private cachedPrompts: PromptEntry[] | null = null;
   private cachedResources: ResourceEntry[] | null = null;
@@ -87,6 +112,7 @@ export class Registry extends EventEmitter {
     this.cachedPrompts = null;
     this.cachedResources = null;
     this.cachedResourceTemplates = null;
+    this.searchIndex = null; // Invalidate search index too
   }
 
   /**
@@ -195,6 +221,52 @@ export class Registry extends EventEmitter {
       this.cachedTools = Array.from(this.tools.values());
     }
     return this.cachedTools;
+  }
+
+  /**
+   * Ensure the search index is built (lazy initialization)
+   */
+  private ensureSearchIndex(): MiniSearch<ToolSearchDocument> {
+    if (!this.searchIndex) {
+      this.searchIndex = new MiniSearch<ToolSearchDocument>({
+        fields: ["name", "description"],
+        storeFields: ["id", "name", "description", "serverId"],
+        searchOptions: {
+          fuzzy: 0.2,
+          prefix: true,
+          boost: { name: 2 },
+        },
+      });
+
+      // Index all tools
+      const allTools = this.getAllTools();
+      this.searchIndex.addAll(
+        allTools.map((t) => ({
+          id: t.id,
+          name: t.id,
+          description: t.def.description || "",
+          serverId: t.serverId,
+        })),
+      );
+
+      logger.debug({ toolCount: allTools.length }, "Built search index");
+    }
+    return this.searchIndex;
+  }
+
+  /**
+   * Search tools using keyword/fuzzy matching
+   */
+  searchTools(query: string): ToolSearchResult[] {
+    const index = this.ensureSearchIndex();
+    const results = index.search(query);
+    return results.map((r) => ({
+      id: String(r["id"]),
+      name: String(r["name"]),
+      description: String(r["description"]),
+      serverId: String(r["serverId"]),
+      score: r.score,
+    }));
   }
 
   // --- Prompts ---

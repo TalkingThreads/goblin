@@ -44,6 +44,7 @@ describe("Router", () => {
         }
         return undefined;
       }),
+      getLocalTool: mock(() => undefined),
     } as unknown as Registry;
 
     const router = new Router(mockRegistry, mockPool, config);
@@ -63,9 +64,13 @@ describe("Router", () => {
       auth: {} as any,
       policies: {} as any,
     };
-    const router = new Router({ getTool: () => undefined } as any, {} as any, config);
+    const router = new Router(
+      { getTool: () => undefined, getLocalTool: () => undefined } as any,
+      {} as any,
+      config,
+    );
 
-    expect(router.callTool("unknown", {})).rejects.toThrow("Tool not found");
+    expect(router.callTool("unknown", {})).rejects.toThrow("Tool not found: unknown");
   });
 
   test("should throw if server config not found", async () => {
@@ -77,10 +82,11 @@ describe("Router", () => {
     };
     const registry = {
       getTool: () => ({ serverId: "missing", def: { name: "tool" } }),
+      getLocalTool: () => undefined,
     } as any;
 
     const router = new Router(registry, {} as any, config);
 
-    expect(router.callTool("t1", {})).rejects.toThrow("Server configuration not found");
+    expect(router.callTool("t1", {})).rejects.toThrow("Server not found: missing");
   });
 });

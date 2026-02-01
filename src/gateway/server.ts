@@ -15,11 +15,15 @@ import {
   ListToolsRequestSchema,
   McpError,
   ReadResourceRequestSchema,
+  SubscribeRequestSchema,
+  UnsubscribeRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../config/index.js";
+import { isGoblinError } from "../errors/types.js";
 import { createLogger } from "../observability/logger.js";
 import type { Registry } from "./registry.js";
 import type { Router } from "./router.js";
+import { SubscriptionManager } from "./subscription-manager.js";
 
 const logger = createLogger("gateway-server");
 
@@ -29,6 +33,7 @@ export class GatewayServer {
   private cachedPromptList: Prompt[] | null = null;
   private cachedResourceList: Resource[] | null = null;
   private cachedResourceTemplateList: ResourceTemplate[] | null = null;
+  private subscriptionManager: SubscriptionManager;
 
   constructor(
     private registry: Registry,
@@ -36,6 +41,8 @@ export class GatewayServer {
     config: Config,
   ) {
     void config; // Suppress unused warning
+
+    this.subscriptionManager = new SubscriptionManager();
 
     this.server = new Server(
       {
@@ -52,7 +59,7 @@ export class GatewayServer {
           },
           resources: {
             listChanged: true,
-            subscribe: false, // TODO: Support subscription proxying
+            subscribe: true,
           },
         },
       },
@@ -60,6 +67,7 @@ export class GatewayServer {
 
     this.setupHandlers();
     this.setupEvents();
+    this.setupBackendNotificationHandlers();
   }
 
   /**
@@ -155,6 +163,48 @@ export class GatewayServer {
         throw this.mapError(error);
       }
     });
+
+    // --- Resource Subscriptions ---
+    this.server.setRequestHandler(SubscribeRequestSchema, async (request) => {
+      const { uri } = request.params;
+      logger.info({ uri }, "Handling resources/subscribe request");
+
+      // Validate that the resource exists
+      const resource = this.registry.getResource(uri);
+      if (!resource) {
+        throw new McpError(ErrorCode.InvalidRequest, `Resource not found: ${uri}`);
+      }
+
+      // Subscribe (clientId will be set by the transport layer)
+      // For now, we use a placeholder - actual clientId comes from connection context
+      const clientId = this.getCurrentClientId();
+      this.subscriptionManager.subscribe(clientId, uri, resource.serverId);
+
+      return {};
+    });
+
+    this.server.setRequestHandler(UnsubscribeRequestSchema, async (request) => {
+      const { uri } = request.params;
+      logger.info({ uri }, "Handling resources/unsubscribe request");
+
+      const clientId = this.getCurrentClientId();
+      const unsubscribed = this.subscriptionManager.unsubscribe(clientId, uri);
+
+      if (!unsubscribed) {
+        throw new McpError(ErrorCode.InvalidRequest, `Not subscribed to resource: ${uri}`);
+      }
+
+      return {};
+    });
+  }
+
+  /**
+   * Get the current client ID from the connection context.
+   * This is a placeholder - actual implementation depends on the transport layer.
+   */
+  private getCurrentClientId(): string {
+    // TODO: Implement proper client ID extraction from connection context
+    return "default-client";
   }
 
   private setupEvents(): void {
@@ -174,9 +224,69 @@ export class GatewayServer {
       this.cachedResourceTemplateList = null;
       this.server.notification({ method: "notifications/resources/list_changed" });
     });
+
+    // Handle resource updated notifications from backends
+    this.registry.on("resource-updated", (serverId: string, uri: string) => {
+      void this.handleResourceUpdated(serverId, uri);
+    });
+  }
+
+  /**
+   * Set up handlers for notifications from backend servers.
+   * This should be called when a backend server connects.
+   */
+  private setupBackendNotificationHandlers(): void {
+    // This method is called per-backend connection in the registry
+    // The actual handler is set up in registry.ts when subscribing to backend notifications
+  }
+
+  /**
+   * Handle resource updated notification from a backend server.
+   * Routes the notification to all subscribed clients.
+   */
+  public async handleResourceUpdated(serverId: string, uri: string): Promise<void> {
+    const subscribers = this.subscriptionManager.getSubscribers(uri);
+
+    if (subscribers.length === 0) {
+      logger.debug({ uri, serverId }, "No subscribers for resource update");
+      return;
+    }
+
+    logger.info(
+      { uri, serverId, subscriberCount: subscribers.length },
+      "Forwarding resource update to subscribers",
+    );
+
+    // Forward notification to all subscribed clients
+    for (const clientId of subscribers) {
+      try {
+        await this.server.notification({
+          method: "notifications/resources/updated",
+          params: { uri },
+        });
+      } catch (error) {
+        logger.warn({ clientId, uri, error }, "Failed to send resource update to client");
+      }
+    }
+  }
+
+  /**
+   * Clean up subscriptions when a client disconnects.
+   */
+  public cleanupClient(clientId: string): void {
+    const count = this.subscriptionManager.cleanupClient(clientId);
+    logger.info({ clientId, count }, "Cleaned up client subscriptions on disconnect");
   }
 
   private mapError(error: unknown): McpError {
+    // Handle GoblinError subclasses with type-safe error codes
+    if (isGoblinError(error)) {
+      // Use the statusCode from GoblinError which maps to MCP ErrorCode
+      const mcpCode = this.mapToMcpErrorCode(error.statusCode);
+      return new McpError(mcpCode, error.message, error.context);
+    }
+
+    // Fallback for standard Error objects
     if (error instanceof Error) {
       if (error.message.includes("not found")) {
         return new McpError(ErrorCode.MethodNotFound, error.message);
@@ -188,5 +298,27 @@ export class GatewayServer {
       return new McpError(ErrorCode.InternalError, error.message);
     }
     return new McpError(ErrorCode.InternalError, "Unknown error occurred");
+  }
+
+  /**
+   * Map HTTP-style status codes to MCP ErrorCodes
+   */
+  private mapToMcpErrorCode(statusCode: number): ErrorCode {
+    switch (statusCode) {
+      case 400:
+        return ErrorCode.InvalidRequest;
+      case 401:
+        return ErrorCode.InvalidRequest;
+      case 403:
+        return ErrorCode.InvalidRequest;
+      case 404:
+        return ErrorCode.MethodNotFound;
+      case 408:
+        return ErrorCode.RequestTimeout;
+      case 503:
+        return ErrorCode.RequestTimeout;
+      default:
+        return ErrorCode.InternalError;
+    }
   }
 }

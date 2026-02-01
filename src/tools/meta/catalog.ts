@@ -1,4 +1,3 @@
-import MiniSearch from "minisearch";
 import { z } from "zod";
 import { defineMetaTool } from "./types.js";
 
@@ -10,7 +9,7 @@ function getSmartSummary(text?: string): string {
   // Take first sentence or first 120 chars
   const firstSentence = text.split(/[.!?]/, 1)[0] || "";
   if (firstSentence.length < 120) return firstSentence;
-  return text.slice(0, 117) + "...";
+  return `${text.slice(0, 117)}...`;
 }
 
 /**
@@ -51,47 +50,17 @@ export const catalogSearch = defineMetaTool({
     query: z.string().describe("Search query (natural language or keywords)"),
   }),
   execute: async ({ query }, { registry }) => {
-    const allTools = registry.getAllTools();
-
-    // Build Index
-    const minisearch = new MiniSearch({
-      fields: ["name", "description"], // fields to index
-      storeFields: ["id", "def", "serverId"], // fields to return
-      searchOptions: {
-        fuzzy: 0.2,
-        prefix: true,
-        boost: { name: 2 },
-      },
-    });
-
-    // Add documents
-    minisearch.addAll(
-      allTools.map((t) => ({
-        id: t.id,
-        name: t.id,
-        description: t.def.description || "",
-        def: t.def,
-        serverId: t.serverId,
-      })),
-    );
-
-    // Search
-    const results = minisearch.search(query);
+    // Use the Registry's cached search index
+    const results = registry.searchTools(query);
 
     // Map to Compact Card
-    const tools = results.map((r) => {
-      // minisearch stores original docs in r (if storeFields set? No, it flattens)
-      // Actually, we stored 'def' in storeFields, so it should be available.
-      const def = r["def"] as any; // Cast needed as minisearch typings are loose on storeFields
-
-      return {
-        name: r["name"],
-        summary: getSmartSummary(def.description),
-        args: Object.keys(def.inputSchema.properties || {}),
-        serverId: r["serverId"],
-        score: r.score,
-      };
-    });
+    const tools = results.map((r) => ({
+      name: r.name,
+      summary: getSmartSummary(r.description),
+      args: [], // Search results don't include full schema - would need additional lookup
+      serverId: r.serverId,
+      score: r.score,
+    }));
 
     return { tools };
   },
