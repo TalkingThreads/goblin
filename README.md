@@ -41,7 +41,14 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
   - Real-time TUI metrics panel (press 'm' to toggle)
   - Request counters, latency histograms, connection gauges
   - Health meta tool with status, summary, and optional full metrics
-- **TUI Integration**: Interactive TUI with Servers, Tools, Prompts, and Resources panels
+- **TUI Integration**: Interactive terminal UI with real-time gateway monitoring
+  - **Servers Panel**: Real-time server status, transport type, and tool counts from `transportPool.getHealth()`
+  - **Prompts Panel**: Live prompts from `registry.getAllPrompts()` with server filtering and keyboard navigation
+  - **Resources Panel**: Real resources from `registry.getAllResources()` with server and MIME type filtering
+  - **Metrics Panel**: Real-time metrics visualization (press 'm' to toggle)
+  - **Activity Logs**: Real gateway activity logs with level indicators (info, warn, error, debug)
+  - All panels update automatically on registry change events
+  - Launch with `goblin start --tui` command
 - **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints  
 - **Gateway Server**: Core MCP server implementation with unified tool catalog
 - **Intelligent Router**: Request routing with namespacing (`server_tool`) and timeout enforcement

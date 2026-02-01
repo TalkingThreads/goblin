@@ -153,6 +153,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Keyboard navigation for resource selection
   - URI display for selected resources
   - Consistent styling with Tools and Prompts panels
+- **TUI Real Gateway Integration**: Refactored TUI to use real gateway state instead of mock data
+  - Removed MOCK_SERVERS, MOCK_LOGS, MOCK_PROMPTS, MOCK_RESOURCES from all panels
+  - Created `useGatewayData` hook for reactive gateway state management
+  - ServersPane now displays real data from `transportPool.getHealth()`
+  - PromptsPanel displays real prompts from `registry.getAllPrompts()`
+  - ResourcesPanel displays real resources from `registry.getAllResources()`
+  - LogsPane shows real gateway activity logs with level indicators
+  - Gateway instance passed to TUI via `start --tui` command
+  - Automatic data refresh on registry change events
+  - Added `react-devtools-core` dependency for ink TUI runtime
+  - Renamed `start.ts` to `start.tsx` for JSX support
 
 ### Changed
 - **Build Configuration**: Updated build targets for Node.js compatibility
