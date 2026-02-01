@@ -59,7 +59,7 @@ export class Router {
         const duration = (performance.now() - start) / 1000;
 
         mcpToolCallsTotal.inc({ server: "goblin", tool: name, status: "success" });
-        mcpToolDuration.observe({ server: "goblin", tool: name, status: "success" }, duration);
+        mcpToolDuration.observe(duration, { server: "goblin", tool: name, status: "success" });
 
         return {
           content: [
@@ -204,7 +204,7 @@ export class Router {
         duration = (performance.now() - startTool) / 1000;
 
         mcpToolCallsTotal.inc({ server: serverId, tool: id, status: "success" });
-        mcpToolDuration.observe({ server: serverId, tool: id, status: "success" }, duration);
+        mcpToolDuration.observe(duration, { server: serverId, tool: id, status: "success" });
 
         logger.info(
           { type, id, server: serverId, durationMs: performance.now() - start },
@@ -221,7 +221,7 @@ export class Router {
         throw new RequestTimeoutError(timeoutMs, `${type}: ${id}`);
       }
 
-      mcpToolCallsTotal.inc({ server: id.split("_")[0], tool: id, status: "error" });
+      mcpToolCallsTotal.inc({ server: id.split("_")[0] || "unknown", tool: id, status: "error" });
       const durationMs = performance.now() - start;
       logger.error({ type, id, error, durationMs }, "Request failed");
       throw error;

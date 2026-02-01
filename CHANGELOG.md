@@ -41,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Environment variable override support
 - **Production Observability**: Complete monitoring and logging stack
   - Structured JSON logging with Pino
-  - Prometheus metrics for HTTP requests and transport pool
+  - Custom in-memory metrics registry (zero-dependency, developer-first)
+  - JSON `/metrics` endpoint for local development debugging
   - Component-based loggers with proper context
   - Request tracing and performance monitoring
 - **MCP Compliance**: Full protocol compliance with proper error handling
@@ -142,6 +143,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build Optimization**: Updated build script with `--minify` and `--sourcemap=external` flags for production builds (reduces bundle size and separates source maps)
 - **Error Handling**: Implemented structured error class hierarchy with `GoblinError` base class and type-specific subclasses (`ToolNotFoundError`, `ServerNotFoundError`, `ConnectionError`, `RequestTimeoutError`, etc.)
 - **Metadata Search**: Implemented lazy-initialized MiniSearch index in Registry with incremental updates on tool changes (eliminates per-request index rebuild bottleneck)
+- **Metrics Refactor**: Replaced `prom-client` with custom in-memory metrics registry for developer-first observability
+  - Zero external dependencies for metrics
+  - JSON `/metrics` endpoint for local development
+  - Reduced bundle size by removing prom-client
+  - Custom Counter, Gauge, Histogram implementations with label support
 - **Test Suite**: Expanded to 81 comprehensive unit and integration tests
 - Updated README.md to accurately represent implemented features
 - Updated CHANGELOG.md with complete v0.1.0 feature summary

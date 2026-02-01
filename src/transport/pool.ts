@@ -53,7 +53,7 @@ export class TransportPool {
         logger.info({ server: serverName }, "Reconnecting existing transport");
         try {
           await existingEntry.transport.connect();
-          mcpActiveConnections.set({ server: serverName, transport: serverConfig.transport }, 1);
+          mcpActiveConnections.set(1, { server: serverName, transport: serverConfig.transport });
         } catch (error) {
           throw error;
         }
@@ -75,7 +75,7 @@ export class TransportPool {
     const connectionPromise = (async () => {
       try {
         await transport.connect();
-        mcpActiveConnections.set({ server: serverName, transport: serverConfig.transport }, 1);
+        mcpActiveConnections.set(1, { server: serverName, transport: serverConfig.transport });
 
         this.transports.set(serverName, {
           transport,
@@ -103,7 +103,7 @@ export class TransportPool {
     const entry = this.transports.get(serverName);
     if (entry) {
       await entry.transport.disconnect();
-      mcpActiveConnections.set({ server: serverName, transport: entry.config.transport }, 0);
+      mcpActiveConnections.set(0, { server: serverName, transport: entry.config.transport });
       this.transports.delete(serverName);
     }
   }
@@ -119,7 +119,7 @@ export class TransportPool {
 
     const promises = Array.from(this.transports.values()).map(async (entry) => {
       await entry.transport.disconnect();
-      mcpActiveConnections.set({ server: entry.config.name, transport: entry.config.transport }, 0);
+      mcpActiveConnections.set(0, { server: entry.config.name, transport: entry.config.transport });
     });
 
     await Promise.all(promises);

@@ -35,7 +35,7 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
 - **Tool Registry**: Dynamic synchronization with event-driven updates and compact cards
 - **Transport Layer**: STDIO, HTTP, and SSE transports with connection pooling
 - **Configuration System**: Hot-reloadable config with JSON Schema validation
-- **Production Ready**: Pino structured logging and Prometheus metrics
+- **Production Ready**: Pino structured logging and custom in-memory metrics with JSON endpoint
 
 ### 🚧 **In Development**
 - **Sampling Support**: LLM completion requests from backends to clients

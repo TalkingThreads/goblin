@@ -9,7 +9,11 @@ import { logger as honoLogger } from "hono/logger";
 import { streamSSE } from "hono/streaming";
 import type { Config } from "../config/index.js";
 import { createLogger } from "../observability/logger.js";
-import { httpRequestDuration, httpRequestsTotal, register } from "../observability/metrics.js";
+import {
+  httpRequestDuration,
+  httpRequestsTotal,
+  metricsRegistry,
+} from "../observability/metrics.js";
 import { createHonoSseTransport } from "../transport/hono-adapter.js";
 import type { Registry } from "./registry.js";
 import type { Router } from "./router.js";
@@ -48,7 +52,7 @@ export class HttpGateway {
         const status = c.res.status.toString();
 
         httpRequestsTotal.inc({ method, route, status });
-        httpRequestDuration.observe({ method, route, status }, duration);
+        httpRequestDuration.observe(duration, { method, route, status });
       }
     });
   }
@@ -59,7 +63,7 @@ export class HttpGateway {
 
     // Metrics endpoint
     this.app.get("/metrics", async (c) => {
-      return c.text(await register.metrics());
+      return c.json(metricsRegistry.toJSON());
     });
 
     // SSE Endpoint
