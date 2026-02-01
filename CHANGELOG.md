@@ -107,7 +107,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Documentation updates reflecting v0.1.0 release state
+- **Resource Subscriptions**: Full MCP resource subscription support
+  - `SubscriptionManager` class for tracking client subscriptions
+  - `resources/subscribe` request handler for subscribing to resource changes
+  - `resources/unsubscribe` request handler for removing subscriptions
+  - `notifications/resources/updated` handler for forwarding updates to subscribed clients
+  - Subscription limits per client (default: 100 subscriptions)
+  - Automatic subscription cleanup on client disconnect
+  - 30 comprehensive unit tests for SubscriptionManager
+- **Prompt Meta Tools**: Discovery and management tools for MCP prompts
+  - `catalog_prompts`: List all prompts with compact cards (name, description, arguments)
+  - `describe_prompt`: Get detailed information about a specific prompt
+  - `search_prompts`: Fuzzy search prompts by name or description
+  - All tools support server filtering and return namespaced prompt IDs
 
 ### Changed
 - Updated README.md to accurately represent implemented features

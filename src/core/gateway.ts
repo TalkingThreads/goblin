@@ -3,8 +3,10 @@ import { HttpGateway, Registry, Router } from "../gateway/index.js";
 import { createLogger } from "../observability/logger.js";
 import { catalogList, catalogSearch } from "../tools/meta/catalog.js";
 import { health } from "../tools/meta/health.js";
+import { catalogPrompts, describePrompt, searchPrompts } from "../tools/meta/prompts.js";
 import { describeServer, searchServers } from "../tools/meta/server.js";
 import { describeTool, invokeTool } from "../tools/meta/tool.js";
+import { createVirtualToolDefinition } from "../tools/virtual/registry-adapter.js";
 import { TransportPool } from "../transport/index.js";
 
 const logger = createLogger("core");
@@ -42,6 +44,17 @@ export class GoblinGateway {
 
     // Register Meta Tools
     this.registerMetaTools();
+
+    // Register Virtual Tools
+    if (config.virtualTools) {
+      logger.info({ count: config.virtualTools.length }, "Registering virtual tools");
+      for (const vt of config.virtualTools) {
+        // For MVP, we use a generic input schema as inference is complex
+        // Ideally, we'd infer it from the first operation's input requirements
+        const def = createVirtualToolDefinition(vt.id, vt.description);
+        this.registry.registerLocalTool(def);
+      }
+    }
 
     // Start HTTP
     this.httpGateway = new HttpGateway(this.registry, this.router, config);
@@ -93,5 +106,8 @@ export class GoblinGateway {
     this.registry.registerLocalTool(searchServers);
     this.registry.registerLocalTool(describeTool);
     this.registry.registerLocalTool(invokeTool);
+    this.registry.registerLocalTool(catalogPrompts);
+    this.registry.registerLocalTool(describePrompt);
+    this.registry.registerLocalTool(searchPrompts);
   }
 }

@@ -11,22 +11,33 @@
 Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-ready solution for aggregating multiple MCP servers behind a single unified endpoint:
 
 - 🔌 **Complete MCP aggregation** of Tools, Prompts, and Resources from multiple backends
-- 🎛️ **Intelligent routing** with namespacing and timeout enforcement
+- 🎛️ **Intelligent routing** with namespacing and timeout enforcement  
 - 🚀 **Multiple transport support** including STDIO, HTTP, and Server-Sent Events
 - 🔧 **Hot-reload configuration** with JSON Schema validation
 - 📊 **Production observability** with structured logging and Prometheus metrics
 
 ## Features
 
+### ✅ **Implemented**
 - **Complete MCP Gateway**: Fully functional gateway aggregating multiple MCP servers
-- **Extended Capabilities**: Full support for Tools, Prompts, and Resources aggregation
-- **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints
+- **Extended Capabilities**: Tools, Prompts, and Resources aggregation
+- **Resource Subscriptions**: Full subscription support with `resources/subscribe`, `resources/unsubscribe`, and `notifications/resources/updated`
+- **Prompt Meta Tools**: Discovery tools (`catalog_prompts`, `describe_prompt`, `search_prompts`) for prompt discovery and management
+- **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints  
 - **Gateway Server**: Core MCP server implementation with unified tool catalog
 - **Intelligent Router**: Request routing with namespacing (`server_tool`) and timeout enforcement
 - **Tool Registry**: Dynamic synchronization with event-driven updates and compact cards
 - **Transport Layer**: STDIO, HTTP, and SSE transports with connection pooling
 - **Configuration System**: Hot-reloadable config with JSON Schema validation
-- **Production Ready**: Pino logging, Prometheus metrics, full observability stack
+- **Production Ready**: Pino structured logging and Prometheus metrics
+
+### 🚧 **In Development**
+- **Sampling Support**: LLM completion requests from backends to clients
+- **Elicitation**: User input requests from backends
+- **Parameter Completion**: Argument completion for tools and resources
+- **TUI/CLI**: Interactive management interface and command-line tools
+- **Self-Configuration**: Admin tools for dynamic server management
+- **Advanced Features**: Skills service, RBAC, OAuth integration
 
 ## Quick Start
 
@@ -64,7 +75,7 @@ bun run start
 ```bash
 # Run the test suite to verify installation
 bun test
-# Expected: 26 passing tests
+# Expected: 56 passing tests
 ```
 
 ### Building for Production
@@ -174,6 +185,8 @@ goblin/
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `LOG_LEVEL` | Logging level (trace, debug, info, warn, error, fatal) | `info` |
+| `GOBLIN_CONFIG_PATH` | Custom path to configuration file | OS-specific default |
+| `NODE_ENV` | Environment (development/production) | `development` |
 
 ## Contributing
 
