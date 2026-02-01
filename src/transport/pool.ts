@@ -19,6 +19,7 @@ interface TransportEntry {
 
 export class TransportPool {
   private transports = new Map<string, TransportEntry>();
+  private pendingConnections = new Map<string, Promise<Transport>>();
   private evictionInterval: Timer | null = null;
   private readonly IDLE_TIMEOUT_MS = 60 * 1000; // 1 minute default for Smart mode
 
@@ -42,48 +43,57 @@ export class TransportPool {
    * Get an existing transport or create a new one
    */
   async getTransport(serverConfig: ServerConfig): Promise<Transport> {
-    const entry = this.transports.get(serverConfig.name);
+    const serverName = serverConfig.name;
 
-    if (entry) {
-      entry.lastUsed = Date.now();
-      if (!entry.transport.isConnected()) {
-        logger.info({ server: serverConfig.name }, "Reconnecting existing transport");
+    // Check if transport already exists in cache
+    const existingEntry = this.transports.get(serverName);
+    if (existingEntry) {
+      existingEntry.lastUsed = Date.now();
+      if (!existingEntry.transport.isConnected()) {
+        logger.info({ server: serverName }, "Reconnecting existing transport");
         try {
-          await entry.transport.connect();
-          mcpActiveConnections.set(
-            { server: serverConfig.name, transport: serverConfig.transport },
-            1,
-          );
+          await existingEntry.transport.connect();
+          mcpActiveConnections.set({ server: serverName, transport: serverConfig.transport }, 1);
         } catch (error) {
           throw error;
         }
       }
-      return entry.transport;
+      return existingEntry.transport;
     }
 
-    logger.info({ server: serverConfig.name }, "Creating new transport");
+    // Check if a connection is already in progress
+    const pendingConnection = this.pendingConnections.get(serverName);
+    if (pendingConnection) {
+      logger.debug({ server: serverName }, "Returning existing pending connection");
+      return pendingConnection;
+    }
+
+    logger.info({ server: serverName }, "Creating new transport");
     const transport = this.createTransport(serverConfig);
 
-    // Store entry before connecting to handle race conditions if needed,
-    // but better to connect first to ensure validity.
-    // However, for pooling, we want to reserve the slot?
-    // Let's connect first.
+    // Store the connection promise before initiating
+    const connectionPromise = (async () => {
+      try {
+        await transport.connect();
+        mcpActiveConnections.set({ server: serverName, transport: serverConfig.transport }, 1);
 
-    try {
-      await transport.connect();
-      mcpActiveConnections.set({ server: serverConfig.name, transport: serverConfig.transport }, 1);
+        this.transports.set(serverName, {
+          transport,
+          config: serverConfig,
+          lastUsed: Date.now(),
+        });
 
-      this.transports.set(serverConfig.name, {
-        transport,
-        config: serverConfig,
-        lastUsed: Date.now(),
-      });
+        return transport;
+      } finally {
+        // Always remove from pending connections, regardless of success/failure
+        this.pendingConnections.delete(serverName);
+      }
+    })();
 
-      return transport;
-    } catch (error) {
-      // Ensure we don't leave a half-state? (We didn't set it yet)
-      throw error;
-    }
+    // Store the promise in pendingConnections before awaiting
+    this.pendingConnections.set(serverName, connectionPromise);
+
+    return connectionPromise;
   }
 
   /**

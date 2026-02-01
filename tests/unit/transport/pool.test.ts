@@ -48,6 +48,7 @@ describe("TransportPool", () => {
       transport: "stdio" as const,
       command: "echo",
       enabled: true,
+      mode: "stateful" as const,
     };
 
     const transport = await pool.getTransport(config);
@@ -63,6 +64,7 @@ describe("TransportPool", () => {
       transport: "stdio" as const,
       command: "echo",
       enabled: true,
+      mode: "stateful" as const,
     };
 
     const t1 = await pool.getTransport(config);
@@ -79,6 +81,7 @@ describe("TransportPool", () => {
       transport: "stdio" as const,
       command: "echo",
       enabled: true,
+      mode: "stateful" as const,
     };
 
     const t1 = await pool.getTransport(config);
@@ -98,6 +101,7 @@ describe("TransportPool", () => {
       transport: "stdio" as const,
       command: "echo",
       enabled: true,
+      mode: "stateful" as const,
     };
 
     const t1 = await pool.getTransport(config);
@@ -108,5 +112,81 @@ describe("TransportPool", () => {
     // Should create new one
     const t2 = await pool.getTransport(config);
     expect(t2).not.toBe(t1);
+  });
+
+  test("should handle concurrent requests with single connection", async () => {
+    const pool = new TransportPool();
+    const config = {
+      name: "server1",
+      transport: "stdio" as const,
+      command: "echo",
+      enabled: true,
+      mode: "stateful" as const,
+    };
+
+    // Make multiple concurrent requests for the same server
+    const promises = [
+      pool.getTransport(config),
+      pool.getTransport(config),
+      pool.getTransport(config),
+      pool.getTransport(config),
+    ];
+
+    const transports = await Promise.all(promises);
+
+    // All requests should return the same transport instance
+    for (let i = 1; i < transports.length; i++) {
+      expect(transports[i]).toBe(transports[0]);
+    }
+
+    // Should only connect once
+    expect((transports[0] as any).connectCount).toBe(1);
+  });
+
+  test("should handle rapid sequential requests correctly", async () => {
+    const pool = new TransportPool();
+    const config = {
+      name: "server1",
+      transport: "stdio" as const,
+      command: "echo",
+      enabled: true,
+      mode: "stateful" as const,
+    };
+
+    // First request
+    const t1 = await pool.getTransport(config);
+    expect(t1.isConnected()).toBe(true);
+
+    // Immediate follow-up request should reuse the connection
+    const t2 = await pool.getTransport(config);
+    expect(t2).toBe(t1);
+    expect((t1 as any).connectCount).toBe(1);
+  });
+
+  test("should not create duplicate connections under rapid load", async () => {
+    const pool = new TransportPool();
+    const config = {
+      name: "server1",
+      transport: "stdio" as const,
+      command: "echo",
+      enabled: true,
+      mode: "stateful" as const,
+    };
+
+    // Fire many rapid requests in quick succession
+    const requests: Promise<Transport>[] = [];
+    for (let i = 0; i < 10; i++) {
+      requests.push(pool.getTransport(config));
+    }
+
+    const transports = await Promise.all(requests);
+
+    // Verify all requests got the same transport
+    for (let i = 1; i < transports.length; i++) {
+      expect(transports[i]).toBe(transports[0]);
+    }
+
+    // Verify only one connection was made
+    expect((transports[0] as any).connectCount).toBe(1);
   });
 });
