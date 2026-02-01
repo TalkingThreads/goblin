@@ -307,24 +307,42 @@ interface ToolCompactCard {
 
 ---
 
-### MVP-6: Observability & Optimization
+### MVP-6: Observability & Developer Experience
 
 **Dependencies:** MVP-3
 
-#### MVP-6.1: Health & Metrics
-- [ ] `GET /health` - Gateway health + per-server status
-- [ ] Prometheus metrics (requests, latency, pool, circuit breaker)
-- [ ] Structured logging (pino, correlation IDs, redaction)
-
-#### MVP-6.2: Lazy Loading Policies
-- [ ] Implement `Stateless` mode (connect per call)
-- [ ] Implement `Stateful` mode (keep connected)
-- [ ] Implement `Smart` mode (idle eviction)
-- [ ] Configurable idle timeouts
+#### MVP-6.1: Health & JSON Metrics (Developer-First)
+- [X] `GET /health` - Gateway health + per-server status
+- [X] Structured logging (pino, correlation IDs, redaction)
+- [X] Implement in-memory metrics registry (counters, gauges, histograms)
+- [X] `GET /metrics` - JSON format metrics endpoint for local development
+- [X] TUI metrics panel - Display key metrics in terminal (requests, latency, active connections)
+- [X] `health` meta tool - Returns structured status for agents with optional full metrics
 
 **Acceptance:**
 - `/health` returns correct status
-- Metrics exposed in Prometheus format
+- `/metrics` returns JSON metrics for debugging and TUI consumption
+- TUI displays live metrics without external dependencies
+- Metrics include: request counts, latency buckets, active connections, error rates
+
+#### MVP-6.2: TUI Metrics Display
+- [X] Metrics panel component in TUI
+- [X] Real-time request counter
+- [X] Latency distribution display
+- [X] Active connections per server
+- [X] Error rate indicator
+- [X] Auto-refresh with configurable interval
+
+#### MVP-6.3: Lazy Loading Policies
+- [X] Implement `Stateless` mode (connect per call)
+- [X] Implement `Stateful` mode (keep connected)
+- [X] Implement `Smart` mode (idle eviction)
+- [X] Configurable idle timeouts
+
+**Acceptance:**
+- `/health` returns correct status
+- JSON metrics available without Prometheus
+- TUI shows live metrics at a glance
 - Servers unload after idle timeout (if Smart/Stateless)
 
 ---
@@ -334,13 +352,13 @@ interface ToolCompactCard {
 **Dependencies:** MVP-6
 
 #### MVP-7.1: CLI Foundation
-- [ ] CLI entry point (`goblin start`, `status`, `tools`)
-- [ ] JSON output flag
+- [X] CLI entry point (`goblin start`, `status`, `tools`)
+- [X] JSON output flag
 
 #### MVP-7.2: TUI Basic Views
-- [ ] Main layout (servers, tools, logs)
-- [ ] Live status updates
-- [ ] Log viewer
+- [X] Main layout (servers, tools, logs)
+- [X] Live status updates
+- [X] Log viewer
 
 ---
 
@@ -349,10 +367,10 @@ interface ToolCompactCard {
 **Dependencies:** MVP-5
 
 #### MVP-8.1: Sequential Execution
-- [ ] Parse virtual tool definitions
-- [ ] Execute sub-ops sequentially
-- [ ] Result aggregation
-- [ ] Timeout/Error handling
+- [X] Parse virtual tool definitions
+- [X] Execute sub-ops sequentially
+- [X] Result aggregation
+- [X] Timeout/Error handling
 
 ---
 
@@ -489,6 +507,42 @@ interface ToolCompactCard {
 
 ---
 
+## v2 Milestone
+
+**Goal:** Production hardening and advanced observability with opt-in features.
+
+### v2-0: Opt-in Prometheus Metrics Export
+
+**Dependencies:** MVP complete
+
+**Rationale:** Prometheus integration is valuable for production deployments with existing monitoring infrastructure, but creates unnecessary dependency overhead for the developer-first MVP experience. This provides Prometheus compatibility as an opt-in feature.
+
+#### v2-0.1: Prometheus Format Export
+- [ ] Implement Prometheus-compatible `/metrics` endpoint (opt-in via config)
+- [ ] Support both JSON and Prometheus formats simultaneously
+- [ ] Configurable metrics prefix (`goblin_` default)
+- [ ] Histogram buckets configurable for latency percentiles
+
+#### v2-0.2: Prometheus Client Integration
+- [ ] Optional `prom-client` dependency (lazy-loaded when enabled)
+- [ ] Support for all standard Prometheus metric types (Counter, Gauge, Histogram, Summary)
+- [ ] Automatic default metrics (GC, memory, event loop)
+- [ ] Multi-process support via `prom-client-aggregate`
+
+#### v2-0.3: Production Metrics Enhancements
+- [ ] Per-server rate limiting metrics
+- [ ] Circuit breaker state metrics (open/half-open/closed)
+- [ ] Connection pool utilization metrics
+- [ ] Resource usage metrics (memory, CPU via Bun runtime)
+
+**Acceptance:**
+- `/metrics?format=prometheus` returns Prometheus-compatible output
+- Metrics available in both JSON and Prometheus formats
+- prom-client loaded lazily (no impact when disabled)
+- Production monitoring via Prometheus/Grafana fully supported
+
+---
+
 ## Dependency Graph
 
 ```
@@ -509,8 +563,11 @@ MVP-3 (Gateway Server)
         │
         ├───────────────────┐
         v                   v
-MVP-4 (Extended)      MVP-6 (Observability)
+MVP-4 (Extended)      MVP-6 (Observability & TUI)
   │                     │
+  │                     ├── MVP-6.1 Health & JSON Metrics
+  │                     ├── MVP-6.2 TUI Metrics Display
+  │                     └── MVP-6.3 Lazy Loading
   └─────────┬───────────┘
             v
 MVP-5 (Meta Tools)
@@ -540,7 +597,96 @@ MVP-8 (Virtual Tools)
         │
         v
    v1-7 (Enhanced TUI)
+                  │
+    ══════════════╪═══════════════
+    v1 COMPLETE   │
+                  v
+        v2-0 (Prometheus Metrics - Opt-in)
 ```
+
+---
+
+## Developer-First Metrics Philosophy
+
+### MVP: JSON Metrics + TUI Display
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DEVELOPER EXPERIENCE                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   CLI / TUI                                                     │
+│   ═══════════════════════════════════════════════════════      │
+│                                                                 │
+│   Goblin Status                                                │
+│   ──────────────────────────────────────────────────────       │
+│   ✓ Gateway: Running on port 3000                             │
+│   ✓ Servers: 3 connected (2 stdio, 1 http)                    │
+│   ✓ Tools: 47 available                                        │
+│                                                                 │
+│   Live Metrics                                                 │
+│   ──────────────────────────────────────────────────────       │
+│   Requests:    1,234 total                                     │
+│   Latency:     p50: 12ms │ p95: 45ms │ p99: 128ms            │
+│   Errors:      2 (0.16%)                                       │
+│   Connections: 8 active                                        │
+│                                                                 │
+│   `/metrics` (JSON)                                            │
+│   ═══════════════════════════════════════════════════════      │
+│   {                                                            │
+│     "requests": { "total": 1234, "errors": 2 },               │
+│     "latency": { "p50": 0.012, "p95": 0.045, "p99": 0.128 },  │
+│     "connections": { "active": 8 }                            │
+│   }                                                            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### v2: Optional Prometheus Export
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 PRODUCTION EXPERIENCE (OPT-IN)                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   Configuration:                                                │
+│   ═══════════════════════════════════════════════════════      │
+│   {                                                            │
+│     "observability": {                                          │
+│       "metrics": {                                              │
+│         "format": "both",  // "json" | "prometheus" | "both"  │
+│         "enabled": true                                        │
+│       }                                                        │
+│     }                                                          │
+│   }                                                            │
+│                                                                 │
+│   `/metrics` (Prometheus format)                               │
+│   ═══════════════════════════════════════════════════════      │
+│   # HELP goblin_http_requests_total HTTP requests             │
+│   # TYPE goblin_http_requests_total counter                   │
+│   goblin_http_requests_total{method="GET",route="/health",    │
+│     status="200"} 1234                                        │
+│   goblin_http_request_duration_seconds_bucket{le="0.05"}      │
+│     1000                                                      │
+│                                                                 │
+│   → Works with Prometheus + Grafana dashboards                 │
+│   → No external dependencies when format="json"               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Design Principles
+
+1. **Developer-First Default**: JSON metrics work out of the box, no prom-client dependency
+2. **TUI Integration**: Metrics visible in terminal without external tools
+3. **Opt-In Complexity**: Prometheus support is opt-in, lazy-loaded when enabled
+4. **Production Ready**: When enabled, full Prometheus compatibility
+
+### Migration Path
+
+- **MVP**: Developers use JSON metrics + TUI (zero setup)
+- **v2**: Operators enable Prometheus format for monitoring stack integration
+- **No Breaking Changes**: Always support both formats when Prometheus enabled
 
 ---
 
