@@ -1,0 +1,36 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Project: Goblin MCP - Developer-first MCP gateway and toolkit
+  
+  Tech stack: TypeScript, Bun, Hono, Ink (TUI), Zod
+  Core dependency: @modelcontextprotocol/sdk (Server + Client APIs)
+  API style: MCP Protocol (JSON-RPC 2.0 over STDIO/SSE/HTTP)
+  Testing: Bun test + Vitest for integration tests
+  
+  Architecture: Gateway pattern - Server to clients, Client[] to backends
+  Config: Single JSON file with hot reload, Zod validation
+  Observability: Prometheus metrics, pino structured logs
+  
+  We value:
+  - MCP protocol compliance (preserve semantics, document deviations)
+  - Secure defaults (minimal exposure, admin approval for provisioning)
+  - Developer experience (zero-config start, helpful errors)
+  - Backwards compatibility for tool APIs and config schema
+
+rules:
+  proposal:
+    - Include rollback plan for breaking changes
+    - Identify affected MCP capabilities (tools, resources, prompts)
+    - Document config schema changes with migration path
+    - Security impact assessment for admin/provisioning features
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Reference MCP protocol spec for protocol-level requirements
+    - Include error scenarios for all tool definitions
+    - Document transport-specific behavior differences
+  naming:
+    - Capabilities: verb-noun kebab-case (tool-registry, config-reload)
+    - Tools: snake_case matching MCP convention (catalog_list, invoke_tool)
+    - Config keys: camelCase for JSON (serverConfig, virtualTools)

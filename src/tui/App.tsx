@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import PromptsPanel from "./PromptsPanel.js";
 import ResourcesPanel from "./ResourcesPanel.js";
+import MetricsPanel from "./MetricsPanel.js";
+import { mcpActiveConnections, mcpToolCallsTotal } from "../observability/metrics.js";
 
 /**
  * MOCK DATA
@@ -26,21 +28,46 @@ const MOCK_LOGS = [
 
 /**
  * HEADER COMPONENT
- * Displays the gateway version and global status.
+ * Displays the gateway version, global status, and key metrics summary.
  */
-const Header = () => (
-  <Box borderStyle="round" borderColor="green" paddingX={1} marginBottom={1}>
-    <Box flexGrow={1}>
-      <Text color="green" bold>
-        Goblin MCP Gateway v0.1.0
-      </Text>
+const Header = () => {
+  const [metrics, setMetrics] = useState({ connections: 0, errors: 0 });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const connectionGauges = mcpActiveConnections.getAll();
+      const connections = connectionGauges.reduce((sum, g) => sum + g.value, 0);
+      const errors = mcpToolCallsTotal.value({ status: "error" }) || 0;
+
+      setMetrics({ connections, errors });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <Box borderStyle="round" borderColor="green" paddingX={1} marginBottom={1}>
+      <Box flexGrow={1}>
+        <Text color="green" bold>
+          Goblin MCP Gateway v0.1.0
+        </Text>
+      </Box>
+      <Box marginRight={2}>
+        <Text color="blue">●</Text>
+        <Text> {metrics.connections} conns</Text>
+      </Box>
+      <Box marginRight={2}>
+        <Text color={metrics.errors > 0 ? "red" : "green"}>
+          {metrics.errors > 0 ? "●" : "●"} {metrics.errors} errs
+        </Text>
+      </Box>
+      <Box>
+        <Text>Status: </Text>
+        <Text color="green" bold>● Online</Text>
+      </Box>
     </Box>
-    <Box>
-      <Text>Status: </Text>
-      <Text color="green" bold>● Online</Text>
-    </Box>
-  </Box>
-);
+  );
+};
 
 /**
  * SERVERS PANE
@@ -112,11 +139,13 @@ const LogsPane = () => {
  * FOOTER COMPONENT
  * Help text for the TUI.
  */
-const Footer = () => (
+const Footer = ({ showMetrics }: { showMetrics: boolean }) => (
   <Box marginTop={1} paddingX={1} justifyContent="space-between">
     <Box>
       <Text color="gray">q: </Text><Text dimColor>Quit</Text>
       <Text color="gray"> | r: </Text><Text dimColor>Reload</Text>
+      <Text color="gray"> | m: </Text>
+      <Text dimColor={!showMetrics}>Metrics</Text>
     </Box>
     <Box>
       <Text dimColor>Goblin Dashboard v0.1</Text>
@@ -129,6 +158,7 @@ const Footer = () => (
  */
 const App = () => {
   const { exit } = useApp();
+  const [showMetrics, setShowMetrics] = useState(false);
 
   useInput((input) => {
     if (input === "q") {
@@ -136,6 +166,9 @@ const App = () => {
     }
     if (input === "r") {
       // Simulate reload
+    }
+    if (input === "m") {
+      setShowMetrics((prev) => !prev);
     }
   });
 
@@ -146,9 +179,10 @@ const App = () => {
         <ServersPane />
         <PromptsPanel />
         <ResourcesPanel />
+        {showMetrics && <MetricsPanel />}
         <LogsPane />
       </Box>
-      <Footer />
+      <Footer showMetrics={showMetrics} />
     </Box>
   );
 };

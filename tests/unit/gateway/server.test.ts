@@ -52,6 +52,7 @@ describe("GatewayServer", () => {
   test("should handle tool list request", async () => {
     const registry = {
       listTools: mock(() => [{ name: "t1" }]),
+      getAllTools: mock(() => [{ id: "t1", def: { description: "d", inputSchema: {} } }]),
       getTool: mock(() => ({ id: "t1", def: { description: "d", inputSchema: {} } })),
       on: mock(),
     } as unknown as Registry;
@@ -70,6 +71,9 @@ describe("GatewayServer", () => {
   test("should handle prompt list request", async () => {
     const registry = {
       listPrompts: mock(() => [
+        { id: "p1", def: { name: "prompt1", description: "d1" }, serverId: "s1" },
+      ]),
+      getAllPrompts: mock(() => [
         { id: "p1", def: { name: "prompt1", description: "d1" }, serverId: "s1" },
       ]),
       on: mock(),
@@ -106,6 +110,8 @@ describe("GatewayServer", () => {
   test("should handle resource list request", async () => {
     const registry = {
       listResources: mock(() => [{ def: { uri: "res://1", name: "r1" }, serverId: "s1" }]),
+      getAllResources: mock(() => [{ def: { uri: "res://1", name: "r1" }, serverId: "s1" }]),
+      getAllResourceTemplates: mock(() => []),
       on: mock(),
     } as unknown as Registry;
 

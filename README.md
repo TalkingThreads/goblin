@@ -14,7 +14,7 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
 - 🎛️ **Intelligent routing** with namespacing and timeout enforcement  
 - 🚀 **Multiple transport support** including STDIO, HTTP, and Server-Sent Events
 - 🔧 **Hot-reload configuration** with JSON Schema validation
-- 📊 **Production observability** with structured logging and Prometheus metrics
+- 📊 **Production observability** with structured logging, custom metrics, and TUI real-time display
 
 ## Features
 
@@ -28,6 +28,17 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
 - **Tool Catalog Search**: Fuzzy search tools by name/description with cached MiniSearch index for O(1) search performance
 - **Error Handling**: Structured error hierarchy with `GoblinError` base class and type-specific error codes
 - **Connection Pooling**: Smart transport pool with pending connection tracking to prevent duplicate connection attempts
+- **Enhanced Logging**: Developer-first pino logging with config-driven options
+  - Pretty-print mode for development (colorized, human-readable)
+  - JSON format for production and log aggregation
+  - Sensitive data redaction (passwords, tokens, API keys)
+  - TUI real-time log viewing with log buffer integration
+  - Request/response logging middleware with correlation IDs
+  - File destination support with path resolution
+- **Custom Metrics**: Zero-dependency in-memory metrics with JSON endpoint
+  - Real-time TUI metrics panel (press 'm' to toggle)
+  - Request counters, latency histograms, connection gauges
+  - Health meta tool with status, summary, and optional full metrics
 - **TUI Integration**: Interactive TUI with Servers, Tools, Prompts, and Resources panels
 - **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints  
 - **Gateway Server**: Core MCP server implementation with unified tool catalog

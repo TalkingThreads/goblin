@@ -148,6 +148,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - JSON `/metrics` endpoint for local development
   - Reduced bundle size by removing prom-client
   - Custom Counter, Gauge, Histogram implementations with label support
+- **Enhanced Logging**: Comprehensive pino enhancement with developer-first features
+  - Configurable log level via config file or environment variables
+  - Pretty-print mode for development (colorized, human-readable)
+  - JSON format for production (log aggregation compatible)
+  - Sensitive data redaction (passwords, tokens, API keys)
+  - TUI log buffer integration for real-time log viewing
+  - Request/response logging middleware with correlation IDs
+  - File destination support with path resolution (~, env vars)
+  - Added `pino-pretty` dev dependency for development mode
 - **Test Suite**: Expanded to 81 comprehensive unit and integration tests
 - Updated README.md to accurately represent implemented features
 - Updated CHANGELOG.md with complete v0.1.0 feature summary

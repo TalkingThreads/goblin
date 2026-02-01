@@ -9,9 +9,6 @@ interface StartOptions {
   config?: string;
 }
 
-/**
- * Placeholder for starting the gateway
- */
 async function startGateway(options: StartOptions): Promise<void> {
   logger.info({ options }, "Starting gateway...");
   // Implementation will follow in future tasks
@@ -28,7 +25,7 @@ program
   .option("--port <number>", "Port to listen on")
   .option("--config <path>", "Path to config file")
   .action(async (options: StartOptions) => {
-    console.log("Starting...");
+    logger.info({ options }, "Starting gateway");
     await startGateway(options);
   });
 
@@ -36,14 +33,14 @@ program
   .command("status")
   .description("Show Gateway status")
   .action(() => {
-    console.log("Not implemented (requires running gateway)");
+    logger.info("Status command invoked - requires running gateway");
   });
 
 program
   .command("tools")
   .description("List available tools")
   .action(() => {
-    console.log("Not implemented (requires running gateway)");
+    logger.info("Tools command invoked - requires running gateway");
   });
 
 program.parse();
