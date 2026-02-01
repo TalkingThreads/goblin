@@ -1,96 +1,45 @@
 import { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-
-/**
- * Mock data for prompts panel development
- */
-const MOCK_PROMPTS = [
-  {
-    id: "filesystem_codeReview",
-    name: "codeReview",
-    description: "Review code for best practices and potential bugs",
-    arguments: ["code", "language"],
-    serverId: "filesystem",
-  },
-  {
-    id: "github_prReview",
-    name: "prReview",
-    description: "Review pull request changes and suggest improvements",
-    arguments: ["prNumber", "focus"],
-    serverId: "github",
-  },
-  {
-    id: "database_schemaAnalysis",
-    name: "schemaAnalysis",
-    description: "Analyze database schema for optimization opportunities",
-    arguments: ["tables"],
-    serverId: "database",
-  },
-  {
-    id: "filesystem_documentCode",
-    name: "documentCode",
-    description: "Generate documentation for code functions",
-    arguments: ["functionName", "outputFormat"],
-    serverId: "filesystem",
-  },
-];
-
-const MOCK_SERVERS = [
-  { id: "filesystem", name: "FileSystem" },
-  { id: "github", name: "GitHub" },
-  { id: "database", name: "Database" },
-];
+import { useGatewayData, useFilteredPrompts } from "./hooks/useGatewayData.js";
+import type { GoblinGateway } from "../core/gateway.js";
 
 /**
  * PromptsPanel Component
  * Displays available prompts with filtering and search capabilities
  */
-const PromptsPanel = () => {
-  const [prompts, setPrompts] = useState(MOCK_PROMPTS);
+const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
+  const { prompts } = useGatewayData(gateway);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [filterServer, setFilterServer] = useState<string | null>(null);
   const [searchQuery] = useState("");
 
-  // Filter prompts based on server and search
+  const filteredPrompts = useFilteredPrompts(prompts, filterServer, searchQuery);
+
+  // Get unique server names for filter
+  const serverNames = [...new Set(prompts.map((p) => p.serverId))].filter(
+    (s) => s !== "goblin",
+  );
+
+  // Reset selected index when filtered results change
   useEffect(() => {
-    let filtered = MOCK_PROMPTS;
-
-    if (filterServer) {
-      filtered = filtered.filter((p) => p.serverId === filterServer);
+    if (selectedIndex >= filteredPrompts.length) {
+      setSelectedIndex(Math.max(0, filteredPrompts.length - 1));
     }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query),
-      );
-    }
-
-    setPrompts(filtered);
-  }, [filterServer, searchQuery]);
-
-  // Update search query (simplified for now)
-  useEffect(() => {
-    if (searchQuery) {
-      // Search logic handled in main useEffect
-    }
-  }, [searchQuery]);
+  }, [filteredPrompts.length]);
 
   useInput((input, key) => {
     if (key.upArrow) {
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
     }
     if (key.downArrow) {
-      setSelectedIndex((prev) => (prev < prompts.length - 1 ? prev + 1 : prev));
+      setSelectedIndex((prev) => (prev < filteredPrompts.length - 1 ? prev + 1 : prev));
     }
     if (input === "f") {
       // Toggle server filter
       setFilterServer((prev) => {
-        const currentIdx = MOCK_SERVERS.findIndex((s) => s.id === prev);
-        const nextIdx = currentIdx < MOCK_SERVERS.length - 1 ? currentIdx + 1 : -1;
-        return nextIdx >= 0 ? MOCK_SERVERS[nextIdx]?.id ?? null : null;
+        const currentIdx = serverNames.findIndex((s) => s === prev);
+        const nextIdx = currentIdx < serverNames.length - 1 ? currentIdx + 1 : -1;
+        return nextIdx >= 0 ? serverNames[nextIdx] ?? null : null;
       });
     }
     if (input === "/") {
@@ -117,7 +66,7 @@ const PromptsPanel = () => {
         <Text color="gray">Filter: </Text>
         <Text color={filterServer ? "cyan" : "gray"}>
           {filterServer
-            ? MOCK_SERVERS.find((s) => s.id === filterServer)?.name || filterServer
+            ? serverNames.find((s) => s === filterServer) || filterServer
             : "All"}
         </Text>
         <Text color="gray"> | </Text>
@@ -142,17 +91,17 @@ const PromptsPanel = () => {
 
       {/* Prompt list */}
       <Box flexDirection="column" marginTop={1}>
-        {prompts.length === 0 ? (
+        {filteredPrompts.length === 0 ? (
           <Text color="gray">No prompts found</Text>
         ) : (
-          prompts.map((prompt, index) => (
+          filteredPrompts.map((prompt, index) => (
             <Box
               key={prompt.id}
               backgroundColor={index === selectedIndex ? "gray" : undefined}
             >
               <Box width={20}>
                 <Text color={index === selectedIndex ? "cyan" : "white"}>
-                  {prompt.name}
+                  {prompt.id.split("_").slice(1).join("_")}
                 </Text>
               </Box>
               <Box width={12}>
@@ -160,9 +109,9 @@ const PromptsPanel = () => {
               </Box>
               <Box flexGrow={1}>
                 <Text color="gray" dimColor>
-                  {prompt.description.length > 40
-                    ? prompt.description.slice(0, 37) + "..."
-                    : prompt.description}
+                  {prompt.def.description && prompt.def.description.length > 40
+                    ? prompt.def.description.slice(0, 37) + "..."
+                    : prompt.def.description || "No description"}
                 </Text>
               </Box>
             </Box>
@@ -171,13 +120,13 @@ const PromptsPanel = () => {
       </Box>
 
       {/* Arguments display for selected prompt */}
-      {prompts.length > 0 && (
+      {filteredPrompts.length > 0 && (
         <Box marginTop={1} flexDirection="column">
           <Text color="gray" dimColor>
             Args:{" "}
           </Text>
           <Text color="yellow">
-            {prompts[selectedIndex]?.arguments?.join(", ") || "none"}
+            {filteredPrompts[selectedIndex]?.def.arguments?.map((a) => a.name).join(", ") || "none"}
           </Text>
         </Box>
       )}

@@ -3,7 +3,7 @@ import { showConfigCommand, validateConfigCommand } from "./commands/config.js";
 import { healthCommand } from "./commands/health.js";
 import { logsCommand } from "./commands/logs.js";
 import { serversCommand } from "./commands/servers.js";
-import { startGateway } from "./commands/start.js";
+import { startGateway } from "./commands/start.jsx";
 import { statusCommand } from "./commands/status.js";
 import { toolsCommand } from "./commands/tools.js";
 

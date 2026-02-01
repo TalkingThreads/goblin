@@ -1,94 +1,49 @@
 import { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-
-/**
- * Mock data for resources panel development
- */
-const MOCK_RESOURCES = [
-  {
-    uri: "file:///home/user/docs/readme.md",
-    name: "README.md",
-    description: "Project README documentation",
-    mimeType: "text/markdown",
-    serverId: "filesystem",
-  },
-  {
-    uri: "file:///home/user/config/settings.json",
-    name: "settings.json",
-    description: "User configuration file",
-    mimeType: "application/json",
-    serverId: "filesystem",
-  },
-  {
-    uri: "https://api.example.com/users",
-    name: "Users API",
-    description: "REST API endpoint for users",
-    mimeType: "application/json",
-    serverId: "http-api",
-  },
-  {
-    uri: "s3://bucket/docs/guide.pdf",
-    name: "User Guide",
-    description: "PDF documentation for end users",
-    mimeType: "application/pdf",
-    serverId: "s3-storage",
-  },
-  {
-    uri: "file:///home/user/docs/api.md",
-    name: "API Reference",
-    description: "Complete API documentation with endpoints and examples. This is a longer description to test truncation behavior.",
-    mimeType: "text/markdown",
-    serverId: "filesystem",
-  },
-];
-
-const MOCK_SERVERS = [
-  { id: "filesystem", name: "FileSystem" },
-  { id: "http-api", name: "HTTP API" },
-  { id: "s3-storage", name: "S3 Storage" },
-];
+import { useGatewayData, useFilteredResources } from "./hooks/useGatewayData.js";
+import type { GoblinGateway } from "../core/gateway.js";
 
 /**
  * ResourcesPanel Component
  * Displays available resources with filtering and search capabilities
  */
-const ResourcesPanel = () => {
-  const [resources, setResources] = useState(MOCK_RESOURCES);
+const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
+  const { resources } = useGatewayData(gateway);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [filterServer, setFilterServer] = useState<string | null>(null);
   const [filterMimeType, setFilterMimeType] = useState<string | null>(null);
+  const [searchQuery] = useState("");
+
+  const filteredResources = useFilteredResources(resources, filterServer, filterMimeType, searchQuery);
 
   // Get unique MIME types for filter
-  const mimeTypes = [...new Set(MOCK_RESOURCES.map((r) => r.mimeType))];
+  const mimeTypes = [...new Set(resources.map((r) => r.def.mimeType))];
 
-  // Filter resources based on server and MIME type
+  // Get unique server names for filter
+  const serverNames = [...new Set(resources.map((r) => r.serverId))].filter(
+    (s) => s !== "goblin",
+  );
+
+  // Reset selected index when filtered results change
   useEffect(() => {
-    let filtered = MOCK_RESOURCES;
-
-    if (filterServer) {
-      filtered = filtered.filter((r) => r.serverId === filterServer);
+    if (selectedIndex >= filteredResources.length) {
+      setSelectedIndex(Math.max(0, filteredResources.length - 1));
     }
-
-    if (filterMimeType) {
-      filtered = filtered.filter((r) => r.mimeType === filterMimeType);
-    }
-
-    setResources(filtered);
-  }, [filterServer, filterMimeType]);
+  }, [filteredResources.length]);
 
   useInput((input, key) => {
     if (key.upArrow) {
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
     }
     if (key.downArrow) {
-      setSelectedIndex((prev) => (prev < resources.length - 1 ? prev + 1 : prev));
+      setSelectedIndex((prev) => (prev < filteredResources.length - 1 ? prev + 1 : prev));
     }
     if (input === "f") {
       // Toggle server filter
       setFilterServer((prev) => {
-        const currentIdx = MOCK_SERVERS.findIndex((s) => s.id === prev);
-        const nextIdx = currentIdx < MOCK_SERVERS.length - 1 ? currentIdx + 1 : -1;
-        return nextIdx >= 0 ? MOCK_SERVERS[nextIdx]?.id ?? null : null;
+        const currentIdx = serverNames.findIndex((s) => s === prev);
+        const nextIdx = currentIdx < serverNames.length - 1 ? currentIdx + 1 : -1;
+        return nextIdx >= 0 ? serverNames[nextIdx] ?? null : null;
       });
     }
     if (input === "m") {
@@ -121,7 +76,7 @@ const ResourcesPanel = () => {
           <Text color="gray">Server: </Text>
           <Text color={filterServer ? "cyan" : "gray"}>
             {filterServer
-              ? MOCK_SERVERS.find((s) => s.id === filterServer)?.name || filterServer
+              ? serverNames.find((s) => s === filterServer) || filterServer
               : "All"}
           </Text>
           <Text color="gray"> | </Text>
@@ -150,32 +105,32 @@ const ResourcesPanel = () => {
 
       {/* Resource list */}
       <Box flexDirection="column" marginTop={1}>
-        {resources.length === 0 ? (
+        {filteredResources.length === 0 ? (
           <Text color="gray">No resources found</Text>
         ) : (
-          resources.map((resource, index) => (
+          filteredResources.map((resource, index) => (
             <Box
-              key={resource.uri}
+              key={resource.def.uri}
               backgroundColor={index === selectedIndex ? "gray" : undefined}
             >
               <Box width={15}>
                 <Text color={index === selectedIndex ? "cyan" : "white"}>
-                  {resource.name.length > 14
-                    ? resource.name.slice(0, 11) + "..."
-                    : resource.name}
+                  {(resource.def.name || resource.def.uri.split("/").pop() || "Unknown").length > 14
+                    ? (resource.def.name || resource.def.uri.split("/").pop() || "Unknown").slice(0, 11) + "..."
+                    : resource.def.name || resource.def.uri.split("/").pop() || "Unknown"}
                 </Text>
               </Box>
               <Box width={10}>
-                <Text color="blue">{resource.mimeType.split("/")[1] || "?"}</Text>
+                <Text color="blue">{resource.def.mimeType?.split("/")[1] || "?"}</Text>
               </Box>
               <Box width={10}>
                 <Text color="gray">{resource.serverId}</Text>
               </Box>
               <Box flexGrow={1}>
                 <Text color="gray" dimColor>
-                  {resource.description.length > 35
-                    ? resource.description.slice(0, 32) + "..."
-                    : resource.description}
+                  {resource.def.description && resource.def.description.length > 35
+                    ? resource.def.description.slice(0, 32) + "..."
+                    : resource.def.description || "No description"}
                 </Text>
               </Box>
             </Box>
@@ -184,15 +139,15 @@ const ResourcesPanel = () => {
       </Box>
 
       {/* URI display for selected resource */}
-      {resources.length > 0 && resources[selectedIndex] && (
+      {filteredResources.length > 0 && filteredResources[selectedIndex] && (
         <Box marginTop={1} flexDirection="column">
           <Text color="gray" dimColor>
             URI:{" "}
           </Text>
           <Text color="white">
-            {resources[selectedIndex]!.uri.length > 60
-              ? "..." + resources[selectedIndex]!.uri.slice(-60)
-              : resources[selectedIndex]!.uri}
+            {filteredResources[selectedIndex]!.def.uri.length > 60
+              ? "..." + filteredResources[selectedIndex]!.def.uri.slice(-60)
+              : filteredResources[selectedIndex]!.def.uri}
           </Text>
         </Box>
       )}

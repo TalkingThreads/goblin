@@ -1,49 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import PromptsPanel from "./PromptsPanel.js";
 import ResourcesPanel from "./ResourcesPanel.js";
 import MetricsPanel from "./MetricsPanel.js";
-import { mcpActiveConnections, mcpToolCallsTotal } from "../observability/metrics.js";
-
-/**
- * MOCK DATA
- */
-const MOCK_SERVERS = [
-  { id: "1", name: "FileSystem", transport: "stdio", status: "online", tools: 12 },
-  { id: "2", name: "GoogleSearch", transport: "sse", status: "online", tools: 5 },
-  { id: "3", name: "Database", transport: "stdio", status: "offline", tools: 0 },
-  { id: "4", name: "WeatherAPI", transport: "sse", status: "online", tools: 3 },
-  { id: "5", name: "Slack", transport: "sse", status: "online", tools: 8 },
-];
-
-const MOCK_LOGS = [
-  "Checking server status...",
-  "Connected to FileSystem via stdio",
-  "Error: Database server unreachable",
-  "Aggregated 20 tools from 3 servers",
-  "Gateway listening on port 3000",
-  "User requested 'ls' from FileSystem",
-  "FileSystem returned 42 items",
-];
+import { useGatewayData } from "./hooks/useGatewayData.js";
+import type { GoblinGateway } from "../core/gateway.js";
 
 /**
  * HEADER COMPONENT
  * Displays the gateway version, global status, and key metrics summary.
  */
-const Header = () => {
-  const [metrics, setMetrics] = useState({ connections: 0, errors: 0 });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const connectionGauges = mcpActiveConnections.getAll();
-      const connections = connectionGauges.reduce((sum, g) => sum + g.value, 0);
-      const errors = mcpToolCallsTotal.value({ status: "error" }) || 0;
-
-      setMetrics({ connections, errors });
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
+const Header = ({
+  gateway,
+}: {
+  gateway: GoblinGateway | null;
+}) => {
+  const { metrics } = useGatewayData(gateway);
 
   return (
     <Box borderStyle="round" borderColor="green" paddingX={1} marginBottom={1}>
@@ -58,12 +30,14 @@ const Header = () => {
       </Box>
       <Box marginRight={2}>
         <Text color={metrics.errors > 0 ? "red" : "green"}>
-          {metrics.errors > 0 ? "●" : "●"} {metrics.errors} errs
+          <Text color="green">●</Text> {metrics.errors} errs
         </Text>
       </Box>
       <Box>
         <Text>Status: </Text>
-        <Text color="green" bold>● Online</Text>
+        <Text color="green" bold>
+          ● Online
+        </Text>
       </Box>
     </Box>
   );
@@ -73,67 +47,87 @@ const Header = () => {
  * SERVERS PANE
  * A table-like view of connected MCP servers.
  */
-const ServersPane = () => (
+const ServersPane = ({ servers }: { servers: Array<{ id: string; name: string; transport: string; status: "online" | "offline"; tools: number }> }) => (
   <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={1} minWidth={40}>
     <Box marginBottom={1}>
-      <Text bold underline color="cyan">CONNECTED SERVERS</Text>
+      <Text bold underline color="cyan">
+        CONNECTED SERVERS
+      </Text>
     </Box>
     <Box>
-      <Box width={15}><Text bold>Name</Text></Box>
-      <Box width={12}><Text bold>Transport</Text></Box>
-      <Box width={8}><Text bold>Tools</Text></Box>
-      <Box><Text bold>Status</Text></Box>
+      <Box width={15}>
+        <Text bold>Name</Text>
+      </Box>
+      <Box width={12}>
+        <Text bold>Transport</Text>
+      </Box>
+      <Box width={8}>
+        <Text bold>Tools</Text>
+      </Box>
+      <Box>
+        <Text bold>Status</Text>
+      </Box>
     </Box>
     <Box flexDirection="column" marginTop={1}>
-      {MOCK_SERVERS.map((server) => (
+      {servers.map((server) => (
         <Box key={server.id}>
-          <Box width={15}><Text>{server.name}</Text></Box>
-          <Box width={12}><Text color="gray">{server.transport}</Text></Box>
-          <Box width={8}><Text>{server.tools}</Text></Box>
+          <Box width={15}>
+            <Text>{server.name}</Text>
+          </Box>
+          <Box width={12}>
+            <Text color="gray">{server.transport}</Text>
+          </Box>
+          <Box width={8}>
+            <Text>{server.tools}</Text>
+          </Box>
           <Box>
             <Text color={server.status === "online" ? "green" : "red"}>
-              {server.status === "online" ? "🟢" : "🔴"} {server.status.toUpperCase()}
+              {server.status === "online" ? "🟢" : "🔴"}{" "}
+              {server.status.toUpperCase()}
             </Text>
           </Box>
         </Box>
       ))}
+      {servers.length === 0 && (
+        <Box>
+          <Text color="gray">No servers connected</Text>
+        </Box>
+      )}
     </Box>
   </Box>
 );
 
 /**
  * LOGS PANE
- * A simulated scrolling log view.
+ * A scrolling log view with real gateway logs.
  */
-const LogsPane = () => {
-  const [logs, setLogs] = useState(MOCK_LOGS);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLogs((prev) => {
-        const newLog = `Incoming request to ${MOCK_SERVERS[Math.floor(Math.random() * MOCK_SERVERS.length)]?.name}...`;
-        return [...prev.slice(-12), newLog];
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={2} marginLeft={1}>
-      <Box marginBottom={1}>
-        <Text bold underline color="yellow">RECENT ACTIVITY</Text>
-      </Box>
-      <Box flexDirection="column">
-        {logs.map((log, i) => (
-          <Box key={i}>
-            <Text color="gray" dimColor>[{new Date().toLocaleTimeString()}]</Text>
-            <Text> {log}</Text>
-          </Box>
-        ))}
-      </Box>
+const LogsPane = ({ logs }: { logs: Array<{ timestamp: Date; message: string; level: "info" | "warn" | "error" | "debug" }> }) => (
+  <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={2} marginLeft={1}>
+    <Box marginBottom={1}>
+      <Text bold underline color="yellow">
+        RECENT ACTIVITY
+      </Text>
     </Box>
-  );
-};
+    <Box flexDirection="column">
+      {logs.slice(-12).map((log, i) => (
+        <Box key={i}>
+          <Text color="gray" dimColor>
+            [{log.timestamp.toLocaleTimeString()}]
+          </Text>
+          <Text color={log.level === "error" ? "red" : log.level === "warn" ? "yellow" : "white"}>
+            {" "}
+            {log.message}
+          </Text>
+        </Box>
+      ))}
+      {logs.length === 0 && (
+        <Box>
+          <Text color="gray">No activity yet</Text>
+        </Box>
+      )}
+    </Box>
+  </Box>
+);
 
 /**
  * FOOTER COMPONENT
@@ -142,10 +136,13 @@ const LogsPane = () => {
 const Footer = ({ showMetrics }: { showMetrics: boolean }) => (
   <Box marginTop={1} paddingX={1} justifyContent="space-between">
     <Box>
-      <Text color="gray">q: </Text><Text dimColor>Quit</Text>
-      <Text color="gray"> | r: </Text><Text dimColor>Reload</Text>
-      <Text color="gray"> | m: </Text>
-      <Text dimColor={!showMetrics}>Metrics</Text>
+      <Text color="gray">
+        q: <Text dimColor>Quit</Text>
+        <Text color="gray"> | r: </Text>
+        <Text dimColor>Reload</Text>
+        <Text color="gray"> | m: </Text>
+        <Text dimColor={!showMetrics}>Metrics</Text>
+      </Text>
     </Box>
     <Box>
       <Text dimColor>Goblin Dashboard v0.1</Text>
@@ -156,16 +153,17 @@ const Footer = ({ showMetrics }: { showMetrics: boolean }) => (
 /**
  * MAIN APP COMPONENT
  */
-const App = () => {
+const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
   const { exit } = useApp();
   const [showMetrics, setShowMetrics] = useState(false);
+  const { servers, logs } = useGatewayData(gateway);
 
   useInput((input) => {
     if (input === "q") {
       exit();
     }
     if (input === "r") {
-      // Simulate reload
+      // Trigger refresh - the hook will pick up changes
     }
     if (input === "m") {
       setShowMetrics((prev) => !prev);
@@ -174,13 +172,13 @@ const App = () => {
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Header />
+      <Header gateway={gateway} />
       <Box flexGrow={1} height={18}>
-        <ServersPane />
-        <PromptsPanel />
-        <ResourcesPanel />
+        <ServersPane servers={servers} />
+        <PromptsPanel gateway={gateway} />
+        <ResourcesPanel gateway={gateway} />
         {showMetrics && <MetricsPanel />}
-        <LogsPane />
+        <LogsPane logs={logs} />
       </Box>
       <Footer showMetrics={showMetrics} />
     </Box>
