@@ -164,6 +164,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatic data refresh on registry change events
   - Added `react-devtools-core` dependency for ink TUI runtime
   - Renamed `start.ts` to `start.tsx` for JSX support
+- **Comprehensive TUI Unit Tests**: Added 33 unit tests for TUI filtering functions
+  - `filterTools` tests: server filtering, search, case insensitivity, edge cases
+  - `filterPrompts` tests: server filtering, search in ID and description
+  - `filterResources` tests: server, MIME type, combined filters, URI/name/description search
+  - Interface tests: ServerStatus and LogEntry structure validation
+  - All 114 tests pass (81 original + 33 new)
 
 ### Changed
 - **Build Configuration**: Updated build targets for Node.js compatibility

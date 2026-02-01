@@ -49,6 +49,13 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
   - **Activity Logs**: Real gateway activity logs with level indicators (info, warn, error, debug)
   - All panels update automatically on registry change events
   - Launch with `goblin start --tui` command
+- **Comprehensive Testing**: 114 unit tests covering core functionality
+  - Gateway registry, router, subscription manager tests
+  - Transport pool and connection management tests
+  - Config loader and schema validation tests
+  - Meta tools for prompts, resources, and health checks
+  - TUI filtering functions with 33 dedicated tests
+  - All tests pass with bun test
 - **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints  
 - **Gateway Server**: Core MCP server implementation with unified tool catalog
 - **Intelligent Router**: Request routing with namespacing (`server_tool`) and timeout enforcement
