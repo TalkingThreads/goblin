@@ -11,6 +11,7 @@ import type { Config } from "../config/index.js";
 import { getOrCreateRequestId, getRequestId } from "../observability/correlation.js";
 import { createLogger } from "../observability/logger.js";
 import {
+  getMetricsSummary,
   httpRequestDuration,
   httpRequestsTotal,
   metricsRegistry,
@@ -70,6 +71,103 @@ export class HttpGateway {
   private setupRoutes(): void {
     // Health check
     this.app.get("/health", (c) => c.json({ status: "ok" }));
+
+    // Status endpoint for CLI
+    this.app.get("/status", async (c) => {
+      const tools = this.registry.listTools();
+      const configuredServers = this.config.servers;
+
+      const serverStatus = configuredServers.map((s) => {
+        const hasTools = tools.some((t) => t.serverId === s.name);
+        return {
+          id: s.name,
+          online: hasTools,
+        };
+      });
+
+      const onlineCount = serverStatus.filter((s) => s.online).length;
+      const offlineCount = serverStatus.length - onlineCount;
+
+      // Overall health logic
+      let health = "healthy";
+      if (serverStatus.length === 0 || (configuredServers.length > 0 && onlineCount === 0)) {
+        health = "unhealthy";
+      } else if (onlineCount < serverStatus.length) {
+        health = "degraded";
+      }
+
+      return c.json({
+        servers: {
+          total: serverStatus.length,
+          online: onlineCount,
+          offline: offlineCount,
+        },
+        tools: tools.length,
+        uptime: Math.floor(process.uptime()),
+        health: health,
+        metrics: getMetricsSummary(),
+      });
+    });
+
+    // List tools endpoint
+    this.app.get("/tools", async (c) => {
+      const search = c.req.query("search");
+      const server = c.req.query("server");
+
+      let tools = this.registry.getAllTools();
+
+      if (server) {
+        tools = tools.filter((t) => t.serverId === server);
+      }
+
+      if (search) {
+        // Use registry search if available, but registry search returns different format
+        // For simplicity and consistency in the API, we can filter here or return search results
+        // Let's use the registry's fuzzy search if it's just a search query
+        const results = this.registry.searchTools(search);
+        // Map back to ToolEntry-like objects or just return results
+        // If we want schema summary, we need the full ToolEntry
+        const resultIds = new Set(results.map((r) => r.id));
+        tools = tools.filter((t) => resultIds.has(t.id));
+      }
+
+      return c.json({
+        tools: tools.map((t) => ({
+          name: t.id,
+          description: t.def.description,
+          serverId: t.serverId,
+          inputSchema: t.def.inputSchema,
+        })),
+      });
+    });
+
+    // List servers endpoint
+    this.app.get("/servers", async (c) => {
+      const statusFilter = c.req.query("status");
+      const tools = this.registry.getAllTools();
+      const configuredServers = this.config.servers;
+
+      const servers = configuredServers.map((s) => {
+        const serverTools = tools.filter((t) => t.serverId === s.name);
+        const isOnline = serverTools.length > 0;
+        return {
+          name: s.name,
+          transport: s.transport,
+          status: isOnline ? "online" : "offline",
+          enabled: s.enabled,
+          tools: serverTools.length,
+        };
+      });
+
+      let filteredServers = servers;
+      if (statusFilter === "online") {
+        filteredServers = servers.filter((s) => s.status === "online");
+      } else if (statusFilter === "offline") {
+        filteredServers = servers.filter((s) => s.status === "offline");
+      }
+
+      return c.json({ servers: filteredServers });
+    });
 
     // Metrics endpoint
     this.app.get("/metrics", async (c) => {

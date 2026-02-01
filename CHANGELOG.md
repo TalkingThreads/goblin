@@ -108,6 +108,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI Commands**: Comprehensive command-line interface for gateway management
+  - `goblin start`: Start the Gateway with optional TUI mode, port, and config path
+  - `goblin status`: Show gateway status with server count, tool count, health metrics
+  - `goblin tools`: List available tools with server filtering and search capabilities
+  - `goblin servers`: List configured servers with status, transport type, and tool count
+  - `goblin config validate`: Validate configuration files with JSON output support
+  - `goblin config show`: Display current configuration with JSON output support
+  - `goblin logs`: Show recent logs with tail, follow, level filter, and JSON output
+  - `goblin health`: Show detailed health status with per-server metrics and latency
+  - Built with Commander.js for robust CLI argument parsing
+  - JSON output mode for programmatic integration
+  - Hot reload support via config watcher integration
+- **HTTP Gateway Endpoints**: Additional endpoints for CLI and monitoring integration
+  - `GET /status`: Returns health, metrics, server stats, and uptime information
+  - `GET /tools`: Returns tool list with server and search filtering
+  - `GET /servers`: Returns server list with status and connection info
 - **Resource Subscriptions**: Full MCP resource subscription support
   - `SubscriptionManager` class for tracking client subscriptions
   - `resources/subscribe` request handler for subscribing to resource changes
@@ -139,6 +155,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Consistent styling with Tools and Prompts panels
 
 ### Changed
+- **Build Configuration**: Updated build targets for Node.js compatibility
+  - Changed `--target bun` to `--target node` for cross-platform support
+  - Added separate `build:cli` script for CLI binary compilation
+  - CLI now runs with Node.js (>=20.0.0) instead of requiring Bun runtime
+  - Updated `start` script to use `node dist/index.js` for production
 - **Connection Pooling**: Added `pendingConnections` Map to track in-flight connection attempts and prevent duplicate connection requests for the same server
 - **Build Optimization**: Updated build script with `--minify` and `--sourcemap=external` flags for production builds (reduces bundle size and separates source maps)
 - **Error Handling**: Implemented structured error class hierarchy with `GoblinError` base class and type-specific subclasses (`ToolNotFoundError`, `ServerNotFoundError`, `ConnectionError`, `RequestTimeoutError`, etc.)

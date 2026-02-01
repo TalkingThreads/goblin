@@ -18,6 +18,7 @@ export type Labels = Record<string, string>;
 export interface Counter {
   inc(labels?: Labels): void;
   value(labels?: Labels): number;
+  getAll(): Array<{ labels: Labels; value: number }>;
 }
 
 /**
@@ -37,6 +38,10 @@ export interface Gauge {
 export interface Histogram {
   observe(value: number, labels?: Labels): void;
   values(labels?: Labels): { count: number; sum: number; buckets: Record<number, number> };
+  getAll(): Array<{
+    labels: Labels;
+    values: { count: number; sum: number; buckets: Record<number, number> };
+  }>;
 }
 
 /**
@@ -73,7 +78,7 @@ export interface MetricsRegistry {
  * Internal counter implementation
  */
 class CounterImpl implements Counter {
-  private values = new Map<string, number>();
+  private values = new Map<string, { labels: Labels; value: number }>();
 
   private getKey(labels?: Labels): string {
     if (!labels || Object.keys(labels).length === 0) {
@@ -87,11 +92,17 @@ class CounterImpl implements Counter {
 
   inc(labels?: Labels): void {
     const key = this.getKey(labels);
-    this.values.set(key, (this.values.get(key) || 0) + 1);
+    const existing = this.values.get(key) || { labels: labels || {}, value: 0 };
+    existing.value += 1;
+    this.values.set(key, existing);
   }
 
   value(labels?: Labels): number {
-    return this.values.get(this.getKey(labels)) || 0;
+    return this.values.get(this.getKey(labels))?.value || 0;
+  }
+
+  getAll(): Array<{ labels: Labels; value: number }> {
+    return Array.from(this.values.values());
   }
 }
 
@@ -144,7 +155,10 @@ class HistogramImpl implements Histogram {
   private buckets: number[];
   private observations = new Map<
     string,
-    { count: number; sum: number; buckets: Record<number, number> }
+    {
+      labels: Labels;
+      values: { count: number; sum: number; buckets: Record<number, number> };
+    }
   >();
 
   constructor(buckets: number[]) {
@@ -164,23 +178,26 @@ class HistogramImpl implements Histogram {
   observe(value: number, labels?: Labels): void {
     const key = this.getKey(labels);
     const existing = this.observations.get(key) || {
-      count: 0,
-      sum: 0,
-      buckets: {} as Record<number, number>,
+      labels: labels || {},
+      values: {
+        count: 0,
+        sum: 0,
+        buckets: {} as Record<number, number>,
+      },
     };
 
     // Initialize bucket counts
     for (const bucket of this.buckets) {
-      existing.buckets[bucket] = existing.buckets[bucket] || 0;
+      existing.values.buckets[bucket] = existing.values.buckets[bucket] || 0;
     }
 
-    existing.count += 1;
-    existing.sum += value;
+    existing.values.count += 1;
+    existing.values.sum += value;
 
     // Count bucket
     for (const bucket of this.buckets) {
       if (value <= bucket) {
-        existing.buckets[bucket] = (existing.buckets[bucket] || 0) + 1;
+        existing.values.buckets[bucket] = (existing.values.buckets[bucket] || 0) + 1;
       }
     }
 
@@ -188,7 +205,14 @@ class HistogramImpl implements Histogram {
   }
 
   values(labels?: Labels): { count: number; sum: number; buckets: Record<number, number> } {
-    return this.observations.get(this.getKey(labels)) || { count: 0, sum: 0, buckets: {} };
+    return this.observations.get(this.getKey(labels))?.values || { count: 0, sum: 0, buckets: {} };
+  }
+
+  getAll(): Array<{
+    labels: Labels;
+    values: { count: number; sum: number; buckets: Record<number, number> };
+  }> {
+    return Array.from(this.observations.values());
   }
 }
 
@@ -319,10 +343,17 @@ export function getMetricsSummary(): {
   avgLatency: number;
   connections: number;
 } {
-  const totalRequests = httpRequestsTotal.value();
-  const errorRequests = httpRequestsTotal.value({ status: "5xx" }) || 0;
-  const durationValues = httpRequestDuration.values();
-  const avgLatency = durationValues.count > 0 ? durationValues.sum / durationValues.count : 0;
+  const allRequests = httpRequestsTotal.getAll();
+  const totalRequests = allRequests.reduce((sum, item) => sum + item.value, 0);
+  const errorRequests = allRequests
+    .filter((item) => item.labels["status"]?.startsWith("5"))
+    .reduce((sum, item) => sum + item.value, 0);
+
+  const allDurations = httpRequestDuration.getAll();
+  const totalCount = allDurations.reduce((sum, item) => sum + item.values.count, 0);
+  const totalSum = allDurations.reduce((sum, item) => sum + item.values.sum, 0);
+  const avgLatency = totalCount > 0 ? totalSum / totalCount : 0;
+
   const connections = mcpActiveConnections.value();
 
   return {
