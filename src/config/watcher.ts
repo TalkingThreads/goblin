@@ -25,21 +25,21 @@ export class ConfigWatcher extends EventEmitter {
   private watcher: FSWatcher | null = null;
   private debounceTimer: Timer | null = null;
   private currentConfig: Config;
+  private configPath: string;
 
-  constructor(initialConfig: Config) {
+  constructor(initialConfig: Config, customPath?: string) {
     super();
     this.currentConfig = initialConfig;
+    this.configPath = customPath ?? getConfigPath();
   }
 
   /**
    * Start watching the config file
    */
   start(): void {
-    const configPath = getConfigPath();
+    logger.info({ configPath: this.configPath }, "Configuration watcher started");
 
-    logger.info({ configPath }, "Configuration watcher started");
-
-    this.watcher = watch(configPath, (event) => {
+    this.watcher = watch(this.configPath, (event) => {
       if (event === "change") {
         this.handleChange();
       }
@@ -56,7 +56,7 @@ export class ConfigWatcher extends EventEmitter {
    */
   stop(): void {
     if (this.watcher !== null) {
-      logger.info({ configPath: getConfigPath() }, "Configuration watcher stopped");
+      logger.info({ configPath: this.configPath }, "Configuration watcher stopped");
       this.watcher.close();
       this.watcher = null;
     }
@@ -93,13 +93,11 @@ export class ConfigWatcher extends EventEmitter {
    * Reload and validate config with atomic swap
    */
   private async reloadConfig(): Promise<void> {
-    const configPath = getConfigPath();
-
     try {
-      logger.debug({ configPath }, "Configuration reload started");
+      logger.debug({ configPath: this.configPath }, "Configuration reload started");
 
       // Read and parse JSON
-      const content = await readFile(configPath, "utf-8");
+      const content = await readFile(this.configPath, "utf-8");
       const raw = JSON.parse(content);
 
       // Atomic validation
@@ -109,18 +107,21 @@ export class ConfigWatcher extends EventEmitter {
         // Atomic swap - only update if validation succeeded
         this.currentConfig = validatedConfig;
 
-        logger.info({ configPath }, "Configuration reloaded");
+        logger.info({ configPath: this.configPath }, "Configuration reloaded");
         this.emit("updated", this.currentConfig);
       } else {
         // Validation failed - rollback (keep current config)
-        logger.warn({ configPath }, "Configuration validation failed");
+        logger.warn({ configPath: this.configPath }, "Configuration validation failed");
       }
     } catch (error: unknown) {
       // File read or JSON parse error - rollback
       if (error instanceof SyntaxError) {
-        logger.error({ configPath, error: error.message }, "Configuration parsing failed");
+        logger.error(
+          { configPath: this.configPath, error: error.message },
+          "Configuration parsing failed",
+        );
       } else {
-        logger.error({ configPath, error }, "Configuration reload failed");
+        logger.error({ configPath: this.configPath, error }, "Configuration reload failed");
       }
     }
   }

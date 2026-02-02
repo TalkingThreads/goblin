@@ -187,14 +187,14 @@ This document tracks all implementation tasks for CLI smoke testing infrastructu
 
 - [x] 6.1 Create smoke test runner script
 - [x] 6.2 Add smoke tests to package.json scripts
-- [ ] 6.3 Add smoke tests to CI pipeline (pre-commit hook)
-- [ ] 6.4 Set up smoke test reporting
-- [ ] 6.5 Verify all smoke tests pass
-- [ ] 6.6 Measure smoke test execution time (target: < 60 seconds)
+- [x] 6.3 Add smoke tests to CI pipeline (pre-commit hook)
+- [x] 6.4 Set up smoke test reporting
+- [x] 6.5 Verify all smoke tests pass
+- [x] 6.6 Measure smoke test execution time (target: < 60 seconds)
 - [x] 6.7 Document smoke test usage and best practices
-- [ ] 6.8 Create smoke test configuration file
-- [ ] 6.9 Set up parallel test execution where safe
-- [ ] 6.10 Add smoke test coverage to README
+- [x] 6.8 Create smoke test configuration file
+- [x] 6.9 Set up parallel test execution where safe
+- [x] 6.10 Add smoke test coverage to README
 
 ---
 

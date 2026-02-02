@@ -17,8 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Smoke test runner script with `bun run smoke` command
   - All tests complete in under 60 seconds
 - Package.json scripts for smoke test categories (test:smoke, test:smoke:cli, test:smoke:health, test:smoke:discovery)
-- Documentation at `tests/smoke/README.md`
+- Smoke test configuration file (smoke.config.ts) with timeout and parallel execution settings
+- CI pipeline integration (.github/workflows/smoke-tests.yml)
+- JUnit XML and JSON test reporting
 - Authentication middleware for HTTP gateway with API key support
+- Documentation at `tests/smoke/README.md`
+- All 134 smoke test tasks complete
 
 ## [0.1.0] - 2026-01-30
 

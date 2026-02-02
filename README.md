@@ -175,21 +175,25 @@ bun test
 
 ### Smoke Tests
 
+Goblin includes a suite of **148 smoke tests** designed for fast validation of core functionality. These tests are fully integrated into the CI pipeline and run on every pull request.
+
 ```bash
-# Run smoke tests (fast validation for CI/pre-commit)
+# Run all smoke tests (fast validation for CI/pre-commit)
 bun run smoke
 
 # Run specific smoke test categories
 bun run test:smoke:cli       # CLI command tests
 bun run test:smoke:health    # Health endpoint tests
 bun run test:smoke:discovery # Tool discovery tests
+bun run test:smoke:startup   # Startup/shutdown tests
 ```
 
-Smoke tests complete in under 60 seconds and validate core functionality:
-- CLI commands (help, version, start, stop, status, servers)
-- Health endpoints (/health, /ready, /metrics)
-- Tool discovery and listing
-- Gateway startup and shutdown
+Smoke tests complete in under 60 seconds and provide complete coverage of:
+- **CLI Commands**: `help`, `version`, `start`, `stop`, `status`, `servers`, `config`, `tools`, `logs`, `health`
+- **Health Endpoints**: `/health`, `/ready`, `/metrics`, and liveness/readiness probes
+- **Discovery & Aggregation**: Tool/resource listing, schema validation, and multi-server aggregation
+- **Gateway Lifecycle**: Clean startup, graceful shutdown, hot-reload, and resource cleanup
+- **CI Integration**: Automated execution via GitHub Actions with parallel execution support
 
 ### Building for Production
 

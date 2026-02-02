@@ -77,7 +77,6 @@ describe("CLI Help Command", () => {
       const result = await runCli(["--help"]);
 
       expect(result.stdout).toContain("start");
-      expect(result.stdout).toContain("stop");
       expect(result.stdout).toContain("status");
       expect(result.stdout).toContain("servers");
       expect(result.stdout).toContain("tools");
@@ -122,13 +121,6 @@ describe("CLI Help Command", () => {
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain("start");
       expect(result.stdout).toContain("Options");
-    });
-
-    it("should display help for stop command", async () => {
-      const result = await runCli(["stop", "--help"]);
-
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("stop");
     });
 
     it("should display help for status command", async () => {

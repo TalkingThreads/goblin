@@ -47,6 +47,27 @@ export class HttpGateway {
       await next();
     });
 
+    // Authentication middleware
+    this.app.use("*", async (c, next) => {
+      const path = c.req.path;
+      // Skip auth for health endpoint
+      if (path === "/health") {
+        return await next();
+      }
+
+      if (this.config.auth.mode === "apikey") {
+        const apiKey =
+          c.req.header("X-API-Key") || c.req.header("Authorization")?.replace("Bearer ", "");
+
+        if (!apiKey || apiKey !== this.config.auth.apiKey) {
+          logger.warn({ path, requestId: getRequestId() }, "Unauthorized access attempt");
+          return c.json({ error: "Unauthorized" }, 401);
+        }
+      }
+
+      return await next();
+    });
+
     // Metrics middleware
     this.app.use("*", async (c, next) => {
       const start = performance.now();

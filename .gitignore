@@ -31,3 +31,9 @@ coverage
 
 # Bun
 bun.lockb
+
+# Developer Documents
+.dev_docs
+
+# Skills
+skills

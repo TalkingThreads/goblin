@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="16" assertions="32" failures="2" skipped="0" time="6.8158514">
+  <testsuite name="tests\smoke\cli\help.test.ts" file="tests\smoke\cli\help.test.ts" tests="16" assertions="32" failures="2" skipped="0" time="0" hostname="">
+    <testsuite name="CLI Help Command" file="tests\smoke\cli\help.test.ts" line="57" tests="16" assertions="32" failures="2" skipped="0" time="0" hostname="">
+      <testsuite name="Global Help" file="tests\smoke\cli\help.test.ts" line="58" tests="5" assertions="12" failures="1" skipped="0" time="2.015" hostname="">
+        <testcase name="should display help when run with --help" classname="Global Help &amp;gt; CLI Help Command" time="0.64" file="tests\smoke\cli\help.test.ts" line="59" assertions="4" />
+        <testcase name="should display help when run with -h" classname="Global Help &amp;gt; CLI Help Command" time="0.36" file="tests\smoke\cli\help.test.ts" line="68" assertions="3" />
+        <testcase name="should list all available commands" classname="Global Help &amp;gt; CLI Help Command" time="0.359" file="tests\smoke\cli\help.test.ts" line="76" assertions="2">
+          <failure type="AssertionError" />
+        </testcase>
+        <testcase name="should include command descriptions" classname="Global Help &amp;gt; CLI Help Command" time="0.36" file="tests\smoke\cli\help.test.ts" line="89" assertions="1" />
+        <testcase name="should be formatted readably" classname="Global Help &amp;gt; CLI Help Command" time="0.296" file="tests\smoke\cli\help.test.ts" line="106" assertions="2" />
+      </testsuite>
+      <testsuite name="Command-Specific Help" file="tests\smoke\cli\help.test.ts" line="118" tests="10" assertions="19" failures="1" skipped="0" time="4.172" hostname="">
+        <testcase name="should display help for start command" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.282" file="tests\smoke\cli\help.test.ts" line="119" assertions="3" />
+        <testcase name="should display help for stop command" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.328" file="tests\smoke\cli\help.test.ts" line="127" assertions="2">
+          <failure type="AssertionError" />
+        </testcase>
+        <testcase name="should display help for status command" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.39" file="tests\smoke\cli\help.test.ts" line="134" assertions="2" />
+        <testcase name="should display help for servers command" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.36" file="tests\smoke\cli\help.test.ts" line="141" assertions="2" />
+        <testcase name="should display help for tools command" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.422" file="tests\smoke\cli\help.test.ts" line="148" assertions="2" />
+        <testcase name="should display help for config command" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.39" file="tests\smoke\cli\help.test.ts" line="155" assertions="2" />
+        <testcase name="should display help for logs command" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.563" file="tests\smoke\cli\help.test.ts" line="162" assertions="2" />
+        <testcase name="should display help for health command" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.5" file="tests\smoke\cli\help.test.ts" line="169" assertions="2" />
+        <testcase name="should include options in command help" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.515" file="tests\smoke\cli\help.test.ts" line="176" assertions="1" />
+        <testcase name="should show usage information" classname="Command-Specific Help &amp;gt; CLI Help Command" time="0.422" file="tests\smoke\cli\help.test.ts" line="183" assertions="1" />
+      </testsuite>
+      <testsuite name="Help Response Time" file="tests\smoke\cli\help.test.ts" line="190" tests="1" assertions="1" failures="0" skipped="0" time="0.453" hostname="">
+        <testcase name="should respond quickly (&lt; 1s)" classname="Help Response Time &amp;gt; CLI Help Command" time="0.453" file="tests\smoke\cli\help.test.ts" line="191" assertions="1" />
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

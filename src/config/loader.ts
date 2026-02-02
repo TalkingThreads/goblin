@@ -32,13 +32,18 @@ const DEFAULT_CONFIG: Config = {
 /**
  * Load and validate configuration from file
  *
+ * @param customPath - Optional custom path to config file
  * @returns Validated configuration or default config on error
  */
-export async function loadConfig(): Promise<Config> {
-  const configPath = getConfigPath();
+export async function loadConfig(customPath?: string): Promise<Config> {
+  const configPath = customPath ?? getConfigPath();
 
   // Use default config if file doesn't exist
   if (!existsSync(configPath)) {
+    if (customPath) {
+      // If a custom path was requested but doesn't exist, this is an error
+      throw new Error(`Configuration file not found at: ${configPath}`);
+    }
     logger.info({ configPath }, "Configuration file not found");
     return DEFAULT_CONFIG;
   }
@@ -64,6 +69,11 @@ export async function loadConfig(): Promise<Config> {
       },
       "Configuration validation failed",
     );
+
+    if (customPath) {
+      throw new Error(`Configuration validation failed for: ${configPath}`);
+    }
+
     return DEFAULT_CONFIG;
   } catch (error: unknown) {
     // File read or JSON parse error
@@ -72,6 +82,11 @@ export async function loadConfig(): Promise<Config> {
     } else {
       logger.error({ configPath, error }, "Configuration read failed");
     }
+
+    if (customPath) {
+      throw error;
+    }
+
     return DEFAULT_CONFIG;
   }
 }

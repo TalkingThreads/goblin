@@ -21,8 +21,8 @@ export async function startGateway(options: StartOptions): Promise<void> {
   try {
     logger.info({ options }, "Starting Goblin Gateway...");
 
-    // Load configuration (uses default path)
-    const config = await loadConfig();
+    // Load configuration
+    const config = await loadConfig(options.config);
 
     // Override port if specified
     if (options.port) {
@@ -43,7 +43,7 @@ export async function startGateway(options: StartOptions): Promise<void> {
     process.on("SIGTERM", shutdown);
 
     // Start the gateway
-    await gateway.start();
+    await gateway.start(config, options.config);
 
     // Log startup message
     logger.info(
@@ -65,8 +65,12 @@ export async function startGateway(options: StartOptions): Promise<void> {
 
     // Keep process running
     await new Promise(() => {});
-  } catch (error) {
-    logger.error({ error }, "Failed to start gateway");
+  } catch (error: any) {
+    logger.error({ 
+      message: error.message,
+      stack: error.stack,
+      error 
+    }, "Failed to start gateway");
     process.exit(1);
   }
 }

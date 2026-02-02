@@ -70,11 +70,11 @@ describe("CLI Servers Command", () => {
     expect(duration).toBeLessThan(2000);
   });
 
-  it("should list available subcommands", async () => {
+  it("should show options in help", async () => {
     const result = await runCli(["servers", "--help"]);
 
-    expect(result.stdout).toContain("list");
-    expect(result.stdout).toContain("add");
-    expect(result.stdout).toContain("remove");
+    expect(result.stdout).toContain("--json");
+    expect(result.stdout).toContain("--url");
+    expect(result.stdout).toContain("--status");
   });
 });

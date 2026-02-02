@@ -1,4 +1,4 @@
-import { ConfigWatcher, generateSchema, loadConfig } from "../config/index.js";
+import { type Config, ConfigWatcher, generateSchema, loadConfig } from "../config/index.js";
 import { HttpGateway, Registry, Router } from "../gateway/index.js";
 import { createLogger } from "../observability/logger.js";
 import { catalogList, catalogSearch } from "../tools/meta/catalog.js";
@@ -37,15 +37,22 @@ export class GoblinGateway {
 
   /**
    * Initialize and start the gateway
+   *
+   * @param customConfig - Optional pre-loaded configuration
+   * @param configPath - Optional path to the configuration file
    */
-  async start(): Promise<void> {
+  async start(customConfig?: Config, configPath?: string): Promise<void> {
     logger.info("Starting Goblin Gateway Core...");
 
     // Generate Schema
-    await generateSchema();
+    try {
+      await generateSchema();
+    } catch (error) {
+      logger.warn({ error }, "Failed to generate config schema");
+    }
 
-    // Load Config
-    const config = await loadConfig();
+    // Load Config if not provided
+    const config = customConfig ?? (await loadConfig(configPath));
     this.router = new Router(this.registry, this.transportPool, config);
 
     // Register Meta Tools
@@ -79,8 +86,8 @@ export class GoblinGateway {
     }
 
     // Watch Config
-    this.configWatcher = new ConfigWatcher(config);
-    this.configWatcher.on("updated", (newConfig) => {
+    this.configWatcher = new ConfigWatcher(config, configPath);
+    this.configWatcher.on("updated", (newConfig: Config) => {
       logger.info({ serverCount: newConfig.servers.length }, "Configuration updated");
       // TODO: Implement hot reload logic
     });
