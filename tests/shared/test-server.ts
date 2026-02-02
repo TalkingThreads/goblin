@@ -48,7 +48,7 @@ export interface TestServerConfig {
 /**
  * Mock transport for testing
  */
-class MockTransport extends EventEmitter implements AsyncIterable<unknown> {
+export class MockTransport extends EventEmitter implements AsyncIterable<unknown> {
   private connected = false;
   private messageQueue: unknown[] = [];
   private resolveRead: ((value: unknown) => void) | null = null;
@@ -58,6 +58,9 @@ class MockTransport extends EventEmitter implements AsyncIterable<unknown> {
   }
 
   async send(message: unknown): Promise<void> {
+    // Emit event for test infrastructure to intercept responses
+    this.emit("send", message);
+
     // Queue message for reading
     if (this.resolveRead) {
       this.resolveRead(message);
@@ -91,6 +94,13 @@ class MockTransport extends EventEmitter implements AsyncIterable<unknown> {
 
   isConnected(): boolean {
     return this.connected;
+  }
+
+  /**
+   * Simulate receiving a response from client (for testing)
+   */
+  async receiveResponse(response: unknown): Promise<void> {
+    this.emit("message", response);
   }
 }
 
@@ -357,6 +367,24 @@ export class TestMcpServer {
    */
   getTransport(): MockTransport | null {
     return this.transport;
+  }
+
+  /**
+   * Connect this server's transport to a client's transport for testing
+   */
+  connectToClient(client: {
+    getTransport: () => { receiveResponse: (response: unknown) => Promise<void> };
+  }): void {
+    if (!this.transport) {
+      throw new Error("Server must be started before connecting to client");
+    }
+
+    const clientTransport = client.getTransport();
+
+    // When server sends a response, deliver it to the client
+    this.transport.on("send", async (data: unknown) => {
+      await clientTransport.receiveResponse(data);
+    });
   }
 
   /**

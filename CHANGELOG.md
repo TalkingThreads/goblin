@@ -48,6 +48,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MCP Compliance**: Full protocol compliance with proper error handling
   - Removed advertising of unimplemented capabilities
   - Dynamic capability synchronization across gateway
+
+## [0.2.0] - 2026-02-01
+
+### Added
+- **Integration Tests Infrastructure**: Comprehensive test suite for gateway behavior
+  - Test MCP server and client utilities for isolated testing
+  - Network simulator for latency and error injection testing
+  - Cleanup manager for proper test isolation
+  - 60 integration tests covering handshake, capabilities, and session management
   - Support for `notifications/tools/list_changed` propagation
   - Standard MCP error codes and messages
 - **Development Tooling**: Complete development environment

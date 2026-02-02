@@ -296,6 +296,21 @@ export class TestMcpClient {
   getTransport(): MockTransport {
     return this.transport;
   }
+
+  /**
+   * Connect to a server's transport for testing
+   */
+  async connectToServer(serverTransport: {
+    receiveResponse: (response: unknown) => Promise<void>;
+    receiveNotification?: (method: string, params?: Record<string, unknown>) => void;
+  }): Promise<void> {
+    await this.transport.start();
+
+    // Forward messages to server
+    this.transport.on("message", async (message: unknown) => {
+      await serverTransport.receiveResponse(message);
+    });
+  }
 }
 
 /**
