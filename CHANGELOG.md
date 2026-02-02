@@ -58,7 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cleanup manager for proper test isolation
   - **Handshake Tests**: 46 tests for session, capabilities, and server info
   - **E2E Tests**: 94 tests for request/response, streaming, prompts, resources, and errors
-  - Total: 154 integration tests passing
+  - **Multi-Server Tests**: 71 tests for aggregation, routing, and lifecycle
+  - Total: 225 integration tests passing
   - Support for `notifications/tools/list_changed` propagation
   - Standard MCP error codes and messages
 - **Development Tooling**: Complete development environment
