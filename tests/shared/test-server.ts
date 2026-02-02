@@ -528,6 +528,7 @@ export function createBasicTestServer(name: string = "test-server"): TestMcpServ
         inputSchema: {
           type: "object",
           properties: {},
+          required: [],
         },
         handler: async () => {
           return {
