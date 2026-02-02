@@ -60,7 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **E2E Tests**: 94 tests for request/response, streaming, prompts, resources, and errors
   - **Multi-Server Tests**: 71 tests for aggregation, routing, and lifecycle
   - **Transport Tests**: 90 tests for basic, stdio, http, and sse transport behavior
-  - Total: 315 integration tests passing
+  - **Hot-Reload Tests**: 64 tests for dynamic updates, server lifecycle, and configuration
+  - Total: 379 integration tests passing
   - Support for `notifications/tools/list_changed` propagation
   - Standard MCP error codes and messages
 - **Development Tooling**: Complete development environment
