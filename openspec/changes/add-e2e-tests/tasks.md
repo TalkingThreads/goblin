@@ -56,7 +56,7 @@ This document outlines all implementation tasks for adding comprehensive end-to-
 ## 3. Real Backend E2E Tests
 
 ### 3.1 Filesystem Server Tests
-- [ ] 3.1.1 Create tests/e2e/real-backends/filesystem.test.ts
+- [x] 3.1.1 Create tests/e2e/real-backends/filesystem.test.ts
 - [ ] 3.1.2 Test read file through gateway
 - [ ] 3.1.3 Test list directory through gateway
 - [ ] 3.1.4 Test write file through gateway
@@ -81,24 +81,24 @@ This document outlines all implementation tasks for adding comprehensive end-to-
 
 ### 3.4 Multi-Server Tests
 - [ ] 3.4.1 Create tests/e2e/real-backends/multi-server.test.ts
-- [ ] 3.4.2 Test multiple servers registered
-- [ ] 3.4.3 Test cross-server tool calls
-- [ ] 3.4.4 Test server health during operation
+- [x] 3.4.2 Test multiple servers registered
+- [x] 3.4.3 Test cross-server tool calls
+- [x] 3.4.4 Test server health during operation
 - [ ] 3.4.5 Test server addition/removal dynamically
 - [ ] 3.4.6 Test server capability aggregation
 
 ### 3.5 Real Server Error Tests
 - [ ] 3.5.1 Create tests/e2e/real-backends/errors.test.ts
-- [ ] 3.5.2 Test server returns protocol error
-- [ ] 3.5.3 Test server becomes unavailable
-- [ ] 3.5.4 Test server returns unexpected data
-- [ ] 3.5.5 Test server connection failures
-- [ ] 3.5.6 Test server timeout handling
+- [x] 3.5.2 Test server returns protocol error
+- [x] 3.5.3 Test server becomes unavailable
+- [x] 3.5.4 Test server returns unexpected data
+- [x] 3.5.5 Test server connection failures
+- [x] 3.5.6 Test server timeout handling
 
 ## 4. CLI/TUI E2E Tests
 
 ### 4.1 CLI Command Tests
-- [ ] 4.1.1 Create tests/e2e/cli-tui/cli-commands.test.ts
+- [x] 4.1.1 Create tests/e2e/cli-tui/cli-commands.test.ts
 - [ ] 4.1.2 Test start gateway via CLI
 - [ ] 4.1.3 Test list connected servers
 - [ ] 4.1.4 Test add new server
@@ -106,12 +106,12 @@ This document outlines all implementation tasks for adding comprehensive end-to-
 - [ ] 4.1.6 Test view server status
 
 ### 4.2 CLI Output Tests
-- [ ] 4.2.1 Create tests/e2e/cli-tui/cli-output.test.ts
-- [ ] 4.2.2 Test help command output
-- [ ] 4.2.3 Test error messages are helpful
-- [ ] 4.2.4 Test JSON output format
-- [ ] 4.2.5 Test verbose output mode
-- [ ] 4.2.6 Test output formatting and colors
+- [x] 4.2.1 Create tests/e2e/cli-tui/cli-output.test.ts
+- [x] 4.2.2 Test help command output
+- [x] 4.2.3 Test error messages are helpful
+- [x] 4.2.4 Test JSON output format
+- [x] 4.2.5 Test verbose output mode
+- [x] 4.2.6 Test output formatting and colors
 
 ### 4.3 TUI Interface Tests
 - [ ] 4.3.1 Create tests/e2e/cli-tui/tui-interface.test.ts
@@ -140,20 +140,20 @@ This document outlines all implementation tasks for adding comprehensive end-to-
 ## 5. Error Scenario E2E Tests
 
 ### 5.1 Invalid Request Tests
-- [ ] 5.1.1 Create tests/e2e/errors/invalid-requests.test.ts
-- [ ] 5.1.2 Test unknown tool name
-- [ ] 5.1.3 Test invalid tool arguments
-- [ ] 5.1.4 Test malformed JSON-RPC request
-- [ ] 5.1.5 Test request with missing required fields
-- [ ] 5.1.6 Test request ID mismatch
+- [x] 5.1.1 Create tests/e2e/errors/invalid-requests.test.ts
+- [x] 5.1.2 Test unknown tool name
+- [x] 5.1.3 Test invalid tool arguments
+- [x] 5.1.4 Test malformed JSON-RPC request
+- [x] 5.1.5 Test request with missing required fields
+- [x] 5.1.6 Test request ID mismatch
 
 ### 5.2 Timeout Tests
-- [ ] 5.2.1 Create tests/e2e/errors/timeout.test.ts
-- [ ] 5.2.2 Test tool execution timeout
-- [ ] 5.2.3 Test client request timeout
-- [ ] 5.2.4 Test backend server timeout
-- [ ] 5.2.5 Test timeout with pending operations
-- [ ] 5.2.6 Test timeout recovery
+- [x] 5.2.1 Create tests/e2e/errors/timeout.test.ts
+- [x] 5.2.2 Test tool execution timeout
+- [x] 5.2.3 Test client request timeout
+- [x] 5.2.4 Test backend server timeout
+- [x] 5.2.5 Test timeout with pending operations
+- [x] 5.2.6 Test timeout recovery
 
 ### 5.3 Malformed Data Tests
 - [ ] 5.3.1 Create tests/e2e/errors/malformed-data.test.ts
@@ -181,9 +181,9 @@ This document outlines all implementation tasks for adding comprehensive end-to-
 
 ## 6. Test Integration and CI
 
-- [ ] 6.1 Create tests/e2e/README.md with documentation
-- [ ] 6.2 Create tests/e2e/test-data/sample-project/ for testing
-- [ ] 6.3 Create tests/e2e/test-data/sample-configs/ for testing
+- [x] 6.1 Create tests/e2e/README.md with documentation
+- [x] 6.2 Create tests/e2e/test-data/sample-project/ for testing
+- [x] 6.3 Create tests/e2e/test-data/sample-configs/ for testing
 - [ ] 6.4 Set up Docker containers for real MCP servers
 - [ ] 6.5 Configure CI pipeline for e2e tests
 - [ ] 6.6 Set up e2e test reporting
