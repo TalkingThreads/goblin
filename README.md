@@ -49,7 +49,7 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
   - **Activity Logs**: Real gateway activity logs with level indicators (info, warn, error, debug)
   - All panels update automatically on registry change events
   - Launch with `goblin start --tui` command
-- **Comprehensive Testing**: 565 tests covering core functionality
+- **Comprehensive Testing**: 520 tests covering core functionality
   - Gateway registry, router, subscription manager tests
   - Transport pool and connection management tests
   - Config loader and schema validation tests
@@ -62,13 +62,14 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
   - Transport tests with 90 tests for basic, stdio, http, and sse transport behavior
   - Hot-reload tests with 64 tests for dynamic updates and configuration
   - Virtual tools tests with 72 tests for catalog, describe, and search functionality
+  - Resource tests with 69 tests for basic, templates, and subscriptions
   - All tests pass with `bun test`
 - **Integration Tests Infrastructure**: Mock MCP server/client for end-to-end testing
   - `TestMcpServer`: Configurable mock server with tools, resources, and prompts
   - `TestMcpClient`: Mock client with assertion helpers (ToolResultAssertions)
   - `NetworkSimulator`: Latency, error rate, and packet drop simulation
   - `CleanupManager`: Test resource cleanup with priority support
-  - Ready for 185 integration tests across handshake, e2e, multi-server, transport, hot-reload, virtual-tools, and resources
+  - 520 integration tests across handshake, e2e, multi-server, transport, hot-reload, virtual-tools, and resources
 - **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints  
 - **Gateway Server**: Core MCP server implementation with unified tool catalog
 - **Intelligent Router**: Request routing with namespacing (`server_tool`) and timeout enforcement
