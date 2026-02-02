@@ -61,7 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Multi-Server Tests**: 71 tests for aggregation, routing, and lifecycle
   - **Transport Tests**: 90 tests for basic, stdio, http, and sse transport behavior
   - **Hot-Reload Tests**: 64 tests for dynamic updates, server lifecycle, and configuration
-  - Total: 379 integration tests passing
+  - **Virtual Tools Tests**: 72 tests for catalog, describe, and search functionality
+  - Total: 451 integration tests passing
   - Support for `notifications/tools/list_changed` propagation
   - Standard MCP error codes and messages
 - **Development Tooling**: Complete development environment
