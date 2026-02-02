@@ -218,6 +218,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented `CleanupManager` for test resource cleanup
   - Added infrastructure verification tests (14 tests, all passing)
   - Total: 128 tests passing
+- **Performance Test Infrastructure**: Comprehensive performance testing framework with 133 tests
+  - **Load Tests** (`tests/performance/load/`): Concurrent clients, sustained load, ramp-up behavior (30 tests)
+  - **Memory Tests** (`tests/performance/memory/`): Stability monitoring, leak detection, long-running stability (25 tests)
+  - **Latency Tests** (`tests/performance/latency/`): p50/p95/p99 target verification, percentiles (25 tests)
+  - **Throughput Tests** (`tests/performance/throughput/`): Capacity and saturation point detection (25 tests)
+  - **Baseline Framework** (`tests/performance/baseline/`): Regression detection, trend analysis, baseline storage (28 tests)
+  - **Shared Utilities** (`tests/performance/shared/`): Load generator, memory monitor, latency measurer, throughput tester, baseline manager
+  - **CI Integration**: `.github/workflows/performance-tests.yml` for automated nightly performance regression detection
 
 ### Changed
 - **Build Configuration**: Updated build targets for Node.js compatibility

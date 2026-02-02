@@ -24,6 +24,12 @@
     "test:smoke:health": "bun test tests/smoke/health --reporter=junit --reporter-outfile=test-results/smoke/health.xml",
     "test:smoke:discovery": "bun test tests/smoke/discovery --reporter=junit --reporter-outfile=test-results/smoke/discovery.xml",
     "smoke": "bun run tests/smoke/run-smoke-tests.ts",
+    "perf": "bun run tests/performance/run-performance-tests.ts",
+    "perf:load": "bun test tests/performance/load",
+    "perf:memory": "bun test tests/performance/memory",
+    "perf:latency": "bun test tests/performance/latency",
+    "perf:throughput": "bun test tests/performance/throughput",
+    "perf:baseline": "bun test tests/performance/baseline",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

@@ -72,6 +72,15 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
   - Shared utilities: process-manager, output-capture, http-client, test-config
   - CI pipeline integration: .github/workflows/smoke-tests.yml
   - Run with `bun run smoke` (completes in under 60 seconds)
+- **Performance Tests**: Comprehensive performance testing infrastructure
+  - Load tests: concurrent clients (100, 250, 500), sustained load (1h, 8h), ramp-up behavior
+  - Memory tests: stability monitoring, leak detection during extended operations
+  - Latency tests: p50 (<50ms), p95 (<100ms), p99 (<200ms) target verification
+  - Throughput tests: capacity determination, saturation point identification
+  - Baseline framework: persistent baselines, regression detection, trend analysis
+  - Shared utilities: load-generator, memory-monitor, latency-measurer, throughput-tester, baseline-manager
+  - CI pipeline: nightly runs with GitHub Actions workflow
+  - Run with `bun run perf` (baseline comparison included)
 - **Integration Tests Infrastructure**: Mock MCP server/client for end-to-end testing
   - `TestMcpServer`: Configurable mock server with tools, resources, and prompts
   - `TestMcpClient`: Mock client with assertion helpers (ToolResultAssertions)
