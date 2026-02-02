@@ -4,20 +4,20 @@ This document outlines all implementation tasks for adding comprehensive end-to-
 
 ## 1. Test Infrastructure Setup
 
-- [ ] 1.1 Create tests/e2e directory structure
-- [ ] 1.2 Create tests/e2e/shared/ directory for shared utilities
-- [ ] 1.3 Create tests/fixtures/real-servers/ for MCP server installations
-- [ ] 1.4 Create tests/fixtures/projects/ for sample projects
-- [ ] 1.5 Create tests/e2e/shared/agent-simulator.ts for workflow simulation
-- [ ] 1.6 Create tests/e2e/shared/real-server.ts for real server management
-- [ ] 1.7 Create tests/e2e/shared/cli-tester.ts for CLI testing
-- [ ] 1.8 Create tests/e2e/shared/tui-tester.ts for TUI testing
-- [ ] 1.9 Create tests/e2e/shared/error-injector.ts for error scenarios
-- [ ] 1.10 Create tests/e2e/shared/environment.ts for test isolation
-- [ ] 1.11 Create tests/e2e/shared/fixtures.ts for test data
-- [ ] 1.12 Update vitest.config.ts with e2e test settings
-- [ ] 1.13 Configure e2e test timeouts (30s per test, 10min per suite)
-- [ ] 1.14 Document test environment requirements
+- [x] 1.1 Create tests/e2e directory structure
+- [x] 1.2 Create tests/e2e/shared/ directory for shared utilities
+- [x] 1.3 Create tests/fixtures/real-servers/ for MCP server installations
+- [x] 1.4 Create tests/fixtures/projects/ for sample projects
+- [x] 1.5 Create tests/e2e/shared/agent-simulator.ts for workflow simulation
+- [x] 1.6 Create tests/e2e/shared/real-server.ts for real server management
+- [x] 1.7 Create tests/e2e/shared/cli-tester.ts for CLI testing
+- [x] 1.8 Create tests/e2e/shared/tui-tester.ts for TUI testing
+- [x] 1.9 Create tests/e2e/shared/error-injector.ts for error scenarios
+- [x] 1.10 Create tests/e2e/shared/environment.ts for test isolation
+- [x] 1.11 Create tests/e2e/shared/fixtures.ts for test data
+- [x] 1.12 Update vitest.config.ts with e2e test settings
+- [x] 1.13 Configure e2e test timeouts (30s per test, 10min per suite)
+- [x] 1.14 Document test environment requirements
 
 ## 2. Agent Workflow E2E Tests
 
