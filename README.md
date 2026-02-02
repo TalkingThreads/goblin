@@ -64,6 +64,12 @@ Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-
   - Virtual tools tests with 72 tests for catalog, describe, and search functionality
   - Resource tests with 69 tests for basic, templates, and subscriptions
   - All tests pass with `bun test`
+- **Smoke Tests**: Fast-running smoke tests for CI and pre-commit validation
+  - CLI command tests (help, version, start, stop, status, servers)
+  - Health endpoint tests (/health, /ready, /metrics)
+  - Tool discovery tests (listing, filtering, invocation)
+  - Gateway startup/shutdown tests
+  - Run with `bun run smoke` (completes in under 60 seconds)
 - **Integration Tests Infrastructure**: Mock MCP server/client for end-to-end testing
   - `TestMcpServer`: Configurable mock server with tools, resources, and prompts
   - `TestMcpClient`: Mock client with assertion helpers (ToolResultAssertions)
@@ -166,6 +172,24 @@ goblin health --json            # JSON output
 bun test
 # Expected: 81 passing tests
 ```
+
+### Smoke Tests
+
+```bash
+# Run smoke tests (fast validation for CI/pre-commit)
+bun run smoke
+
+# Run specific smoke test categories
+bun run test:smoke:cli       # CLI command tests
+bun run test:smoke:health    # Health endpoint tests
+bun run test:smoke:discovery # Tool discovery tests
+```
+
+Smoke tests complete in under 60 seconds and validate core functionality:
+- CLI commands (help, version, start, stop, status, servers)
+- Health endpoints (/health, /ready, /metrics)
+- Tool discovery and listing
+- Gateway startup and shutdown
 
 ### Building for Production
 

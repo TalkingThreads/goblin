@@ -18,6 +18,12 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "test": "bun test",
+    "test:smoke": "bun test tests/smoke",
+    "test:smoke:cli": "bun test tests/smoke/cli",
+    "test:smoke:startup": "bun test tests/smoke/startup",
+    "test:smoke:health": "bun test tests/smoke/health",
+    "test:smoke:discovery": "bun test tests/smoke/discovery",
+    "smoke": "bun run tests/smoke/run-smoke-tests.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
