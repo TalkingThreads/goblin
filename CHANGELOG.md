@@ -8,21 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2026-02-02
 
 ### Added
-- **Smoke Tests**: Complete smoke test suite for CI validation and pre-commit hooks
-  - CLI command tests (help, version, start, stop, status, servers) - 33 tests
-  - Health endpoint tests (/health, /ready, /metrics, probes, auth) - 32 tests
-  - Tool discovery tests (listing, filtering, invocation, connection, schema, availability) - 32 tests
-  - Gateway startup/shutdown tests (clean, graceful, forced, restart, errors, cleanup) - 27 tests
-  - Shared utilities for process management, output capture, HTTP testing, and configuration
-  - Smoke test runner script with `bun run smoke` command
+- **Complete Smoke Test Suite** (148 tests across 23 test files):
+  - CLI command tests: help, version, start, stop, status, servers (6 files, 33 tests)
+  - Health endpoint tests: /health, /ready, /metrics, probes, auth (5 files, 32 tests)
+  - Tool discovery tests: listing, filtering, invocation, connection, schema, availability (6 files, 32 tests)
+  - Gateway startup/shutdown tests: clean, graceful, forced, restart, errors, cleanup (6 files, 27 tests)
   - All tests complete in under 60 seconds
-- Package.json scripts for smoke test categories (test:smoke, test:smoke:cli, test:smoke:health, test:smoke:discovery)
-- Smoke test configuration file (smoke.config.ts) with timeout and parallel execution settings
-- CI pipeline integration (.github/workflows/smoke-tests.yml)
-- JUnit XML and JSON test reporting
-- Authentication middleware for HTTP gateway with API key support
-- Documentation at `tests/smoke/README.md`
-- All 134 smoke test tasks complete
+- **Smoke Test Infrastructure**:
+  - `tests/smoke/run-smoke-tests.ts` - Parallel test runner with JUnit/XML reporting
+  - `tests/smoke/smoke.config.ts` - Configuration for timeouts and parallel execution
+  - `tests/smoke/README.md` - Complete documentation with usage examples
+- **CI Pipeline Integration**:
+  - `.github/workflows/smoke-tests.yml` - GitHub Actions workflow for automated testing
+  - Pre-commit hook support for local validation
+- **Core Infrastructure Enhancements**:
+  - Config loading with custom path support
+  - ConfigWatcher with custom path support
+  - HTTP gateway authentication middleware with API key support
+  - Process manager with robust startup detection
 
 ## [0.1.0] - 2026-01-30
 
