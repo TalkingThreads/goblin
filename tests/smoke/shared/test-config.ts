@@ -88,7 +88,7 @@ export function createTestConfig(
       enabled: true,
     })),
     gateway: {
-      port: 0,
+      port: 3000,
       host: "127.0.0.1",
     },
     auth: {

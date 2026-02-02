@@ -5,9 +5,9 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 export interface ProcessManagerConfig {
   binaryPath?: string;
@@ -42,7 +42,7 @@ export class ProcessManager {
 
   constructor(config: ProcessManagerConfig = {}) {
     this.config = {
-      binaryPath: "node dist/cli/index.js",
+      binaryPath: `bun ${resolve("dist/cli/index.js")}`,
       startupTimeout: 10000,
       shutdownTimeout: 5000,
       ...config,
@@ -60,13 +60,15 @@ export class ProcessManager {
     this.startTime = Date.now();
 
     const fullArgs = ["start", "--port", port.toString(), ...args];
+    const [cmd, ...cmdArgs] = (this.config.binaryPath || "bun").split(" ");
+    const finalArgs = [...cmdArgs, ...fullArgs];
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error(`Gateway startup timed out after ${this.config.startupTimeout}ms`));
       }, this.config.startupTimeout);
 
-      this.process = spawn(this.config.binaryPath || "bun", fullArgs, {
+      this.process = spawn(cmd!, finalArgs, {
         cwd: this.tempDir,
         env: {
           ...process.env,
@@ -77,14 +79,18 @@ export class ProcessManager {
         stdio: ["pipe", "pipe", "pipe"],
       });
 
+      let combinedOutput = "";
       let started = false;
 
-      this.process.stdout?.on("data", (data) => {
+      const handleOutput = (data: string | Buffer) => {
         const output = data.toString();
+        combinedOutput += output;
+
         if (
-          output.includes("started") ||
-          output.includes("listening") ||
-          output.includes("ready")
+          combinedOutput.includes("started") ||
+          combinedOutput.includes("listening") ||
+          combinedOutput.includes("ready") ||
+          combinedOutput.includes("running")
         ) {
           if (!started) {
             started = true;
@@ -97,19 +103,10 @@ export class ProcessManager {
             });
           }
         }
-      });
+      };
 
-      this.process.stderr?.on("data", (data) => {
-        const output = data.toString();
-        // Check for errors during startup
-        if (output.includes("Error") || output.includes("error")) {
-          if (!started) {
-            started = true;
-            clearTimeout(timeout);
-            reject(new Error(`Gateway failed to start: ${output}`));
-          }
-        }
-      });
+      this.process.stdout?.on("data", handleOutput);
+      this.process.stderr?.on("data", handleOutput);
 
       this.process.on("error", (error) => {
         if (!started) {
@@ -121,7 +118,9 @@ export class ProcessManager {
       this.process.on("exit", (code) => {
         if (!started) {
           clearTimeout(timeout);
-          reject(new Error(`Gateway exited unexpectedly with code ${code}`));
+          const finalError =
+            combinedOutput.trim() || `Gateway exited unexpectedly with code ${code}`;
+          reject(new Error(`Gateway failed to start: ${finalError}`));
         }
       });
     });

@@ -24,7 +24,7 @@ async function runCli(args: string[], timeout: number = 10000): Promise<CliResul
     }, timeout);
 
     const childProcess = spawn("node", ["dist/cli/index.js", ...args], {
-      env: { ...process.env, NO_COLOR: "1", GOBLIN_LOG_LEVEL: "error" },
+      env: { ...process.env, NO_COLOR: "1", LOG_LEVEL: "error", GOBLIN_LOG_LEVEL: "error" },
     });
 
     let stdout = "";
@@ -98,7 +98,7 @@ describe("CLI Start Command", () => {
       const result = await runCli(["start", "--config", "/nonexistent/path/config.json"]);
 
       expect(result.exitCode).not.toBe(0);
-      expect(result.stderr.length).toBeGreaterThan(0);
+      expect(result.stdout + result.stderr).toMatch(/error|failed/i);
     });
   });
 

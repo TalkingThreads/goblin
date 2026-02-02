@@ -70,37 +70,37 @@ This document tracks all implementation tasks for CLI smoke testing infrastructu
 - [x] 3.1.5 Test gateway initializes within timeout
 
 ### 3.2 Graceful Shutdown Tests
-- [ ] 3.2.1 Create tests/smoke/startup/graceful.test.ts
-- [ ] 3.2.2 Test shutdown on SIGTERM
-- [ ] 3.2.3 Test shutdown on SIGINT
-- [ ] 3.2.4 Test shutdown with active connections
-- [ ] 3.2.5 Test shutdown waits for in-flight requests
+- [x] 3.2.1 Create tests/smoke/startup/graceful.test.ts
+- [x] 3.2.2 Test shutdown on SIGTERM
+- [x] 3.2.3 Test shutdown on SIGINT
+- [x] 3.2.4 Test shutdown with active connections
+- [x] 3.2.5 Test shutdown waits for in-flight requests
 
 ### 3.3 Forced Shutdown Tests
-- [ ] 3.3.1 Create tests/smoke/startup/forced.test.ts
-- [ ] 3.3.2 Test force shutdown after timeout
-- [ ] 3.3.3 Test force shutdown with active requests
-- [ ] 3.3.4 Test force shutdown cleanup
+- [x] 3.3.1 Create tests/smoke/startup/forced.test.ts
+- [x] 3.3.2 Test force shutdown after timeout
+- [x] 3.3.3 Test force shutdown with active requests
+- [x] 3.3.4 Test force shutdown cleanup
 
 ### 3.4 Restart Tests
-- [ ] 3.4.1 Create tests/smoke/startup/restart.test.ts
-- [ ] 3.4.2 Test restart preserves connection state
-- [ ] 3.4.3 Test restart with config reload
-- [ ] 3.4.4 Test restart without data loss
+- [x] 3.4.1 Create tests/smoke/startup/restart.test.ts
+- [x] 3.4.2 Test restart preserves connection state
+- [x] 3.4.3 Test restart with config reload
+- [x] 3.4.4 Test restart without data loss
 
 ### 3.5 Startup Error Tests
-- [ ] 3.5.1 Create tests/smoke/startup/errors.test.ts
-- [ ] 3.5.2 Test port already in use error
-- [ ] 3.5.3 Test invalid configuration file error
-- [ ] 3.5.4 Test missing required dependencies error
-- [ ] 3.5.5 Test error messages are helpful
+- [x] 3.5.1 Create tests/smoke/startup/errors.test.ts
+- [x] 3.5.2 Test port already in use error
+- [x] 3.5.3 Test invalid configuration file error
+- [x] 3.5.4 Test missing required dependencies error
+- [x] 3.5.5 Test error messages are helpful
 
 ### 3.6 Resource Cleanup Tests
-- [ ] 3.6.1 Create tests/smoke/startup/cleanup.test.ts
-- [ ] 3.6.2 Test file descriptors closed on shutdown
-- [ ] 3.6.3 Test backend connections closed on shutdown
-- [ ] 3.6.4 Test temporary files cleaned on shutdown
-- [ ] 3.6.5 Test memory cleanup on shutdown
+- [x] 3.6.1 Create tests/smoke/startup/cleanup.test.ts
+- [x] 3.6.2 Test file descriptors closed on shutdown
+- [x] 3.6.3 Test backend connections closed on shutdown
+- [x] 3.6.4 Test temporary files cleaned on shutdown
+- [x] 3.6.5 Test memory cleanup on shutdown
 
 ## 4. Health Endpoint Smoke Tests
 
@@ -126,18 +126,18 @@ This document tracks all implementation tasks for CLI smoke testing infrastructu
 - [x] 4.3.5 Test /metrics endpoint includes connection metrics
 
 ### 4.4 Kubernetes Probe Tests
-- [ ] 4.4.1 Create tests/smoke/health/probes.test.ts
-- [ ] 4.4.2 Test health endpoint suitable for liveness probe
-- [ ] 4.4.3 Test ready endpoint suitable for readiness probe
-- [ ] 4.4.4 Test endpoints handle probe frequency
-- [ ] 4.4.5 Test endpoints respond quickly under load
+- [x] 4.4.1 Create tests/smoke/health/probes.test.ts
+- [x] 4.4.2 Test health endpoint suitable for liveness probe
+- [x] 4.4.3 Test ready endpoint suitable for readiness probe
+- [x] 4.4.4 Test endpoints handle probe frequency
+- [x] 4.4.5 Test endpoints respond quickly under load
 
 ### 4.5 Authentication Tests
-- [ ] 4.5.1 Create tests/smoke/health/auth.test.ts
-- [ ] 4.5.2 Test health endpoint accessible without auth
-- [ ] 4.5.3 Test metrics endpoint requires auth when configured
-- [ ] 4.5.4 Test health endpoints bypass rate limiting
-- [ ] 4.5.5 Test invalid token returns 401
+- [x] 4.5.1 Create tests/smoke/health/auth.test.ts
+- [x] 4.5.2 Test health endpoint accessible without auth
+- [x] 4.5.3 Test metrics endpoint requires auth when configured
+- [x] 4.5.4 Test health endpoints bypass rate limiting
+- [x] 4.5.5 Test invalid token returns 401
 
 ## 5. Tool Discovery Smoke Tests
 
@@ -149,39 +149,39 @@ This document tracks all implementation tasks for CLI smoke testing infrastructu
 - [x] 5.1.5 Test tool listing includes metadata
 
 ### 5.2 Tool Filtering Tests
-- [ ] 5.2.1 Create tests/smoke/discovery/filtering.test.ts
-- [ ] 5.2.2 Test filter tools by prefix
-- [ ] 5.2.3 Test filter tools by backend
-- [ ] 5.2.4 Test empty filter returns all tools
-- [ ] 5.2.5 Test filter combination
+- [x] 5.2.1 Create tests/smoke/discovery/filtering.test.ts
+- [x] 5.2.2 Test filter tools by prefix
+- [x] 5.2.3 Test filter tools by backend
+- [x] 5.2.4 Test empty filter returns all tools
+- [x] 5.2.5 Test filter combination
 
 ### 5.3 Tool Invocation Tests
-- [ ] 5.3.1 Create tests/smoke/discovery/invocation.test.ts
-- [ ] 5.3.2 Test tool invoked on correct backend
-- [ ] 5.3.3 Test tool invocation with arguments
-- [ ] 5.3.4 Test tool invocation result format
-- [ ] 5.3.5 Test tool invocation error handling
+- [x] 5.3.1 Create tests/smoke/discovery/invocation.test.ts
+- [x] 5.3.2 Test tool invoked on correct backend
+- [x] 5.3.3 Test tool invocation with arguments
+- [x] 5.3.4 Test tool invocation result format
+- [x] 5.3.5 Test tool invocation error handling
 
 ### 5.4 Backend Connection Tests
-- [ ] 5.4.1 Create tests/smoke/discovery/connection.test.ts
-- [ ] 5.4.2 Test new tools appear after backend connects
-- [ ] 5.4.3 Test tools removed after backend disconnects
-- [ ] 5.4.4 Test tool list updates are consistent
-- [ ] 5.4.5 Test rapid backend connect/disconnect
+- [x] 5.4.1 Create tests/smoke/discovery/connection.test.ts
+- [x] 5.4.2 Test new tools appear after backend connects
+- [x] 5.4.3 Test tools removed after backend disconnects
+- [x] 5.4.4 Test tool list updates are consistent
+- [x] 5.4.5 Test rapid backend connect/disconnect
 
 ### 5.5 Tool Schema Tests
-- [ ] 5.5.1 Create tests/smoke/discovery/schema.test.ts
-- [ ] 5.5.2 Test valid tool schemas accepted
-- [ ] 5.5.3 Test invalid tool schema rejected
-- [ ] 5.5.4 Test tool schema includes all required fields
-- [ ] 5.5.5 Test tool schema validation errors
+- [x] 5.5.1 Create tests/smoke/discovery/schema.test.ts
+- [x] 5.5.2 Test valid tool schemas accepted
+- [x] 5.5.3 Test invalid tool schema rejected
+- [x] 5.5.4 Test tool schema includes all required fields
+- [x] 5.5.5 Test tool schema validation errors
 
 ### 5.6 Tool Availability Tests
-- [ ] 5.6.1 Create tests/smoke/discovery/availability.test.ts
-- [ ] 5.6.2 Test tool marked available when backend connected
-- [ ] 5.6.3 Test tool marked unavailable when backend disconnected
-- [ ] 5.6.4 Test tool availability updates in real-time
-- [ ] 5.6.5 Test unavailable tool returns appropriate error
+- [x] 5.6.1 Create tests/smoke/discovery/availability.test.ts
+- [x] 5.6.2 Test tool marked available when backend connected
+- [x] 5.6.3 Test tool marked unavailable when backend disconnected
+- [x] 5.6.4 Test tool availability updates in real-time
+- [x] 5.6.5 Test unavailable tool returns appropriate error
 
 ## 6. Smoke Test Integration
 

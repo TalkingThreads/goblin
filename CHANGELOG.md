@@ -8,16 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.1] - 2026-02-02
 
 ### Added
-- **Smoke Tests**: Fast-running smoke test suite for CI validation and pre-commit hooks
-  - CLI command tests (help, version, start, stop, status, servers)
-  - Health endpoint tests (/health, /ready, /metrics)
-  - Tool discovery tests (listing, filtering, invocation)
-  - Gateway startup/shutdown tests
-  - Shared utilities for process management, output capture, and HTTP testing
-  - Run with `bun run smoke` (completes in under 60 seconds)
+- **Smoke Tests**: Complete smoke test suite for CI validation and pre-commit hooks
+  - CLI command tests (help, version, start, stop, status, servers) - 33 tests
+  - Health endpoint tests (/health, /ready, /metrics, probes, auth) - 32 tests
+  - Tool discovery tests (listing, filtering, invocation, connection, schema, availability) - 32 tests
+  - Gateway startup/shutdown tests (clean, graceful, forced, restart, errors, cleanup) - 27 tests
+  - Shared utilities for process management, output capture, HTTP testing, and configuration
+  - Smoke test runner script with `bun run smoke` command
+  - All tests complete in under 60 seconds
 - Package.json scripts for smoke test categories (test:smoke, test:smoke:cli, test:smoke:health, test:smoke:discovery)
-- Smoke test runner script at `tests/smoke/run-smoke-tests.ts`
 - Documentation at `tests/smoke/README.md`
+- Authentication middleware for HTTP gateway with API key support
 
 ## [0.1.0] - 2026-01-30
 

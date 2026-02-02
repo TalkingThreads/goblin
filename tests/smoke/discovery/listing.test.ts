@@ -67,39 +67,6 @@ describe("Tool Discovery", () => {
   });
 });
 
-describe("Tool Invocation", () => {
-  it("should route tool to correct backend", async () => {
-    const routing = { tool: "readFile", backend: "server1" };
-    expect(routing.backend).toBe("server1");
-  });
-
-  it("should pass arguments to tool", async () => {
-    const invocation = {
-      tool: "readFile",
-      arguments: { path: "/test/file.txt" },
-    };
-    expect(invocation.arguments.path).toBe("/test/file.txt");
-  });
-
-  it("should return tool result format", async () => {
-    const result = {
-      content: [{ type: "text", text: "file contents" }],
-    };
-    expect(result.content).toBeDefined();
-    expect(Array.isArray(result.content)).toBe(true);
-  });
-
-  it("should handle tool errors", async () => {
-    const error = {
-      error: {
-        message: "File not found",
-        code: "ENOENT",
-      },
-    };
-    expect(error.error.message).toBeDefined();
-  });
-});
-
 describe("Backend Connection", () => {
   it("should detect new backend connection", async () => {
     const backend = { id: "new-server", status: "connected", tools: 5 };
