@@ -5,6 +5,7 @@ import { logsCommand } from "./commands/logs.js";
 import { serversCommand } from "./commands/servers.js";
 import { startGateway } from "./commands/start.jsx";
 import { statusCommand } from "./commands/status.js";
+import { stopCommand } from "./commands/stop.js";
 import { toolsCommand } from "./commands/tools.js";
 
 interface StartOptions {
@@ -13,9 +14,29 @@ interface StartOptions {
   config?: string;
 }
 
+const VERSION = "0.1.0";
+
 const program = new Command();
 
-program.name("goblin").description("Goblin MCP Gateway CLI").version("0.1.0");
+program
+  .name("goblin")
+  .description("Goblin MCP Gateway CLI")
+  .option("-v, --version", "output version number")
+  .action(() => {
+    console.log(VERSION);
+  });
+
+program
+  .command("version")
+  .description("Show version information")
+  .option("--json", "Output in JSON format")
+  .action(async (options: { json?: boolean }) => {
+    if (options.json) {
+      console.log(JSON.stringify({ version: VERSION, exitCode: 0 }));
+    } else {
+      console.log(VERSION);
+    }
+  });
 
 program
   .command("start")
@@ -65,6 +86,7 @@ config
   .command("validate")
   .description("Validate config file")
   .option("--path <path>", "Path to config file")
+  .option("--config <path>", "Path to config file (alias for --path)")
   .option("--json", "Output in JSON format")
   .action(async (options) => {
     await validateConfigCommand(options);
@@ -74,6 +96,7 @@ config
   .command("show")
   .description("Display current configuration")
   .option("--path <path>", "Path to config file")
+  .option("--config <path>", "Path to config file (alias for --path)")
   .option("--json", "Output in JSON format")
   .action(async (options) => {
     await showConfigCommand(options);
@@ -97,6 +120,21 @@ program
   .option("--url <url>", "Gateway URL", "http://localhost:3000")
   .action(async (options: { json?: boolean; url?: string }) => {
     await healthCommand(options);
+  });
+
+program
+  .command("stop")
+  .description("Stop the running Gateway")
+  .option("--url <url>", "Gateway URL", "http://localhost:3000")
+  .action(async (options: { url?: string }) => {
+    await stopCommand(options);
+  });
+
+program
+  .command("help")
+  .description("Show help information")
+  .action(() => {
+    program.help();
   });
 
 program.parse();

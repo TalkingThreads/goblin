@@ -4,22 +4,44 @@
  * Tests that latency meets defined targets.
  */
 
-import { after, before, describe, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { type LatencyConfig, latencyMeasurer } from "../shared/latency-measurer.js";
-import { loadConfig } from "../shared/test-config.js";
+import { isFastMode, loadConfig } from "../shared/test-config.js";
+import {
+  checkServerHealth,
+  getServerUrl,
+  startTestServer,
+  stopTestServer,
+} from "../shared/test-server.js";
 
 const config = loadConfig();
 
 async function makeRequest(): Promise<void> {
-  await fetch(`${config.gatewayUrl}/health`);
+  const gatewayUrl = getServerUrl() || config.gatewayUrl;
+  await fetch(`${gatewayUrl}/health`);
 }
 
 describe("Performance Latency Tests - Target Measurements", () => {
+  beforeAll(async () => {
+    const health = await checkServerHealth(config.gatewayUrl);
+    if (!health.healthy) {
+      try {
+        await startTestServer({ gatewayUrl: config.gatewayUrl });
+      } catch {
+        console.log("Skipping latency tests - server not available");
+      }
+    }
+  }, 60000);
+
+  afterAll(async () => {
+    await stopTestServer();
+  }, 10000);
+
   describe("p50 Latency Target (<50ms)", () => {
     it("should maintain p50 latency under 50ms", async () => {
       const latConfig: LatencyConfig = {
-        warmupRequests: 10,
-        samples: 100,
+        warmupRequests: isFastMode() ? 3 : 10,
+        samples: isFastMode() ? 20 : 100,
       };
 
       const result = await latencyMeasurer.measureLatency(makeRequest, latConfig);
@@ -30,17 +52,21 @@ describe("Performance Latency Tests - Target Measurements", () => {
         samples: result.samples,
       });
 
-      console.assert(result.p50 <= 50, `p50 latency ${result.p50.toFixed(2)}ms should be <= 50ms`);
+      expect(result.p50).toBeLessThanOrEqual(
+        50,
+        `p50 latency ${result.p50.toFixed(2)}ms should be <= 50ms`,
+      );
     });
 
     it("should consistently meet p50 target across multiple runs", async () => {
       const latConfig: LatencyConfig = {
-        warmupRequests: 10,
-        samples: 50,
+        warmupRequests: isFastMode() ? 3 : 10,
+        samples: isFastMode() ? 10 : 50,
       };
 
       const results = [];
-      for (let i = 0; i < 3; i++) {
+      const runs = isFastMode() ? 2 : 3;
+      for (let i = 0; i < runs; i++) {
         const result = await latencyMeasurer.measureLatency(makeRequest, latConfig);
         results.push(result.p50);
       }
@@ -54,8 +80,8 @@ describe("Performance Latency Tests - Target Measurements", () => {
         max: maxP50.toFixed(2) + "ms",
       });
 
-      console.assert(
-        maxP50 <= 75,
+      expect(maxP50).toBeLessThanOrEqual(
+        75,
         `Max p50 ${maxP50.toFixed(2)}ms should be <= 75ms (with margin)`,
       );
     });
@@ -64,8 +90,8 @@ describe("Performance Latency Tests - Target Measurements", () => {
   describe("p95 Latency Target (<100ms)", () => {
     it("should maintain p95 latency under 100ms", async () => {
       const latConfig: LatencyConfig = {
-        warmupRequests: 10,
-        samples: 100,
+        warmupRequests: isFastMode() ? 3 : 10,
+        samples: isFastMode() ? 20 : 100,
       };
 
       const result = await latencyMeasurer.measureLatency(makeRequest, latConfig);
@@ -76,8 +102,8 @@ describe("Performance Latency Tests - Target Measurements", () => {
         samples: result.samples,
       });
 
-      console.assert(
-        result.p95 <= 100,
+      expect(result.p95).toBeLessThanOrEqual(
+        100,
         `p95 latency ${result.p95.toFixed(2)}ms should be <= 100ms`,
       );
     });
@@ -86,8 +112,8 @@ describe("Performance Latency Tests - Target Measurements", () => {
   describe("p99 Latency Target (<200ms)", () => {
     it("should maintain p99 latency under 200ms", async () => {
       const latConfig: LatencyConfig = {
-        warmupRequests: 10,
-        samples: 200,
+        warmupRequests: isFastMode() ? 3 : 10,
+        samples: isFastMode() ? 50 : 200,
       };
 
       const result = await latencyMeasurer.measureLatency(makeRequest, latConfig);
@@ -98,16 +124,16 @@ describe("Performance Latency Tests - Target Measurements", () => {
         samples: result.samples,
       });
 
-      console.assert(
-        result.p99 <= 200,
+      expect(result.p99).toBeLessThanOrEqual(
+        200,
         `p99 latency ${result.p99.toFixed(2)}ms should be <= 200ms`,
       );
     });
 
     it("should have minimal outliers beyond p99", async () => {
       const latConfig: LatencyConfig = {
-        warmupRequests: 10,
-        samples: 500,
+        warmupRequests: isFastMode() ? 3 : 10,
+        samples: isFastMode() ? 100 : 500,
       };
 
       const result = await latencyMeasurer.measureLatency(makeRequest, latConfig);
@@ -121,8 +147,8 @@ describe("Performance Latency Tests - Target Measurements", () => {
         outlierPercent: ((outliers / result.samples) * 100).toFixed(2) + "%",
       });
 
-      console.assert(
-        outliers <= result.samples * 0.02,
+      expect(outliers).toBeLessThanOrEqual(
+        result.samples * 0.02,
         `Outliers ${outliers} should be <= 2% of samples`,
       );
     });

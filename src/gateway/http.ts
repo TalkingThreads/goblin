@@ -26,6 +26,10 @@ const logger = createLogger("http-gateway");
 export class HttpGateway {
   public app: Hono;
   private sessions = new Map<string, { transport: SSEServerTransport; server: GatewayServer }>();
+  private server: ReturnType<typeof Bun.serve> | null = null;
+  private onShutdown: (() => void) | null = null;
+  private activeRequests = 0;
+  private shutdownPromise: Promise<void> | null = null;
 
   constructor(
     private registry: Registry,
@@ -35,6 +39,13 @@ export class HttpGateway {
     this.app = new Hono();
     this.setupMiddleware();
     this.setupRoutes();
+  }
+
+  /**
+   * Set shutdown callback
+   */
+  setShutdownCallback(callback: () => void): void {
+    this.onShutdown = callback;
   }
 
   private setupMiddleware(): void {
@@ -68,6 +79,20 @@ export class HttpGateway {
       return await next();
     });
 
+    // Request tracking middleware for graceful shutdown
+    this.app.use("*", async (c, next) => {
+      this.activeRequests++;
+      try {
+        await next();
+      } finally {
+        this.activeRequests--;
+        // Resolve shutdown promise if no more active requests
+        if (this.activeRequests === 0 && this.shutdownPromise) {
+          this.shutdownPromise = null;
+        }
+      }
+    });
+
     // Metrics middleware
     this.app.use("*", async (c, next) => {
       const start = performance.now();
@@ -92,6 +117,20 @@ export class HttpGateway {
   private setupRoutes(): void {
     // Health check
     this.app.get("/health", (c) => c.json({ status: "ok" }));
+
+    // Shutdown endpoint for graceful stop
+    this.app.post("/shutdown", async (c) => {
+      logger.info("Shutdown requested via API");
+
+      // Trigger graceful shutdown
+      setTimeout(() => {
+        if (this.onShutdown) {
+          this.onShutdown();
+        }
+      }, 100);
+
+      return c.json({ message: "Shutting down" });
+    });
 
     // Status endpoint for CLI
     this.app.get("/status", async (c) => {
@@ -272,10 +311,21 @@ export class HttpGateway {
 
     logger.info({ port, hostname }, "HTTP server startup initiated");
 
-    Bun.serve({
+    this.server = Bun.serve({
       fetch: this.app.fetch,
       port,
       hostname,
     });
+  }
+
+  /**
+   * Stop the HTTP server gracefully
+   */
+  async stop(): Promise<void> {
+    if (this.server) {
+      logger.info("Stopping HTTP server");
+      await this.server.stop(); // No argument = graceful, waits for in-flight requests
+      this.server = null;
+    }
   }
 }

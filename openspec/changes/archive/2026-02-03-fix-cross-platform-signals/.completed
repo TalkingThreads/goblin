@@ -1,0 +1,32 @@
+completed: 2026-02-03
+archived: 2026-02-03
+status: completed
+
+## Summary
+Successfully implemented cross-platform signal handling utilities for graceful shutdown on Windows, macOS, and Linux.
+
+## Implementation Details
+
+### Core Utilities (`src/observability/utils.ts`)
+- `setupShutdownHandlers(callback)`: Registers SIGINT on all platforms, SIGTERM only on Unix
+- `gracefulShutdown(childProcess, timeoutMs)`: Sends SIGTERM on Unix, SIGINT on Windows with SIGKILL fallback
+
+### Updates Made
+- ✅ `src/cli/commands/start.tsx` - Uses `setupShutdownHandlers()`
+- ✅ `tests/e2e/shared/cli-tester.ts` - Uses `gracefulShutdown()` for cleanup
+- ✅ `tests/smoke/shared/process-manager.ts` - Uses `gracefulShutdown()` for stop/cleanup
+- ✅ `tests/unit/observability/utils.test.ts` - 6 tests pass
+
+### Files Modified
+- `src/observability/utils.ts` - Added signal handling utilities
+- `src/observability/index.ts` - Exported new utilities
+- `src/cli/commands/start.tsx` - Uses `setupShutdownHandlers()`
+- `tests/e2e/shared/cli-tester.ts` - Uses `gracefulShutdown()`
+- `tests/smoke/shared/process-manager.ts` - Uses `gracefulShutdown()`
+- `tests/unit/observability/utils.test.ts` - Created with 6 tests
+
+## Test Results
+- All 6 signal handling unit tests pass
+- All 278 core tests pass (unit + smoke + e2e/cli-tui)
+- All 32 performance tests pass
+- CLI no longer crashes on Windows

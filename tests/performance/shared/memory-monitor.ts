@@ -35,12 +35,25 @@ export interface MemoryConfig {
   intervalMs: number;
   sampleCount?: number;
   warmupSamples?: number;
+  onProgress?: (snapshot: MemorySnapshot, sampleNumber: number, totalSamples: number) => void;
 }
 
 export class MemoryMonitor {
   private snapshots: MemorySnapshot[] = [];
   private intervalId: NodeJS.Timeout | null = null;
   private isMonitoring = false;
+
+  private createSnapshot(): MemorySnapshot {
+    const usage = process.memoryUsage();
+    return {
+      timestamp: Date.now(),
+      heapUsed: usage.heapUsed,
+      heapTotal: usage.heapTotal,
+      external: usage.external,
+      arrayBuffers: usage.arrayBuffers || 0,
+      rss: usage.rss,
+    };
+  }
 
   async monitor(duration: number, config: MemoryConfig): Promise<MemoryResult> {
     this.snapshots = [];
@@ -50,28 +63,21 @@ export class MemoryMonitor {
     const maxSamples = config.sampleCount || Math.floor(duration / intervalMs);
     const warmupSamples = config.warmupSamples || 3;
 
-    const takeSnapshot = (): MemorySnapshot => {
-      const usage = process.memoryUsage();
-      return {
-        timestamp: Date.now(),
-        heapUsed: usage.heapUsed,
-        heapTotal: usage.heapTotal,
-        external: usage.external,
-        arrayBuffers: usage.arrayBuffers || 0,
-        rss: usage.rss,
-      };
-    };
-
     return new Promise((resolve) => {
       let sampleCount = 0;
       let peakSnapshot = this.getEmptySnapshot();
+      const onProgress = config.onProgress;
 
       const collectMemory = () => {
         if (!this.isMonitoring) return;
 
-        const snapshot = takeSnapshot();
+        const snapshot = this.createSnapshot();
         this.snapshots.push(snapshot);
         sampleCount++;
+
+        if (onProgress) {
+          onProgress(snapshot, sampleCount, maxSamples);
+        }
 
         if (snapshot.heapUsed > peakSnapshot.heapUsed) {
           peakSnapshot = snapshot;
@@ -92,12 +98,17 @@ export class MemoryMonitor {
   startContinuousMonitor(config: MemoryConfig): void {
     this.snapshots = [];
     this.isMonitoring = true;
+    const onProgress = config.onProgress;
 
     const collectMemory = () => {
       if (!this.isMonitoring) return;
 
-      const snapshot = this.takeSnapshot();
+      const snapshot = this.createSnapshot();
       this.snapshots.push(snapshot);
+
+      if (onProgress) {
+        onProgress(snapshot, this.snapshots.length, Infinity);
+      }
 
       this.intervalId = setTimeout(collectMemory, config.intervalMs);
     };
@@ -114,15 +125,7 @@ export class MemoryMonitor {
   }
 
   takeSnapshot(): MemorySnapshot {
-    const usage = process.memoryUsage();
-    return {
-      timestamp: Date.now(),
-      heapUsed: usage.heapUsed,
-      heapTotal: usage.heapTotal,
-      external: usage.external,
-      arrayBuffers: usage.arrayBuffers || 0,
-      rss: usage.rss,
-    };
+    return this.createSnapshot();
   }
 
   getCurrentUsage(): MemorySnapshot {

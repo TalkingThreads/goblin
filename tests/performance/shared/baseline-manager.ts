@@ -4,7 +4,8 @@
  * Manages performance baselines for regression detection and comparison.
  */
 
-import { existsSync, mkdir, readFile, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { performance } from "node:perf_hooks";
 

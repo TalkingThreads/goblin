@@ -5,7 +5,21 @@
 3. **Plan Updates:** If you discover missing features during implementation, update this plan to reflect reality.
 <!-- GUIDANCE:END -->
 
-# Goblin MCP - Implementation Plan
+---
+
+# 📁 Plan Structure Updated
+
+This plan has been split into focused milestone plans:
+
+- **MVP** → See `goblin-v1/mvp-complete.md` (✅ COMPLETE)
+- **v1** → See `goblin-v1/plan.md` (🚧 IN PROGRESS)
+- **v2** → See `goblin-v2/plan.md` (📋 PLANNED)
+
+**This file is retained for historical reference only. Do not update this file.**
+
+---
+
+# Goblin MCP - Implementation Plan (ARCHIVED)
 
 > Full roadmap: MVP + v1 milestones
 

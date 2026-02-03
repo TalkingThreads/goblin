@@ -4,6 +4,7 @@ import React from "react";
 import { loadConfig } from "../../config/index.js";
 import { GoblinGateway } from "../../core/gateway.js";
 import { createLogger } from "../../observability/logger.js";
+import { setupShutdownHandlers } from "../../observability/utils.js";
 import type App from "../../tui/App.js";
 
 const logger = createLogger("cli-commands");
@@ -32,15 +33,14 @@ export async function startGateway(options: StartOptions): Promise<void> {
     // Create gateway instance
     const gateway = new GoblinGateway();
 
-    // Handle graceful shutdown
+    // Handle graceful shutdown with cross-platform signal handling
     const shutdown = async () => {
       logger.info("Received shutdown signal");
       await gateway.stop();
       process.exit(0);
     };
 
-    process.on("SIGINT", shutdown);
-    process.on("SIGTERM", shutdown);
+    setupShutdownHandlers(shutdown);
 
     // Start the gateway
     await gateway.start(config, options.config);

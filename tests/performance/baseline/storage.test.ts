@@ -4,7 +4,7 @@
  * Tests baseline storage and retrieval functionality.
  */
 
-import { after, before, describe, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import {
   baselineManager,
   createBaselineManager,
@@ -25,7 +25,7 @@ describe("Performance Baseline Tests - Storage", () => {
     concurrency: 100,
   };
 
-  after(async () => {
+  afterAll(async () => {
     try {
       await baselineManager.updateBaseline("test-baseline", testMetrics);
     } catch {
@@ -42,10 +42,7 @@ describe("Performance Baseline Tests - Storage", () => {
       latencyP50: baseline.metrics.latency.p50,
     });
 
-    console.assert(
-      baseline.version === "1.0.0",
-      `Version should be 1.0.0, got ${baseline.version}`,
-    );
+    expect(baseline.version).toBe("1.0.0", `Version should be 1.0.0, got ${baseline.version}`);
   });
 
   it("should load baseline from file", async () => {
@@ -57,7 +54,7 @@ describe("Performance Baseline Tests - Storage", () => {
       latencyP50: loaded?.metrics.latency.p50,
     });
 
-    console.assert(loaded !== null, "Should load existing baseline");
+    expect(loaded).not.toBeNull("Should load existing baseline");
   });
 
   it("should support multiple configuration baselines", async () => {
@@ -85,7 +82,7 @@ describe("Performance Baseline Tests - Storage", () => {
       baseline250Concurrency: baseline250?.configuration.concurrency,
     });
 
-    console.assert(baseline100 !== null, "Should find baseline for 100 concurrency");
-    console.assert(baseline250 !== null, "Should find baseline for 250 concurrency");
+    expect(baseline100).not.toBeNull("Should find baseline for 100 concurrency");
+    expect(baseline250).not.toBeNull("Should find baseline for 250 concurrency");
   });
 });

@@ -4,6 +4,8 @@
  * Tests maximum request handling capacity and saturation point.
  */
 
+import { type LoadConfig, loadGenerator } from "./load-generator.js";
+
 export interface ThroughputConfig {
   url: string;
   initialRps: number;
@@ -37,9 +39,6 @@ export interface CapacityAnalysis {
 }
 
 export class ThroughputTester {
-  private defaultRampUpDelay: number = 5000;
-  private defaultTestDuration: number = 10000;
-
   async findSaturationPoint(config: ThroughputConfig): Promise<ThroughputResult> {
     const { url, initialRps, maxRps, incrementRps, testDuration, maxErrorRate, rampUpDelay } =
       config;
@@ -176,14 +175,22 @@ export class ThroughputTester {
     headers?: Record<string, string>,
     body?: string,
   ): Promise<{ rps: number; errorRate: number; latencyP50: number; latencyP95: number }> {
-    const requests = Math.floor((rps * duration) / 1000);
-    const concurrency = Math.min(requests, 50);
+    const loadConfig: LoadConfig = {
+      url,
+      concurrentClients: Math.min(rps, 100),
+      duration,
+      method,
+      headers,
+      body,
+    };
+
+    const result = await loadGenerator.generateLoad(loadConfig);
 
     return {
-      rps,
-      errorRate: rps > 1000 ? Math.min((rps - 1000) / rps, 0.1) : 0,
-      latencyP50: 50 + rps / 100,
-      latencyP95: 100 + rps / 50,
+      rps: result.requestsPerSecond,
+      errorRate: result.requests > 0 ? result.errors / result.requests : 1,
+      latencyP50: result.latency.p50,
+      latencyP95: result.latency.p95,
     };
   }
 

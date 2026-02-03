@@ -8,6 +8,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { gracefulShutdown } from "../../../src/observability/utils.js";
 
 export interface ProcessManagerConfig {
   binaryPath?: string;
@@ -154,9 +155,9 @@ export class ProcessManager {
   }
 
   /**
-   * Stop the gateway process gracefully
+   * Stop gateway process gracefully
    */
-  async stop(signal: "SIGTERM" | "SIGINT" = "SIGTERM"): Promise<ProcessMetrics> {
+  async stop(): Promise<ProcessMetrics> {
     if (!this.process) {
       return {
         exitCode: 0,
@@ -169,16 +170,8 @@ export class ProcessManager {
     const duration = Date.now() - this.startTime;
 
     return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        // Force kill if graceful shutdown fails
-        if (this.process) {
-          this.process.kill("SIGKILL");
-        }
-      }, this.config.shutdownTimeout);
-
       if (this.process) {
         this.process.on("exit", (code, signal) => {
-          clearTimeout(timeout);
           resolve({
             exitCode: code,
             signal,
@@ -187,7 +180,18 @@ export class ProcessManager {
           });
         });
 
-        this.process.kill(signal);
+        // Use cross-platform graceful shutdown
+        gracefulShutdown(this.process, this.config.shutdownTimeout)
+          .then(() => {
+            // Process should exit via the 'exit' handler above
+          })
+          .catch(() => {
+            // Fallback to force kill if graceful shutdown fails
+            if (this.process) {
+              this.process.kill("SIGKILL");
+            }
+          });
+
         this.process = null;
       }
     });
@@ -220,21 +224,53 @@ export class ProcessManager {
   /**
    * Clean up temporary directory
    */
-  cleanup(): void {
+  async cleanup(): Promise<void> {
     if (this.process) {
       try {
-        this.process.kill("SIGTERM");
+        await gracefulShutdown(this.process, 2000);
       } catch {
-        // Ignore
+        // Ignore errors during cleanup (process may already be dead)
       }
       this.process = null;
     }
 
-    try {
-      rmSync(this.tempDir, { recursive: true, force: true });
-    } catch {
-      // Ignore cleanup errors
+    // Small delay before cleanup to allow process to release file handles
+    const delay = 100;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < delay) {
+      // Busy wait for delay
     }
+
+    // Retry logic with exponential backoff for temp directory removal
+    const maxRetries = 5;
+    let attempt = 0;
+    let lastError: Error | null = null;
+
+    while (attempt < maxRetries) {
+      try {
+        rmSync(this.tempDir, { recursive: true, force: true });
+        return; // Success
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        attempt++;
+
+        if (attempt < maxRetries) {
+          // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+          const backoffDelay = Math.min(100 * 2 ** (attempt - 1), 2000);
+          const backoffStart = Date.now();
+          while (Date.now() - backoffStart < backoffDelay) {
+            // Busy wait
+          }
+        }
+      }
+    }
+
+    // If we get here, all retries failed
+    console.warn(
+      `Failed to clean up temp directory after ${maxRetries} attempts: ${this.tempDir}`,
+      lastError?.message,
+    );
   }
 
   /**

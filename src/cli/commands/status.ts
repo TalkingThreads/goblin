@@ -64,18 +64,34 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
     console.log(`Uptime: ${formatUptime(data.uptime)}`);
     console.log(`Health: ${data.health}`);
   } catch (error) {
+    const isConnectionRefused =
+      error instanceof Error &&
+      (error.message.includes("ECONNREFUSED") ||
+        error.message.includes("connection refused") ||
+        error.message.includes("fetch failed"));
+
     if (options.json) {
       console.log(
         JSON.stringify({
-          error: "Could not connect to gateway",
-          detail: error instanceof Error ? error.message : String(error),
+          servers: { total: 0, online: 0, offline: 0 },
+          tools: 0,
+          uptime: 0,
+          health: "offline",
+          offline: true,
         }),
       );
     } else {
-      logger.error({ error, url: statusUrl }, "Failed to fetch gateway status");
-      console.error(`Error: Could not connect to gateway at ${url}`);
-      console.error("Make sure the gateway is running (goblin start)");
+      if (isConnectionRefused) {
+        console.log("Gateway Status");
+        console.log("==============");
+        console.log("Gateway is not running");
+        console.log("Use 'goblin start' to start the gateway");
+      } else {
+        logger.error({ error, url: statusUrl }, "Failed to fetch gateway status");
+        console.error(`Error: Could not connect to gateway at ${url}`);
+        console.error("Make sure the gateway is running (goblin start)");
+      }
     }
-    process.exit(1);
+    process.exit(isConnectionRefused ? 0 : 1);
   }
 }

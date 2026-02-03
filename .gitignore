@@ -35,5 +35,5 @@ bun.lockb
 # Developer Documents
 .dev_docs
 
-# Skills
-skills
+# Test Results
+test-results/*

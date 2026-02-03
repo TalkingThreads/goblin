@@ -5,10 +5,11 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { gracefulShutdown } from "../../../src/observability/utils.js";
 
 export interface CliResult {
   exitCode: number;
@@ -21,13 +22,25 @@ export interface CliTesterConfig {
   binaryPath?: string;
   workingDir?: string;
   env?: Record<string, string>;
-  timeout: number;
+  timeout?: number;
 }
+
+const DEFAULT_CONFIG: Required<CliTesterConfig> = {
+  binaryPath: "node dist/cli/index.js",
+  workingDir: "",
+  env: {},
+  timeout: 30000,
+};
 
 export interface CommandResult {
   command: string;
   args: string[];
   result: CliResult;
+}
+
+export function isCliBinaryAvailable(): boolean {
+  const binaryPath = "dist/cli/index.js";
+  return existsSync(binaryPath);
 }
 
 /**
@@ -38,13 +51,19 @@ export class CliTester {
   private stdout: string = "";
   private stderr: string = "";
   private tempDir: string;
+  private config: Required<CliTesterConfig>;
 
-  constructor(
-    private config: CliTesterConfig = {
-      binaryPath: "node dist/cli/index.js",
-      timeout: 30000,
-    },
-  ) {
+  constructor(config: CliTesterConfig = {}) {
+    this.config = { ...DEFAULT_CONFIG, ...config };
+    const binaryPath = this.config.binaryPath;
+    const binaryPathWithoutNode = binaryPath.replace(/^node\s+/, "");
+    const resolvedPath =
+      binaryPathWithoutNode.startsWith("/") || binaryPathWithoutNode.match(/^[A-Za-z]:/)
+        ? binaryPathWithoutNode
+        : join(process.cwd(), binaryPathWithoutNode);
+    if (!existsSync(resolvedPath)) {
+      throw new Error(`CLI binary not found at "${binaryPath}". Run 'bun run build:cli' first.`);
+    }
     this.tempDir = mkdtempSync(join(tmpdir(), "goblin-cli-test-"));
   }
 
@@ -57,7 +76,9 @@ export class CliTester {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         if (this.process) {
-          this.process.kill("SIGTERM");
+          gracefulShutdown(this.process).catch(() => {
+            // Ignore errors during timeout cleanup
+          });
         }
         reject(new Error(`Command timed out after ${this.config.timeout}ms`));
       }, this.config.timeout);
@@ -66,9 +87,19 @@ export class CliTester {
       this.stderr = "";
 
       const fullArgs = args;
-      const command = this.config.binaryPath || "bun";
+      const command = this.config.binaryPath;
 
-      this.process = spawn(command, fullArgs, {
+      const binaryPathWithoutNode = command.replace(/^node\s+/, "");
+      const resolvedBinaryPath =
+        binaryPathWithoutNode.startsWith("/") || binaryPathWithoutNode.match(/^[A-Za-z]:/)
+          ? binaryPathWithoutNode
+          : join(process.cwd(), binaryPathWithoutNode);
+
+      const isNodeCommand = command.startsWith("node");
+      const spawnCommand = isNodeCommand ? "node" : resolvedBinaryPath;
+      const spawnArgs = isNodeCommand ? [resolvedBinaryPath, ...fullArgs] : fullArgs;
+
+      this.process = spawn(spawnCommand, spawnArgs, {
         cwd: this.config.workingDir || this.tempDir,
         env: {
           ...process.env,
@@ -125,14 +156,14 @@ export class CliTester {
    * Run help command
    */
   async help(): Promise<CliResult> {
-    return this.run(["--help"]);
+    return this.run(["help"]);
   }
 
   /**
    * Run version command
    */
   async version(): Promise<CliResult> {
-    return this.run(["--version"]);
+    return this.run(["version"]);
   }
 
   /**
@@ -244,15 +275,15 @@ export class CliTester {
   async cleanup(): Promise<void> {
     if (this.process) {
       try {
-        this.process.kill("SIGTERM");
+        await gracefulShutdown(this.process);
       } catch {
-        // Ignore errors during cleanup
+        // Ignore errors during cleanup (process may already be dead)
       }
       this.process = null;
     }
 
     try {
-      rm(this.tempDir, { recursive: true, force: true });
+      await rm(this.tempDir, { recursive: true, force: true });
     } catch {
       // Ignore cleanup errors
     }
@@ -350,8 +381,7 @@ export class InteractiveSession {
    */
   async terminate(): Promise<void> {
     if (this.process) {
-      this.process.kill("SIGTERM");
-      await new Promise((r) => setTimeout(r, 500));
+      await gracefulShutdown(this.process, 1000);
       this.process = null;
     }
   }

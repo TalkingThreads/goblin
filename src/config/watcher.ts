@@ -4,7 +4,7 @@
 
 import { EventEmitter } from "node:events";
 import type { FSWatcher } from "node:fs";
-import { watch } from "node:fs";
+import { existsSync, watch } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createLogger } from "../observability/logger.js";
 import { validateConfig } from "./loader.js";
@@ -37,18 +37,36 @@ export class ConfigWatcher extends EventEmitter {
    * Start watching the config file
    */
   start(): void {
+    if (!existsSync(this.configPath)) {
+      logger.warn(
+        { configPath: this.configPath },
+        "Configuration file not found, watcher not started",
+      );
+      return;
+    }
+
     logger.info({ configPath: this.configPath }, "Configuration watcher started");
 
-    this.watcher = watch(this.configPath, (event) => {
-      if (event === "change") {
-        this.handleChange();
-      }
-    });
+    try {
+      this.watcher = watch(this.configPath, (event) => {
+        if (event === "change") {
+          this.handleChange();
+        }
+      });
 
-    this.watcher.on("error", (error: Error) => {
-      logger.error({ error }, "Configuration watcher failed");
-      this.emit("error", error);
-    });
+      this.watcher.on("error", (error: Error) => {
+        logger.warn(
+          { error, configPath: this.configPath },
+          "Configuration watcher error, continuing without hot reload",
+        );
+        this.stop();
+      });
+    } catch (error) {
+      logger.warn(
+        { error, configPath: this.configPath },
+        "Failed to start configuration watcher, continuing without hot reload",
+      );
+    }
   }
 
   /**

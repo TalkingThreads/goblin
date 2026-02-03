@@ -7,14 +7,19 @@ const logger = createLogger("cli-config");
 
 interface ConfigOptions {
   path?: string;
+  config?: string;
   json?: boolean;
+}
+
+function resolveConfigPath(options: ConfigOptions): string {
+  return options.config || options.path || getConfigPath();
 }
 
 /**
  * Validate configuration file
  */
 export async function validateConfigCommand(options: ConfigOptions): Promise<void> {
-  const configPath = options.path || getConfigPath();
+  const configPath = resolveConfigPath(options);
 
   try {
     const content = await readFile(configPath, "utf-8");
@@ -67,7 +72,7 @@ export async function validateConfigCommand(options: ConfigOptions): Promise<voi
  * Show current configuration
  */
 export async function showConfigCommand(options: ConfigOptions): Promise<void> {
-  const configPath = options.path || getConfigPath();
+  const configPath = resolveConfigPath(options);
 
   try {
     const content = await readFile(configPath, "utf-8");

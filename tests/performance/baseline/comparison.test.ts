@@ -4,7 +4,7 @@
  * Tests baseline comparison and regression detection.
  */
 
-import { after, before, describe, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import {
   baselineManager,
   createBaselineManager,
@@ -18,7 +18,7 @@ describe("Performance Baseline Tests - Comparison", () => {
     memory: { averageMb: 256.8, peakMb: 384.2, growthRate: 0.5 },
   };
 
-  before(async () => {
+  beforeAll(async () => {
     await baselineManager.saveBaseline("comparison-test", baselineMetrics, {
       testType: "load",
       duration: 60000,
@@ -47,7 +47,7 @@ describe("Performance Baseline Tests - Comparison", () => {
         result.changes.find((c) => c.metric === "latency.p50")?.changePercent.toFixed(2) + "%",
     });
 
-    console.assert(result.regression === true, "Should detect latency regression");
+    expect(result.regression).toBe(true, "Should detect latency regression");
   });
 
   it("should detect throughput regression", async () => {
@@ -68,10 +68,9 @@ describe("Performance Baseline Tests - Comparison", () => {
           ?.changePercent.toFixed(2) + "%",
     });
 
-    console.assert(
+    expect(
       result.changes.some((c) => c.metric === "throughput.requestsPerSecond" && c.change < 0),
-      "Should show throughput decrease",
-    );
+    ).toBe(true, "Should show throughput decrease");
   });
 
   it("should detect memory regression", async () => {
@@ -91,8 +90,8 @@ describe("Performance Baseline Tests - Comparison", () => {
         "%",
     });
 
-    console.assert(
-      result.changes.some((c) => c.metric === "memory.growthRate" && c.change > 0),
+    expect(result.changes.some((c) => c.metric === "memory.growthRate" && c.change > 0)).toBe(
+      true,
       "Should show memory growth increase",
     );
   });
@@ -113,6 +112,6 @@ describe("Performance Baseline Tests - Comparison", () => {
         result.changes.find((c) => c.metric === "latency.p50")?.changePercent.toFixed(2) + "%",
     });
 
-    console.assert(result.severity === "none", "Should report no significant regression");
+    expect(result.severity).toBe("none", "Should report no significant regression");
   });
 });

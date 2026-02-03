@@ -4,17 +4,39 @@
  * Tests maximum throughput capacity and saturation point.
  */
 
-import { describe, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { loadConfig } from "../shared/test-config.js";
+import {
+  checkServerHealth,
+  getServerUrl,
+  startTestServer,
+  stopTestServer,
+} from "../shared/test-server.js";
 import { type ThroughputConfig, throughputTester } from "../shared/throughput-tester.js";
 
 const config = loadConfig();
 
 describe("Performance Throughput Tests - Capacity", () => {
+  beforeAll(async () => {
+    const health = await checkServerHealth(config.gatewayUrl);
+    if (!health.healthy) {
+      try {
+        await startTestServer({ gatewayUrl: config.gatewayUrl });
+      } catch {
+        console.log("Skipping throughput tests - server not available");
+      }
+    }
+  });
+
+  afterAll(async () => {
+    await stopTestServer();
+  });
+
   describe("Saturation Point Identification", () => {
     it("should identify saturation point", async () => {
+      const gatewayUrl = getServerUrl() || config.gatewayUrl;
       const throughputConfig: ThroughputConfig = {
-        url: `${config.gatewayUrl}/health`,
+        url: `${gatewayUrl}/health`,
         initialRps: 100,
         maxRps: 5000,
         incrementRps: 200,
@@ -31,8 +53,8 @@ describe("Performance Throughput Tests - Capacity", () => {
         stepsTested: result.rpsProgression.length,
       });
 
-      console.assert(
-        result.maxStableRps > 0,
+      expect(result.maxStableRps).toBeGreaterThan(
+        0,
         `Should have identified a stable RPS level, got ${result.maxStableRps}`,
       );
     });
@@ -56,8 +78,8 @@ describe("Performance Throughput Tests - Capacity", () => {
         recommendations: analysis.scalingRecommendations.length,
       });
 
-      console.assert(
-        analysis.recommendedMaxRps > 0,
+      expect(analysis.recommendedMaxRps).toBeGreaterThan(
+        0,
         `Should recommend a max RPS, got ${analysis.recommendedMaxRps}`,
       );
     });

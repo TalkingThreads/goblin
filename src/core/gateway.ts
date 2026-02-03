@@ -71,6 +71,15 @@ export class GoblinGateway {
 
     // Start HTTP
     this.httpGateway = new HttpGateway(this.registry, this.router, config);
+
+    // Set up shutdown callback for graceful stop via API
+    this.httpGateway.setShutdownCallback(() => {
+      this.stop().catch((error) => {
+        logger.error({ error }, "Error during shutdown");
+        process.exit(1);
+      });
+    });
+
     this.httpGateway.start();
 
     // Connect Servers
@@ -104,9 +113,11 @@ export class GoblinGateway {
     if (this.configWatcher) {
       this.configWatcher.stop();
     }
-    // HttpGateway stop? It uses Bun.serve which doesn't have an easy stop without reference?
-    // Actually Bun.serve returns a server object with .stop().
-    // We need to update HttpGateway to expose stop.
+
+    // Stop HTTP server gracefully (waits for in-flight requests)
+    if (this.httpGateway) {
+      await this.httpGateway.stop();
+    }
 
     await this.transportPool.closeAll();
   }

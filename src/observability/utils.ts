@@ -294,3 +294,89 @@ export const LOG_LEVEL_GUIDELINES = {
   error: ["Failures", "Exceptions", "Timeouts", "Broken invariants"],
   fatal: ["Process-threatening errors", "Shutdown scenarios", "Data corruption"],
 } as const;
+
+/**
+ * Cross-platform signal handling utilities
+ */
+
+import type { ChildProcess } from "node:child_process";
+
+/**
+ * Setup shutdown handlers for graceful process termination.
+ * Handles SIGINT on all platforms (Ctrl+C).
+ * Handles SIGTERM only on Unix-like systems (not Windows).
+ *
+ * @param callback - Function to call when shutdown signal is received
+ */
+export function setupShutdownHandlers(callback: () => void): void {
+  // SIGINT works on all platforms (Ctrl+C)
+  process.on("SIGINT", callback);
+
+  // SIGTERM only on Unix-like systems
+  if (process.platform !== "win32") {
+    process.on("SIGTERM", callback);
+  }
+}
+
+/**
+ * Gracefully shutdown a child process with platform-appropriate signals.
+ * Sends SIGTERM on Unix, SIGINT on Windows as graceful signal.
+ * Escalates to SIGKILL after timeout if process doesn't exit.
+ *
+ * @param childProcess - The child process to shutdown
+ * @param timeoutMs - Timeout in milliseconds before escalating to SIGKILL (default: 5000)
+ * @returns Promise that resolves when process exits
+ */
+export async function gracefulShutdown(
+  childProcess: ChildProcess,
+  timeoutMs = 5000,
+): Promise<void> {
+  return new Promise((resolve) => {
+    let resolved = false;
+
+    const cleanup = () => {
+      if (resolved) return;
+      resolved = true;
+      resolve();
+    };
+
+    // Set up timeout for force kill
+    const timeout = setTimeout(() => {
+      try {
+        childProcess.kill("SIGKILL"); // Works on all platforms
+      } catch {
+        // Process may already be dead
+      }
+      cleanup();
+    }, timeoutMs);
+
+    // Resolve when process exits
+    childProcess.on("exit", () => {
+      clearTimeout(timeout);
+      cleanup();
+    });
+
+    // Send platform-appropriate graceful signal
+    if (childProcess.killed || childProcess.exitCode !== null) {
+      // Process already dead
+      clearTimeout(timeout);
+      cleanup();
+    } else if (process.platform === "win32") {
+      // Windows: SIGINT is the only graceful option
+      try {
+        childProcess.kill("SIGINT");
+      } catch {
+        clearTimeout(timeout);
+        cleanup();
+      }
+    } else {
+      // Unix: SIGTERM for graceful shutdown
+      try {
+        childProcess.kill("SIGTERM");
+      } catch {
+        clearTimeout(timeout);
+        cleanup();
+      }
+    }
+  });
+}

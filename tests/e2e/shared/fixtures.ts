@@ -4,7 +4,7 @@
  * Provides test data and fixtures for e2e tests.
  */
 
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 export interface SampleProject {
   name: string;
@@ -270,12 +270,10 @@ export async function createSampleProject(dir: string, project: SampleProject): 
   const { writeFileSync, mkdirSync } = await import("node:fs");
 
   for (const [relativePath, content] of Object.entries(project.files)) {
-    const fullPath = relativePath.includes("/")
-      ? join(dir, relativePath)
-      : join(dir, project.name, relativePath);
+    const fullPath = join(dir, project.name, relativePath);
 
-    const parentDir = fullPath.substring(0, fullPath.lastIndexOf("/"));
-    if (parentDir) {
+    const parentDir = dirname(fullPath);
+    if (parentDir && parentDir !== dir) {
       mkdirSync(parentDir, { recursive: true });
     }
 
