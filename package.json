@@ -68,6 +68,12 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "proactive-quality": {
+    "name": "proactive-quality-system",
+    "version": "1.0.0",
+    "description": "Proactive quality improvement system with immediate feedback loops",
+    "main": "src/index.js"
+  }
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.3",
     "commander": "^14.0.2",

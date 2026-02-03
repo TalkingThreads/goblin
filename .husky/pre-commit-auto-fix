@@ -1,0 +1,8 @@
+#!/bin/sh
+# Auto-fix common quality issues pre-commit hook
+echo "🔧 Auto-fixing common quality issues..."
+
+# Fix auto-fixable Biome issues
+bun run lint:fix --only-files="$(git diff --cached --name-only --diff-filter=AM | head -5)"
+
+echo "✅ Auto-fixes applied"
