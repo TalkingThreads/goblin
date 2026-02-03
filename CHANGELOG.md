@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0-rc.2] - 2026-02-03
+
+This is the second release candidate for Goblin MCP Gateway v0.3.0.
+
+### Fixed
+
+- Added `.npmignore` file to prevent unnecessary files from being published to npm
+- Small changes on the README.md
+
 ## [0.3.0-rc.1] - 2026-02-03
 
 This is the first release candidate for Goblin MCP Gateway v0.3.0.
@@ -274,7 +283,8 @@ This is the first release candidate for Goblin MCP Gateway v0.3.0.
 - **Beta**: Early preview with known issues (e.g., 0.3.0-beta.1)
 - **Alpha**: Early development preview (e.g., 0.3.0-alpha.1)
 
-[Unreleased]: https://github.com/TalkingThreads/goblin/compare/v0.3.0-rc.1...HEAD
+[Unreleased]: https://github.com/TalkingThreads/goblin/compare/v0.3.0-rc.2...HEAD
+[0.3.0-rc.2]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.2
 [0.3.0-rc.1]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.1
 [0.2.0]: https://github.com/TalkingThreads/goblin/releases/tag/v0.2.0
 [0.1.1]: https://github.com/TalkingThreads/goblin/releases/tag/v0.1.1

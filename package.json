@@ -1,6 +1,6 @@
 {
-  "name": "goblin",
-  "version": "0.3.0-rc.1",
+  "name": "@talkingthreads/goblin",
+  "version": "0.3.0-rc.2",
   "description": "Developer-first MCP gateway that aggregates multiple MCP servers behind a single unified endpoint",
   "type": "module",
   "main": "dist/index.js",
@@ -63,7 +63,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TalkingThreads/goblin"
+    "url": "git+https://github.com/TalkingThreads/goblin.git"
   },
   "engines": {
     "node": ">=20.0.0"

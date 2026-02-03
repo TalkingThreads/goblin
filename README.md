@@ -13,7 +13,6 @@
 ### Version & License
 
 ![Version](https://img.shields.io/npm/v/goblin?style=flat-square&logo=npm)
-![License](https://img.shields.io/npm/l/goblin?style=flat-square&logo=npm)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
 
 ### Technology
