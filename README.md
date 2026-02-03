@@ -2,112 +2,46 @@
 
 > Developer-first MCP gateway that aggregates multiple MCP servers behind a single unified endpoint
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
-[![Bun](https://img.shields.io/badge/Bun-1.3-black)](https://bun.sh/)
+## Badges
 
-## Overview
+### Build & CI
 
-Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-ready solution for aggregating multiple MCP servers behind a single unified endpoint:
+![Build](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/main.yml?style=flat-square&logo=github)
+![Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/tests.yml?style=flat-square&logo=github)
+![Smoke Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/smoke-tests.yml?style=flat-square&logo=github)
 
-- 🔌 **Complete MCP aggregation** of Tools, Prompts, and Resources from multiple backends
-- 🎛️ **Intelligent routing** with namespacing and timeout enforcement  
-- 🚀 **Multiple transport support** including STDIO, HTTP, and Server-Sent Events
-- 🔧 **Hot-reload configuration** with JSON Schema validation
-- 📊 **Production observability** with structured logging, custom metrics, and TUI real-time display
+### Version & License
 
-## Features
+![Version](https://img.shields.io/npm/v/goblin?style=flat-square&logo=npm)
+![License](https://img.shields.io/npm/l/goblin?style=flat-square&logo=npm)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
 
-### ✅ **Implemented**
-- **Complete MCP Gateway**: Fully functional gateway aggregating multiple MCP servers
-- **Extended Capabilities**: Tools, Prompts, and Resources aggregation
-- **Resource Subscriptions**: Full subscription support with `resources/subscribe`, `resources/unsubscribe`, and `notifications/resources/updated`
-- **Resource Namespacing**: URI namespacing (`mcp://{serverId}/{encodedUri}`) to prevent resource collisions
-- **Prompt Meta Tools**: Discovery tools (`catalog_prompts`, `describe_prompt`, `search_prompts`) for prompt discovery
-- **Resource Meta Tools**: Discovery tools (`catalog_resources`, `describe_resource`, `search_resources`, `catalog_resource_templates`) for resource discovery
-- **Tool Catalog Search**: Fuzzy search tools by name/description with cached MiniSearch index for O(1) search performance
-- **Error Handling**: Structured error hierarchy with `GoblinError` base class and type-specific error codes
-- **Connection Pooling**: Smart transport pool with pending connection tracking to prevent duplicate connection attempts
-- **Enhanced Logging**: Developer-first pino logging with config-driven options
-  - Pretty-print mode for development (colorized, human-readable)
-  - JSON format for production and log aggregation
-  - Sensitive data redaction (passwords, tokens, API keys)
-  - TUI real-time log viewing with log buffer integration
-  - Request/response logging middleware with correlation IDs
-  - File destination support with path resolution
-  - Consistent logging patterns with error codes and structured context
-  - Log level discipline (trace, debug, info, warn, error, fatal)
-- **Custom Metrics**: Zero-dependency in-memory metrics with JSON endpoint
-  - Real-time TUI metrics panel (press 'm' to toggle)
-  - Request counters, latency histograms, connection gauges
-  - Health meta tool with status, summary, and optional full metrics
-- **TUI Integration**: Interactive terminal UI with real-time gateway monitoring
-  - **Servers Panel**: Real-time server status, transport type, and tool counts from `transportPool.getHealth()`
-  - **Prompts Panel**: Live prompts from `registry.getAllPrompts()` with server filtering and keyboard navigation
-  - **Resources Panel**: Real resources from `registry.getAllResources()` with server and MIME type filtering
-  - **Metrics Panel**: Real-time metrics visualization (press 'm' to toggle)
-  - **Activity Logs**: Real gateway activity logs with level indicators (info, warn, error, debug)
-  - All panels update automatically on registry change events
-  - Launch with `goblin start --tui` command
-- **Comprehensive Testing**: 520 tests covering core functionality
-  - Gateway registry, router, subscription manager tests
-  - Transport pool and connection management tests
-  - Config loader and schema validation tests
-  - Meta tools for prompts, resources, and health checks
-  - TUI filtering functions with 33 dedicated tests
-  - Integration test infrastructure with 14 verification tests
-  - Handshake tests with 46 tests for session, capabilities, and server info
-  - E2E tests with 94 tests for request/response, streaming, prompts, resources, and errors
-  - Multi-server tests with 71 tests for aggregation, routing, and lifecycle
-  - Transport tests with 90 tests for basic, stdio, http, and sse transport behavior
-  - Hot-reload tests with 64 tests for dynamic updates and configuration
-  - Virtual tools tests with 72 tests for catalog, describe, and search functionality
-  - Resource tests with 69 tests for basic, templates, and subscriptions
-  - All tests pass with `bun test`
-- **Smoke Tests**: Complete smoke test suite (148 tests) for CI and pre-commit validation
-  - CLI command tests: help, version, start, stop, status, servers (33 tests)
-  - Health endpoint tests: /health, /ready, /metrics, probes, auth (32 tests)
-  - Tool discovery tests: listing, filtering, invocation, connection, schema, availability (32 tests)
-  - Gateway startup/shutdown tests: clean, graceful, forced, restart, errors, cleanup (27 tests)
-  - Shared utilities: process-manager, output-capture, http-client, test-config
-  - CI pipeline integration: .github/workflows/smoke-tests.yml
-  - Run with `bun run smoke` (completes in under 60 seconds)
-- **Performance Tests**: Comprehensive performance testing infrastructure
-  - Load tests: concurrent clients (100, 250, 500), sustained load (1h, 8h), ramp-up behavior
-  - Memory tests: stability monitoring, leak detection during extended operations
-  - Latency tests: p50 (<50ms), p95 (<100ms), p99 (<200ms) target verification
-  - Throughput tests: capacity determination, saturation point identification
-  - Baseline framework: persistent baselines, regression detection, trend analysis
-  - Shared utilities: load-generator, memory-monitor, latency-measurer, throughput-tester, baseline-manager
-  - CI pipeline: nightly runs with GitHub Actions workflow
-  - Run with `bun run perf` (baseline comparison included)
-- **Integration Tests Infrastructure**: Mock MCP server/client for end-to-end testing
-  - `TestMcpServer`: Configurable mock server with tools, resources, and prompts
-  - `TestMcpClient`: Mock client with assertion helpers (ToolResultAssertions)
-  - `NetworkSimulator`: Latency, error rate, and packet drop simulation
-  - `CleanupManager`: Test resource cleanup with priority support
-  - 520 integration tests across handshake, e2e, multi-server, transport, hot-reload, virtual-tools, and resources
-- **HTTP Gateway**: Hono-based server with SSE (`/sse`) and messages (`/messages`) endpoints  
-- **Gateway Server**: Core MCP server implementation with unified tool catalog
-- **Intelligent Router**: Request routing with namespacing (`server_tool`) and timeout enforcement
-- **Tool Registry**: Dynamic synchronization with event-driven updates and compact cards
-- **Transport Layer**: STDIO, HTTP, and SSE transports with connection pooling
-- **Configuration System**: Hot-reloadable config with JSON Schema validation
-- **Production Ready**: Pino structured logging, custom in-memory metrics, and comprehensive CLI
+### Technology
 
-### 🚧 **In Development**
-- **Sampling Support**: LLM completion requests from backends to clients
-- **Elicitation**: User input requests from backends
-- **Parameter Completion**: Argument completion for tools and resources
-- **Self-Configuration**: Admin tools for dynamic server management
-- **Advanced Features**: Skills service, RBAC, OAuth integration
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript)
+![Bun](https://img.shields.io/badge/Bun-1.3-black?style=flat-square&logo=bun)
+
+## About
+
+Goblin is a **Model Context Protocol (MCP) gateway** that provides a production-ready solution for aggregating multiple MCP servers behind a single unified endpoint. It solves tool sprawl, context bloat, and brittle integrations in agentic AI systems.
+
+Built with Bun, TypeScript, Hono, and the MCP SDK, Goblin offers blazing-fast performance with sub-50ms latency targets and a developer-first experience including real-time TUI dashboard, structured logging, and comprehensive observability.
+
+## Key Features
+
+- **🔌 Unified Aggregation**: Single endpoint aggregating tools, prompts, and resources from multiple MCP backends
+- **🎛️ Intelligent Routing**: Namespaced tool calls with timeout enforcement and error mapping
+- **🚀 Multi-Transport**: STDIO, HTTP, and SSE transports with automatic connection pooling
+- **🔧 Hot Reload**: Configuration changes applied atomically without restart
+- **📊 Full Observability**: Structured logging, custom metrics, and real-time TUI dashboard
+- **✅ Enterprise Ready**: 668+ tests, smoke tests for CI, performance benchmarks
 
 ## Quick Start
 
 ### Prerequisites
 
 - [Bun](https://bun.sh/) >= 1.3.8
-- Node.js >= 20.0.0 (for compatibility)
+- [Node.js](https://nodejs.org/) >= 20.0.0 (for CLI compatibility)
 
 ### Installation
 
@@ -119,111 +53,87 @@ cd goblin
 # Install dependencies
 bun install
 
-# Run in development mode (with hot reload)
+# Run development mode (with hot reload)
 bun run dev
 ```
 
-### Building for Production
-
-```bash
-# Build the project (main app + CLI)
-bun run build
-bun run build:cli
-
-# Run production build with Node.js
-node dist/index.js
-
-# Or use the CLI directly
-node dist/cli/index.js --help
-```
-
-### CLI Commands
-
-Goblin provides a comprehensive command-line interface for gateway management:
-
-```bash
-# Start the Gateway
-goblin start                    # Start with default settings
-goblin start --tui              # Enable TUI mode
-goblin start --port 3000        # Custom port
-goblin start --config path.json # Custom config path
-
-# Show Gateway status
-goblin status                   # Human-readable output
-goblin status --json            # JSON output
-goblin status --url http://localhost:3000  # Remote gateway
-
-# List available tools
-goblin tools                    # List all tools
-goblin tools --server server1   # Filter by server
-goblin tools --search "file"    # Search tools
-
-# List configured servers
-goblin servers                  # List all servers
-goblin servers --status online  # Filter by status
-
-# Configuration management
-goblin config validate          # Validate config file
-goblin config show              # Display current config
-
-# View logs
-goblin logs                     # Show recent logs
-goblin logs -f                  # Follow log output
-goblin logs --level error       # Filter by level
-
-# Health check
-goblin health                   # Detailed health status
-goblin health --json            # JSON output
-```
-
-### Quick Test
-
-```bash
-# Run the test suite to verify installation
-bun test
-# Expected: 81 passing tests
-```
-
-### Smoke Tests
-
-Goblin includes a suite of **148 smoke tests** designed for fast validation of core functionality. These tests are fully integrated into the CI pipeline and run on every pull request.
-
-```bash
-# Run all smoke tests (fast validation for CI/pre-commit)
-bun run smoke
-
-# Run specific smoke test categories
-bun run test:smoke:cli       # CLI command tests
-bun run test:smoke:health    # Health endpoint tests
-bun run test:smoke:discovery # Tool discovery tests
-bun run test:smoke:startup   # Startup/shutdown tests
-```
-
-Smoke tests complete in under 60 seconds and provide complete coverage of:
-- **CLI Commands**: `help`, `version`, `start`, `stop`, `status`, `servers`, `config`, `tools`, `logs`, `health`
-- **Health Endpoints**: `/health`, `/ready`, `/metrics`, and liveness/readiness probes
-- **Discovery & Aggregation**: Tool/resource listing, schema validation, and multi-server aggregation
-- **Gateway Lifecycle**: Clean startup, graceful shutdown, hot-reload, and resource cleanup
-- **CI Integration**: Automated execution via GitHub Actions with parallel execution support
-
-### Building for Production
+### Build for Production
 
 ```bash
 # Build the project
 bun run build
+bun run build:cli
 
-# Run production build
-bun run start
+# Run with Node.js
+node dist/index.js
 ```
+
+### Start Gateway
+
+```bash
+# Default start
+goblin start
+
+# With TUI dashboard
+goblin start --tui
+
+# Custom port
+goblin start --port 8080
+```
+
+That's it! Goblin is now running at `http://127.0.0.1:3000`.
+
+See [Getting Started](docs/getting-started.md) for a detailed guide.
+
+## Documentation
+
+| Topic | Description |
+|-------|-------------|
+| [Getting Started](docs/getting-started.md) | Step-by-step installation and configuration |
+| [Architecture](docs/architecture.md) | System design and component overview |
+| [API Reference](docs/api/overview.md) | HTTP endpoints and CLI commands |
+| [Configuration](docs/example-config.json) | Complete configuration reference |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
+
+## CLI Commands
+
+```bash
+# Start the gateway
+goblin start                    # Default settings
+goblin start --tui             # Enable TUI mode
+goblin start --port 3000       # Custom port
+
+# Gateway status
+goblin status                   # Human-readable
+goblin status --json           # JSON output
+
+# List resources
+goblin tools                   # All tools
+goblin tools --server server1 # Filter by server
+goblin servers                 # All servers
+goblin servers --status online # Filter by status
+
+# Configuration
+goblin config validate         # Validate config
+goblin config show            # Display config
+
+# Logs and health
+goblin logs                   # Show logs
+goblin logs -f                # Follow output
+goblin health                 # Health status
+```
+
+See [API Reference](docs/api/overview.md) for complete documentation.
 
 ## Configuration
 
-Goblin looks for a configuration file in the standard OS location:
+Goblin uses a JSON configuration file. Default locations:
+
 - **Linux**: `~/.config/goblin/config.json`
 - **macOS**: `~/Library/Application Support/goblin/config.json`
 - **Windows**: `%APPDATA%\goblin\config.json`
 
-### Example Config
+### Example Configuration
 
 ```json
 {
@@ -233,7 +143,7 @@ Goblin looks for a configuration file in the standard OS location:
       "name": "filesystem",
       "transport": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allow"],
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
       "enabled": true
     }
   ],
@@ -251,50 +161,22 @@ Goblin looks for a configuration file in the standard OS location:
 }
 ```
 
-### Features
-- **Hot Reload**: Changes to the config file are applied automatically (atomic updates).
-- **Type Safety**: Validated against a strict schema on load.
-- **Editor Support**: Generated JSON Schema provides autocomplete and validation in VS Code.
-
 See [docs/example-config.json](docs/example-config.json) for a full example.
 
-## Development
-
-### Commands
+## Testing
 
 ```bash
-# Development with hot reload
-bun run dev
-
-# Type checking
-bun run typecheck
-
-# Linting
-bun run lint
-bun run lint:fix
-
-# Formatting
-bun run format
-
-# Testing
+# Run all tests
 bun test
+
+# Run in watch mode
 bun test --watch
-```
 
-### Project Structure
+# Smoke tests (fast validation for CI)
+bun run smoke
 
-```
-goblin/
-├── src/
-│   ├── index.ts              # Application entry point
-│   └── observability/        # Logging, metrics, tracing
-├── tests/
-│   ├── unit/                 # Unit tests
-│   └── integration/          # Integration tests
-├── docs/                     # Documentation
-└── openspec/                 # Specifications and proposals
-    ├── specs/                # Current specifications
-    └── changes/              # Pending change proposals
+# Performance tests
+bun run perf
 ```
 
 ## Technology Stack
@@ -306,16 +188,9 @@ goblin/
 | HTTP Server | Hono | Lightweight web framework |
 | Validation | Zod | Runtime type validation |
 | Logging | Pino | Structured JSON logging |
-| Metrics | Custom (zero-dep) | In-memory metrics with JSON endpoint |
+| Metrics | Custom (zero-dep) | In-memory metrics |
 | CLI | Commander.js | Command-line interface |
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `LOG_LEVEL` | Logging level (trace, debug, info, warn, error, fatal) | `info` |
-| `GOBLIN_CONFIG_PATH` | Custom path to configuration file | OS-specific default |
-| `NODE_ENV` | Environment (development/production) | `development` |
+| TUI | Ink + React | Terminal UI |
 
 ## Contributing
 
@@ -323,31 +198,36 @@ We welcome contributions! Please see [CONTRIBUTE.md](CONTRIBUTE.md) for guidelin
 
 ### Development Workflow
 
-1. Check [openspec/AGENTS.md](openspec/AGENTS.md) for spec-driven development process
-2. Create a change proposal for new features (see OpenSpec workflow)
+1. Read [AGENTS.md](AGENTS.md) for spec-driven development process
+2. Create a change proposal for new features
 3. Write tests for your changes
-4. Ensure all tests pass and build succeeds
+4. Ensure all tests pass: `bun test`
 5. Submit a pull request
 
-## Documentation
+## Environment Variables
 
-- [AGENTS.md](AGENTS.md) - AI coding agent instructions
-- [CHANGELOG.md](CHANGELOG.md) - Version history
-- [CONTRIBUTE.md](CONTRIBUTE.md) - Contribution guidelines
-- [docs/GOBLIN.md](docs/GOBLIN.md) - Full specification
-
-## License
-
-[MIT](LICENSE) © TalkingThreads
-
-## Maintainers
-
-See [MAINTAINERS.md](MAINTAINERS.md) for the list of project maintainers.
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LOG_LEVEL` | Logging level (trace/debug/info/warn/error/fatal) | `info` |
+| `GOBLIN_CONFIG_PATH` | Custom config file path | OS-specific default |
+| `NODE_ENV` | Environment (development/production) | `development` |
 
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/TalkingThreads/goblin/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/TalkingThreads/goblin/discussions)
+- **Security**: [SECURITY.md](SECURITY.md)
+
+## License
+
+[MIT](LICENSE) © TalkingThreads
+
+## Related Documentation
+
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+- [MAINTAINERS.md](MAINTAINERS.md) - Project maintainers
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) - Community guidelines
+- [openspec/project.md](openspec/project.md) - Project context and design
 
 ---
 

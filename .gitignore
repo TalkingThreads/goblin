@@ -1,6 +1,3 @@
-# Octocode local context
-.octocode
-
 # Dependencies
 node_modules
 
@@ -32,8 +29,13 @@ coverage
 # Bun
 bun.lockb
 
-# Developer Documents
+# Test Results
+test-results
+
+# AI Context & Development Tools
+.octocode
+.opencode
 .dev_docs
 
-# Test Results
-test-results/*
+# OpenSpec Development Workflow
+openspec
