@@ -89,7 +89,9 @@ export function parseNamespacedUri(
     if (!match || match.length < 3) {
       return null;
     }
+    // biome-ignore lint/style/noNonNullAssertion: Length check above guarantees these exist
     const serverId = match[1]!;
+    // biome-ignore lint/style/noNonNullAssertion: Length check above guarantees these exist
     const rawUri = decodeURIComponent(match[2]!);
     return { serverId, rawUri };
   } catch {

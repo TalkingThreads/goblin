@@ -25,7 +25,10 @@ const logger = createLogger("http-gateway");
 
 export class HttpGateway {
   public app: Hono;
-  private sessions = new Map<string, { transport: SSEServerTransport; server: GatewayServer }>();
+  private sessions = new Map<
+    string,
+    { transport: SSEServerTransport; server: GatewayServer | null }
+  >();
   private server: ReturnType<typeof Bun.serve> | null = null;
   private onShutdown: (() => void) | null = null;
   private activeRequests = 0;
@@ -80,7 +83,7 @@ export class HttpGateway {
     });
 
     // Request tracking middleware for graceful shutdown
-    this.app.use("*", async (c, next) => {
+    this.app.use("*", async (_c, next) => {
       this.activeRequests++;
       try {
         await next();
@@ -244,7 +247,7 @@ export class HttpGateway {
 
         // Create transport
         const transport = createHonoSseTransport("/messages", c, stream);
-        this.sessions.set(sessionId, { transport, server: null as any }); // Placeholder
+        this.sessions.set(sessionId, { transport, server: null }); // Placeholder
 
         // Send endpoint event
         await stream.writeSSE({
@@ -254,6 +257,7 @@ export class HttpGateway {
 
         // Create GatewayServer for this session
         const server = new GatewayServer(this.registry, this.router, this.config);
+        // biome-ignore lint/style/noNonNullAssertion: Session was just created above, guaranteed to exist
         this.sessions.get(sessionId)!.server = server;
 
         // Connect server to transport
@@ -264,7 +268,7 @@ export class HttpGateway {
           const requestId = getRequestId();
           logger.info({ sessionId, requestId }, "SSE connection closed");
           const session = this.sessions.get(sessionId);
-          if (session) {
+          if (session?.server) {
             await session.server.close();
             this.sessions.delete(sessionId);
           }
@@ -287,6 +291,7 @@ export class HttpGateway {
         return c.json({ error: "Session not found" }, 404);
       }
 
+      // biome-ignore lint/style/noNonNullAssertion: Session existence checked above
       const { transport } = this.sessions.get(sessionId)!;
 
       try {

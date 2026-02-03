@@ -17,9 +17,15 @@ function getSmartSummary(text?: string): string {
  */
 export const catalogList = defineMetaTool({
   name: "catalog_list",
-  description: "Lists all available tools and returns their 'tool compact cards'.",
+  description:
+    "DISCOVER AVAILABLE TOOLS. Lists every tool exposed by all connected MCP servers. Returns tool name, brief summary, parameters, and source server. USE THIS at the start of a session to understand what tools are available, or when the user asks 'what can you do?'. Filter by serverId to see only one backend's tools.",
   parameters: z.object({
-    serverId: z.string().optional().describe("Filter tools by server ID"),
+    serverId: z
+      .string()
+      .optional()
+      .describe(
+        "Optional. Only list tools from this specific server. Use when you want to focus on one backend's capabilities.",
+      ),
   }),
   execute: async ({ serverId }, { registry }) => {
     // We need full details to generate the card (args list)
@@ -45,9 +51,14 @@ export const catalogList = defineMetaTool({
  */
 export const catalogSearch = defineMetaTool({
   name: "catalog_search",
-  description: "Keyword or semantic (fuzzy) search for tools. Returns 'tool compact cards'.",
+  description:
+    "FIND SPECIFIC TOOLS by keyword or natural language. Searches tool names and descriptions using fuzzy matching. Returns matching tools with scores. USE THIS when you need to find a tool for a specific task (e.g., 'find files', 'git commit', 'search code').",
   parameters: z.object({
-    query: z.string().describe("Search query (natural language or keywords)"),
+    query: z
+      .string()
+      .describe(
+        "What you're looking for. Use natural language ('read a file') or keywords ('file read'). The search is fuzzy - partial matches work.",
+      ),
   }),
   execute: async ({ query }, { registry }) => {
     // Use the Registry's cached search index

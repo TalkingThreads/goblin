@@ -157,6 +157,7 @@ export class Router {
     type: string,
     id: string,
     lookupFn: () => { serverId: string; def?: { name?: string } } | undefined,
+    // biome-ignore lint/suspicious/noExplicitAny: SDK Client type mismatch - requires SDK version alignment
     executeFn: (client: any, originalName: string, signal: AbortSignal) => Promise<T>,
   ): Promise<T> {
     const start = performance.now();

@@ -4,6 +4,7 @@
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { SERVER_NAME, SERVER_VERSION } from "../meta.js";
 import { createLogger } from "../observability/logger.js";
 import { type Transport, TransportState } from "./interface.js";
 
@@ -57,8 +58,8 @@ export class StdioTransport implements Transport {
 
       this.client = new Client(
         {
-          name: "goblin-gateway",
-          version: "0.1.0",
+          name: SERVER_NAME,
+          version: SERVER_VERSION,
         },
         {
           capabilities: {},

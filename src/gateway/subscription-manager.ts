@@ -60,6 +60,7 @@ export class SubscriptionManager {
     // Check if already subscribed
     if (this.subscriptionDetails.has(subscriptionKey)) {
       logger.debug({ clientId, uri }, "Client already subscribed to resource");
+      // biome-ignore lint/style/noNonNullAssertion: Existence checked above via has()
       return this.subscriptionDetails.get(subscriptionKey)!;
     }
 
@@ -88,12 +89,14 @@ export class SubscriptionManager {
     if (!this.subscriptions.has(uri)) {
       this.subscriptions.set(uri, new Set());
     }
+    // biome-ignore lint/style/noNonNullAssertion: Set just created above, guaranteed to exist
     this.subscriptions.get(uri)!.add(clientId);
 
     // Add to client index (what is this client subscribed to)
     if (!this.clientSubscriptions.has(clientId)) {
       this.clientSubscriptions.set(clientId, new Set());
     }
+    // biome-ignore lint/style/noNonNullAssertion: Set just created above, guaranteed to exist
     this.clientSubscriptions.get(clientId)!.add(uri);
 
     // Store details

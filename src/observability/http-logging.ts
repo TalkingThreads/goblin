@@ -2,6 +2,7 @@
  * Request/response logging middleware for Hono
  */
 
+import type { Context } from "hono";
 import type { RequestLoggingConfig } from "../config/schema.js";
 import type { Logger } from "./logger.js";
 
@@ -18,7 +19,7 @@ function generateRequestId(): string {
 export function createRequestLoggingMiddleware(
   logger: Logger,
   config?: RequestLoggingConfig,
-): (c: any, next: () => Promise<void>) => Promise<void> {
+): (c: Context, next: () => Promise<void>) => Promise<void> {
   const cfg = config ?? {
     enabled: true,
     includeBody: false,
@@ -26,7 +27,7 @@ export function createRequestLoggingMiddleware(
     excludePaths: ["/health", "/metrics"],
   };
 
-  return async (c: any, next: () => Promise<void>): Promise<void> => {
+  return async (c: Context, next: () => Promise<void>): Promise<void> => {
     // Skip if disabled
     if (!cfg.enabled) {
       await next();
@@ -51,7 +52,7 @@ export function createRequestLoggingMiddleware(
         requestId,
         method: c.req.method,
         path: c.req.path,
-        query: Object.fromEntries(c.req.query()) || {},
+        query: c.req.query(),
       },
       `${c.req.method} ${c.req.path} - Incoming request`,
     );

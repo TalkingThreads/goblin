@@ -19,10 +19,20 @@ function getResourceSmartSummary(text?: string): string {
 export const catalogResources = defineMetaTool({
   name: "catalog_resources",
   description:
-    "Lists all available resources with compact cards (uri, description, mimeType, serverId).",
+    "DISCOVER AVAILABLE RESOURCES. Lists all files, documents, and data sources from connected MCP servers. Returns URI, description, MIME type, and source server. USE THIS when the user mentions files, docs, or data they want to access. Filter by serverId or mimeType to narrow results.",
   parameters: z.object({
-    serverId: z.string().optional().describe("Filter resources by server ID"),
-    mimeType: z.string().optional().describe("Filter resources by MIME type"),
+    serverId: z
+      .string()
+      .optional()
+      .describe(
+        "Optional. Only show resources from this server. Useful for focusing on filesystem, git, or specific backends.",
+      ),
+    mimeType: z
+      .string()
+      .optional()
+      .describe(
+        "Optional. Only show resources of this type (e.g., 'text/plain', 'application/json', 'text/markdown').",
+      ),
   }),
   execute: async ({ serverId, mimeType }, { registry }) => {
     const allResources = registry.listResources();
@@ -54,11 +64,13 @@ export const catalogResources = defineMetaTool({
 export const describeResource = defineMetaTool({
   name: "describe_resource",
   description:
-    "Get detailed information about a specific resource including URI, description, and MIME type.",
+    "GET DETAILS about a resource. Returns full metadata including URI, description, MIME type, and source server. USE THIS before reading a resource to understand what you're accessing, or when you need the exact URI format.",
   parameters: z.object({
     uri: z
       .string()
-      .describe("Namespaced resource URI (e.g., 'mcp://serverId/encodedUri') or raw URI"),
+      .describe(
+        "The resource URI. Can be the full namespaced format (mcp://serverId/path) or raw path. The gateway will resolve it correctly.",
+      ),
   }),
   execute: async ({ uri }, { registry }) => {
     const resource = registry.getResource(uri);
@@ -80,10 +92,12 @@ export const describeResource = defineMetaTool({
 export const searchResources = defineMetaTool({
   name: "search_resources",
   description:
-    "Search for resources using keyword or fuzzy matching. Returns 'resource compact cards'.",
+    "FIND SPECIFIC RESOURCES by keyword or description. Searches resource URIs and descriptions. USE THIS when looking for a specific file or document by name or content description. Filter by mimeType to search only certain file types.",
   parameters: z.object({
-    query: z.string().describe("Search query"),
-    mimeType: z.string().optional().describe("Filter by MIME type"),
+    query: z
+      .string()
+      .describe("What you're searching for. File names, paths, or content descriptions work best."),
+    mimeType: z.string().optional().describe("Optional. Limit search to specific file types."),
   }),
   execute: async ({ query, mimeType }, { registry }) => {
     let allResources = registry.listResources();
@@ -141,9 +155,9 @@ export const searchResources = defineMetaTool({
 export const catalogResourceTemplates = defineMetaTool({
   name: "catalog_resource_templates",
   description:
-    "Lists all available resource templates with compact cards (uriTemplate, description, serverId).",
+    "LIST RESOURCE TEMPLATES. Shows URI patterns that can be instantiated (e.g., 'mcp://filesystem/{path}'). Templates define dynamic resources. USE THIS to understand what dynamic resources are available from each server.",
   parameters: z.object({
-    serverId: z.string().optional().describe("Filter templates by server ID"),
+    serverId: z.string().optional().describe("Optional. Only show templates from this server."),
   }),
   execute: async ({ serverId }, { registry }) => {
     const allTemplates = registry.listResourceTemplates();

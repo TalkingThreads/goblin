@@ -1,0 +1,115 @@
+name: Build & Lint
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build project
+        run: |
+          bun run build
+          bun run build:cli
+
+      - name: Run type checker
+        run: bun run typecheck
+
+      - name: Run linter (warnings only)
+        run: |
+          mkdir -p lint-results
+          bun run lint 2>&1 | tee lint-results/output.txt || true
+
+      - name: Upload lint results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-results
+          path: lint-results/
+
+      - name: Add lint summary comment to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            let lintSummary = '### 📊 Lint Results\n\n';
+
+            // Check if lint results exist
+            const lintPath = 'lint-results/output.txt';
+            if (fs.existsSync(lintPath)) {
+              const content = fs.readFileSync(lintPath, 'utf-8');
+
+              // Extract summary
+              const errorsMatch = content.match(/Found (\d+) errors/);
+              const warningsMatch = content.match(/(\d+) warnings/);
+              const infosMatch = content.match(/(\d+) infos/);
+
+              const errors = errorsMatch ? errorsMatch[1] : '0';
+              const warnings = warningsMatch ? warningsMatch[1] : '0';
+              const infos = infosMatch ? infosMatch[1] : '0';
+
+              lintSummary += `| Status | Errors | Warnings | Infos |\n`;
+              lintSummary += `|--------|--------|----------|--------|\n`;
+              lintSummary += `| ${parseInt(errors) > 0 ? '⚠️' : '✅'} | ${errors} | ${warnings} | ${infos} |\n\n`;
+
+              lintSummary += '**Note:** Lint warnings do not block the build. Please review and fix.\n';
+              lintSummary += '[View detailed results](./lint-results/output.txt)\n';
+            } else {
+              lintSummary += 'No lint results available.\n';
+            }
+
+            // Create or update comment
+            const { octokit } = require('@actions/github');
+            const { repo, pull_request } = context.issue;
+
+            try {
+              // Try to find existing comment
+              const { data: comments } = await octokit.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pull_request.number,
+              });
+
+              const botComment = comments.find(c => c.user.type === 'Bot' && c.body.includes('### 📊 Lint Results'));
+
+              if (botComment) {
+                // Update existing comment
+                await octokit.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: lintSummary
+                });
+              } else {
+                // Create new comment
+                await octokit.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pull_request.number,
+                  body: lintSummary
+                });
+              }
+            } catch (e) {
+              console.log('Could not post lint comment:', e.message);
+            }

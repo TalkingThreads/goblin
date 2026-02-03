@@ -54,12 +54,8 @@ export class TransportPool {
           { serverName, transport: existingEntry.config.transport },
           "Transport reconnection initiated",
         );
-        try {
-          await existingEntry.transport.connect();
-          mcpActiveConnections.set(1, { server: serverName, transport: serverConfig.transport });
-        } catch (error) {
-          throw error;
-        }
+        await existingEntry.transport.connect();
+        mcpActiveConnections.set(1, { server: serverName, transport: serverConfig.transport });
       }
       return existingEntry.transport;
     }

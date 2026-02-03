@@ -3,9 +3,11 @@
  * Smoke Test Runner
  *
  * Runs all smoke tests and reports results.
+ * Cross-platform compatible.
  */
 
 import { spawn } from "node:child_process";
+import { readdirSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,7 +15,6 @@ import { smokeConfig } from "./smoke.config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(__dirname, "..", "..");
-const SMOKE_TEST_DIR = join(__dirname, "..");
 const RESULTS_DIR = join(ROOT_DIR, smokeConfig.reporting.outputDir);
 const XML_PATH = join(RESULTS_DIR, smokeConfig.reporting.junitFile);
 const JSON_PATH = join(RESULTS_DIR, smokeConfig.reporting.jsonFile);
@@ -62,14 +63,49 @@ async function parseJUnitXml(
   return { total: 0, failures: 0, skipped: 0, time: 0 };
 }
 
+function findTestFiles(dir: string, extensions: string[]): string[] {
+  const files: string[] = [];
+
+  function scan(directory: string): void {
+    try {
+      const entries = readdirSync(directory, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = join(directory, entry.name);
+        if (entry.isDirectory()) {
+          // Scan all subdirectories for test files
+          scan(fullPath);
+        } else if (entry.isFile() && extensions.some((ext) => entry.name.endsWith(ext))) {
+          // Convert to forward slashes for cross-platform compatibility
+          files.push(fullPath.replace(/\\/g, "/"));
+        }
+      }
+    } catch {
+      // Ignore errors
+    }
+  }
+
+  scan(dir);
+  return files;
+}
+
 async function runSmokeTests(): Promise<void> {
   console.log("Running Goblin Smoke Tests...\n");
   await ensureDirectoryExists(RESULTS_DIR);
 
   const startTime = Date.now();
 
+  // Find all smoke test files (scan tests/smoke directory directly)
+  const smokeTestDir = __dirname;
+  const testExtensions = [".test.ts", ".test.js", "_test.ts", "_test.js", ".spec.ts", ".spec.js"];
+  const testFiles = findTestFiles(smokeTestDir, testExtensions);
+
+  if (testFiles.length === 0) {
+    console.log("No smoke test files found!");
+    process.exit(1);
+  }
+
   return new Promise((resolve, reject) => {
-    const args = ["test", SMOKE_TEST_DIR];
+    const args = ["test", ...testFiles];
 
     // Apply configuration from smoke.config.ts
     args.push(`--reporter=${smokeConfig.reporting.reporter}`);

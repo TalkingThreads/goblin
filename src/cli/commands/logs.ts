@@ -27,7 +27,7 @@ function getLevelValue(level: string | number): number {
     const val = LEVEL_MAP[level.toLowerCase()];
     if (val !== undefined) return val;
     const num = parseInt(level, 10);
-    if (!isNaN(num)) return num;
+    if (!Number.isNaN(num)) return num;
   }
   return 0;
 }

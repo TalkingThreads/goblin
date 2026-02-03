@@ -20,6 +20,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../config/index.js";
 import { isGoblinError } from "../errors/types.js";
+import { SERVER_NAME, SERVER_VERSION } from "../meta.js";
 import { getRequestId } from "../observability/correlation.js";
 import { createLogger } from "../observability/logger.js";
 import type { Registry } from "./registry.js";
@@ -47,8 +48,8 @@ export class GatewayServer {
 
     this.server = new Server(
       {
-        name: "goblin-gateway",
-        version: "0.1.0",
+        name: SERVER_NAME,
+        version: SERVER_VERSION,
       },
       {
         capabilities: {

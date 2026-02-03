@@ -36,14 +36,14 @@ jobs:
           NO_COLOR: "1"
 
       - name: Upload smoke test results
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-test-results
           path: test-results/
 
-      - name: Upload coverage reports
-        if: always()
+      - name: Upload smoke test coverage
+        if: always() && runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: smoke-test-coverage

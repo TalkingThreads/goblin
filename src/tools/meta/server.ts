@@ -18,9 +18,10 @@ function getServerSummary(server: any): string {
  */
 export const describeServer = defineMetaTool({
   name: "describe_server",
-  description: "Get detailed information about an MCP server including its tools.",
+  description:
+    "GET SERVER DETAILS. Returns configuration and list of all tools provided by a specific MCP server. USE THIS to understand what capabilities a particular backend exposes, or when debugging connection issues.",
   parameters: z.object({
-    name: z.string().describe("Name/ID of the server"),
+    name: z.string().describe("The server name as configured in the gateway."),
   }),
   execute: async ({ name }, { config, registry }) => {
     const serverConfig = config.servers.find((s) => s.name === name);
@@ -44,9 +45,9 @@ export const describeServer = defineMetaTool({
 export const searchServers = defineMetaTool({
   name: "search_servers",
   description:
-    "Keyword or semantic (fuzzy) search for MCP servers. Returns 'server compact cards'.",
+    "FIND CONFIGURED SERVERS. Searches for MCP servers by name or description. Returns matching servers with tool counts. USE THIS when you want to see which backends match certain criteria or understand the gateway's configuration.",
   parameters: z.object({
-    query: z.string().describe("Search query"),
+    query: z.string().describe("Server name or description to search for."),
   }),
   execute: async ({ query }, { config, registry }) => {
     // Build Index

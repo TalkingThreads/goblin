@@ -1,11 +1,10 @@
 import { Command } from "commander";
 import { render } from "ink";
-import React from "react";
 import { loadConfig } from "../../config/index.js";
 import { GoblinGateway } from "../../core/gateway.js";
 import { createLogger } from "../../observability/logger.js";
 import { setupShutdownHandlers } from "../../observability/utils.js";
-import type App from "../../tui/App.js";
+import App from "../../tui/App.js";
 
 const logger = createLogger("cli-commands");
 

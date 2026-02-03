@@ -9,7 +9,7 @@ function getPromptSmartSummary(text?: string): string {
   if (!text) return "";
   const firstSentence = text.split(/[.!?]/, 1)[0] || "";
   if (firstSentence.length < 120) return firstSentence;
-  return text.slice(0, 117) + "...";
+  return `${text.slice(0, 117)}...`;
 }
 
 /**
@@ -18,9 +18,10 @@ function getPromptSmartSummary(text?: string): string {
  */
 export const catalogPrompts = defineMetaTool({
   name: "catalog_prompts",
-  description: "Lists all available prompts with compact cards (name, description, argument keys).",
+  description:
+    "DISCOVER AVAILABLE PROMPTS. Lists all pre-defined prompt templates from connected MCP servers. Returns prompt name, description, arguments, and source server. USE THIS when you need structured assistance or templates for common tasks. Prompts can provide expert-level guidance for complex operations.",
   parameters: z.object({
-    serverId: z.string().optional().describe("Filter prompts by server ID"),
+    serverId: z.string().optional().describe("Optional. Only show prompts from this server."),
   }),
   execute: async ({ serverId }, { registry }) => {
     const allPrompts = registry.getAllPrompts();
@@ -46,9 +47,13 @@ export const catalogPrompts = defineMetaTool({
 export const describePrompt = defineMetaTool({
   name: "describe_prompt",
   description:
-    "Get detailed information about a specific prompt including arguments and message templates.",
+    "GET PROMPT DETAILS. Returns full prompt definition including arguments and message templates. USE THIS before calling a prompt to understand what parameters it needs and how it will respond.",
   parameters: z.object({
-    name: z.string().describe("Namespaced prompt name (e.g., 'serverId_promptName')"),
+    name: z
+      .string()
+      .describe(
+        "The prompt name. Use the format 'serverId_promptName' or just the prompt name if unambiguous.",
+      ),
   }),
   execute: async ({ name }, { registry }) => {
     const prompt = registry.getPrompt(name);
@@ -70,9 +75,13 @@ export const describePrompt = defineMetaTool({
 export const searchPrompts = defineMetaTool({
   name: "search_prompts",
   description:
-    "Search for prompts using keyword or fuzzy matching. Returns 'prompt compact cards'.",
+    "FIND PROMPTS by keyword or description. USE THIS when you need a prompt template for a specific task but don't know the exact name. Search by what the prompt helps with (e.g., 'code review', 'debug', 'explain').",
   parameters: z.object({
-    query: z.string().describe("Search query"),
+    query: z
+      .string()
+      .describe(
+        "What you need help with. Keywords like 'review', 'debug', 'generate', 'explain' work well.",
+      ),
   }),
   execute: async ({ query }, { registry }) => {
     const allPrompts = registry.getAllPrompts();

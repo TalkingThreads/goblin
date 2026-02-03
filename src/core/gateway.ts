@@ -23,7 +23,7 @@ const logger = createLogger("core");
  */
 export class GoblinGateway {
   public registry: Registry;
-  public router: Router;
+  public router: Router | null;
   public transportPool: TransportPool;
   public httpGateway: HttpGateway | null = null;
   public configWatcher: ConfigWatcher | null = null;
@@ -32,7 +32,7 @@ export class GoblinGateway {
     this.registry = new Registry();
     this.transportPool = new TransportPool();
     // Router requires config, so it's initialized in start()
-    this.router = null as any;
+    this.router = null;
   }
 
   /**
@@ -70,7 +70,8 @@ export class GoblinGateway {
     }
 
     // Start HTTP
-    this.httpGateway = new HttpGateway(this.registry, this.router, config);
+    // biome-ignore lint/style/noNonNullAssertion: Router initialized just above on line 56
+    this.httpGateway = new HttpGateway(this.registry, this.router!, config);
 
     // Set up shutdown callback for graceful stop via API
     this.httpGateway.setShutdownCallback(() => {

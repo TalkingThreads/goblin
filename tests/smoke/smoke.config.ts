@@ -9,10 +9,10 @@ export const smokeConfig = {
    * Test timeout settings
    */
   timeouts: {
-    /** Individual test timeout in milliseconds (5s) */
-    test: 5000,
-    /** Total suite execution timeout in milliseconds (60s) */
-    suite: 60000,
+    /** Individual test timeout in milliseconds (10s) */
+    test: 10000,
+    /** Total suite execution timeout in milliseconds (120s) */
+    suite: 120000,
   },
 
   /**

@@ -64,9 +64,15 @@ function generateSummary(
 export const health = defineMetaTool({
   name: "health",
   description:
-    "Get gateway and server health status. Returns status + summary by default. Use full: true for complete metrics.",
+    "Get health status of the gateway and all connected MCP servers. Returns 'healthy', 'degraded', or 'unhealthy' with a summary of connected servers. USE THIS when you suspect something is wrong or before making critical operations. Pass full=true for detailed metrics including latency percentiles and connection info.",
   parameters: z.object({
-    full: z.boolean().optional().default(false).describe("Return complete metrics JSON"),
+    full: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe(
+        "Set to true for detailed metrics including latency percentiles (p50, p95, p99), request counts, and per-server connection details. Default (false) returns just status and summary.",
+      ),
   }),
   execute: async (args, { config, registry }) => {
     const configuredServers = config.servers;
