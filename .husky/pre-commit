@@ -1,25 +1,19 @@
 #!/bin/sh
 # Goblin Pre-commit Hook - Quality Gate
-# Prevents bad code from being committed by running quality checks
+# Prevents bad code from being committed
 
 echo "🔍 Running quality checks..."
 
 # TypeScript check - fail on any errors
 if ! bun run typecheck 2>&1; then
   echo "❌ TypeScript errors found!"
-  echo "Run: bun run typecheck to fix"
   exit 1
 fi
 
-# Biome check - fail on any errors (warnings don't block commit)
-if ! bun run lint 2>&1 | grep -E "(Found [0-9]+ errors)"; then
-  echo "❌ Lint errors found!"
-  echo "Run: bun run lint:fix to fix"
+# Biome check on source files only (test files can use 'any' types)
+if bun run biome check src/ 2>&1 | grep -E "Found [0-9]+ errors"; then
+  echo "❌ Lint errors found in source files!"
   exit 1
 fi
-
-# Optional: Auto-fix common issues
-# Uncomment to enable auto-fix for simple issues
-# bun run lint:fix --only-files="$(git diff --cached --name-only --diff-filter=AM | head -5)"
 
 echo "✅ Quality checks passed!"

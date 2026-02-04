@@ -8,7 +8,7 @@ import { defineMetaTool } from "./types.js";
 function getServerSummary(server: any): string {
   return server.description
     ? server.description.length > 100
-      ? server.description.slice(0, 97) + "..."
+      ? `${server.description.slice(0, 97)}...`
       : server.description
     : `MCP Server (${server.transport})`;
 }

@@ -21,7 +21,7 @@ export function createHonoSseTransport(
     setHeader(name: string, value: string) {
       try {
         c.header(name, value);
-      } catch (e) {
+      } catch (_e) {
         // Headers might be sent already
       }
     },

@@ -9,7 +9,7 @@ function getResourceSmartSummary(text?: string): string {
   if (!text) return "";
   const firstSentence = text.split(/[.!?]/, 1)[0] || "";
   if (firstSentence.length < 120) return firstSentence;
-  return text.slice(0, 117) + "...";
+  return `${text.slice(0, 117)}...`;
 }
 
 /**
