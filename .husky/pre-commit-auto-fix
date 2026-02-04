@@ -1,5 +1,6 @@
 #!/bin/sh
 # Auto-fix common quality issues pre-commit
+# Only fix source files, not tests
 echo "🔧 Auto-fixing common issues..."
-bun run lint:fix
+bun run biome check --write src/
 echo "✅ Auto-fixes applied"

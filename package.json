@@ -20,7 +20,7 @@
     "test": "bun test",
     "quality:install": "node tools/quality-check/install.js",
     "quality:check": "node tools/quality-check/quality-check.js",
-    "quality:fix": "bun run lint:fix",
+    "quality:fix": "bun run biome check --write src/",
     "test:unit": "bun test tests/unit",
     "pretest:unit": "bun run build:cli",
     "test:e2e": "bun test tests/e2e",
