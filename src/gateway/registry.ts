@@ -44,6 +44,9 @@ interface ToolSearchResult {
   score: number;
 }
 
+// Cached regex patterns for URI template matching
+const uriTemplateRegexCache = new Map<string, RegExp>();
+
 /**
  * Match a URI against a URI template
  * Supports simple templates like file:///{path} or s3://{bucket}/{key}
@@ -52,13 +55,17 @@ interface ToolSearchResult {
  * @returns true if the URI matches the template
  */
 function matchUriTemplate(uri: string, template: string): boolean {
-  // Convert template to regex
-  // Replace {var} patterns with regex capture groups
-  const regexPattern = template
-    .replace(/[.+?^${}()|[\]\\]/g, "\\$&") // Escape special regex chars
-    .replace(/\\\{[^}]+\\\}/g, "([^/]+)"); // Replace {var} with capture group
+  let regex = uriTemplateRegexCache.get(template);
+  if (!regex) {
+    // Convert template to regex
+    // Replace {var} patterns with regex capture groups
+    const regexPattern = template
+      .replace(/[.+?^${}()|[\]\\]/g, "\\$&") // Escape special regex chars
+      .replace(/\\\{[^}]+\\\}/g, "([^/]+)"); // Replace {var} with capture group
 
-  const regex = new RegExp(`^${regexPattern}$`);
+    regex = new RegExp(`^${regexPattern}$`);
+    uriTemplateRegexCache.set(template, regex);
+  }
   return regex.test(uri);
 }
 

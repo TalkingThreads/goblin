@@ -75,6 +75,9 @@ export function namespaceUri(serverId: string, rawUri: string): string {
   return `${RESOURCE_URI_SCHEME}://${serverId}/${encodedUri}`;
 }
 
+// Cached compiled regex for parsing namespaced URIs
+const NAMESPACE_URI_REGEX = new RegExp(`^${RESOURCE_URI_SCHEME}://([^/]+)/(.+)$`);
+
 /**
  * Parse a namespaced URI into server ID and original URI
  * @param namespacedUri - The namespaced URI
@@ -84,8 +87,7 @@ export function parseNamespacedUri(
   namespacedUri: string,
 ): { serverId: string; rawUri: string } | null {
   try {
-    const pattern = `^${RESOURCE_URI_SCHEME}://([^/]+)/(.+)$`;
-    const match = namespacedUri.match(new RegExp(pattern));
+    const match = namespacedUri.match(NAMESPACE_URI_REGEX);
     if (!match || match.length < 3) {
       return null;
     }

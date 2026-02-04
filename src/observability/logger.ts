@@ -81,7 +81,23 @@ export interface LoggerOptions {
   destinations?: NodeJS.WritableStream[];
 }
 
+// Cache for child loggers by component name
+const loggerCache = new Map<string, Logger>();
+
+function getConfigHash(options?: LoggerOptions): string {
+  return `${options?.level ?? "info"}:${options?.format ?? "json"}:${!!options?.redact}:${options?.redact?.paths?.length ?? 0}`;
+}
+
 export function createLogger(component: string, options?: LoggerOptions): Logger {
+  const configHash = getConfigHash(options);
+
+  // Check cache for this component with same config
+  const cacheKey = `${component}:${configHash}`;
+  const cached = loggerCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const level = options?.level ?? (process.env["LOG_LEVEL"] as LogLevel) ?? "info";
   const format = options?.format ?? "json";
   const isDev = process.env["NODE_ENV"] !== "production";
@@ -135,7 +151,12 @@ export function createLogger(component: string, options?: LoggerOptions): Logger
   const baseLogger = pino(pinoOptions);
   const childLogger = baseLogger.child({ component });
 
-  return createTuiIntegratedLogger(childLogger, component);
+  const result = createTuiIntegratedLogger(childLogger, component);
+
+  // Cache this logger
+  loggerCache.set(cacheKey, result);
+
+  return result;
 }
 
 function createTuiIntegratedLogger(logger: pino.Logger, component: string): pino.Logger {

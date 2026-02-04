@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 
-- **Async Pino Logging**: Configured async write stream with 4096-byte buffering for non-blocking I/O operations
+- **Regex Compilation Caching**: Cached compiled regex patterns for URI template matching and namespaced URI parsing to avoid recompilation on every call
+- **Child Logger Caching**: Implemented logger cache by component name to reduce logger instantiation overhead
 - **Hono Timeout Middleware**: Added 30-second timeout for API routes and 60-second timeout for MCP operations
 - **Ink TUI Optimization**: Reduced render frequency to 30 FPS with memoized components (Header, ServersPane, LogsPane, Footer)
 - **Circuit Breaker**: Implemented circuit breaker pattern for MCP backend failure isolation with CLOSED/OPEN/HALF_OPEN states
