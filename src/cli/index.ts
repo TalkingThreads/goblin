@@ -6,6 +6,7 @@ import { showConfigCommand, validateConfigCommand } from "./commands/config.js";
 import { healthCommand } from "./commands/health.js";
 import { logsCommand } from "./commands/logs.js";
 import { serversCommand } from "./commands/servers.js";
+import { registerSlashCommands } from "./commands/slashes/index.js";
 import { startGateway } from "./commands/start.jsx";
 import { statusCommand } from "./commands/status.js";
 import { stopCommand } from "./commands/stop.js";
@@ -145,6 +146,8 @@ async function main(): Promise<void> {
     .action(async (options: { url?: string }) => {
       await stopCommand(options);
     });
+
+  registerSlashCommands(program);
 
   program
     .command("help")

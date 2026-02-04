@@ -3,6 +3,7 @@ import { Box, Text, useInput, useApp } from "ink";
 import PromptsPanel from "./PromptsPanel.js";
 import ResourcesPanel from "./ResourcesPanel.js";
 import MetricsPanel from "./MetricsPanel.js";
+import SlashMode from "./components/SlashMode.js";
 import { useGatewayData } from "./hooks/useGatewayData.js";
 import type { GoblinGateway } from "../core/gateway.js";
 
@@ -184,9 +185,17 @@ const Footer = memo(function Footer({ showMetrics }: { showMetrics: boolean }) {
 const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
   const { exit } = useApp();
   const [showMetrics, setShowMetrics] = useState(false);
+  const [slashMode, setSlashMode] = useState(false);
   const { servers, logs } = useGatewayData(gateway);
 
   useInput((input) => {
+    if (slashMode) {
+      if (input === "/") {
+        // Already in slash mode, let the SlashMode component handle it
+      }
+      return;
+    }
+
     if (input === "q") {
       exit();
     }
@@ -196,11 +205,30 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
     if (input === "m") {
       setShowMetrics((prev) => !prev);
     }
+    if (input === "/") {
+      setSlashMode(true);
+    }
   });
+
+  const handleSlashExecute = (command: string, args?: Record<string, string>) => {
+    console.log(`Executing slash command: ${command}`, args);
+    setSlashMode(false);
+  };
+
+  const handleSlashExit = () => {
+    setSlashMode(false);
+  };
 
   return (
     <Box flexDirection="column" padding={1}>
       <Header gateway={gateway} />
+      {slashMode && (
+        <SlashMode
+          registry={gateway?.registry ?? null}
+          onExecute={handleSlashExecute}
+          onExit={handleSlashExit}
+        />
+      )}
       <Box flexGrow={1} height={18}>
         <ServersPane servers={servers} />
         <PromptsPanel gateway={gateway} />

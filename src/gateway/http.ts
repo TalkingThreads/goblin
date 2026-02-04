@@ -17,6 +17,11 @@ import {
   httpRequestsTotal,
   metricsRegistry,
 } from "../observability/metrics.js";
+import {
+  SlashCommandConflictError,
+  SlashCommandNotFoundError,
+  SlashCommandRouter,
+} from "../slashes/router.js";
 import { createHonoSseTransport } from "../transport/hono-adapter.js";
 import type { Registry } from "./registry.js";
 import type { Router } from "./router.js";
@@ -37,12 +42,14 @@ export class HttpGateway {
   private onShutdown: (() => void) | null = null;
   private activeRequests = 0;
   private shutdownPromise: Promise<void> | null = null;
+  private slashCommandRouter: SlashCommandRouter;
 
   constructor(
     private registry: Registry,
     private router: Router,
     private config: Config,
   ) {
+    this.slashCommandRouter = new SlashCommandRouter(this.registry, this.router);
     this.app = new Hono();
     this.setupMiddleware();
     this.setupRoutes();
@@ -311,6 +318,47 @@ export class HttpGateway {
       }
 
       return c.json({ success: true }); // Acknowledge
+    });
+
+    // Slash Commands Endpoints
+    this.app.get("/api/v1/slashes", async (c) => {
+      const commands = this.slashCommandRouter.listCommands();
+      const conflicts = this.slashCommandRouter.listConflicts();
+      return c.json({ commands, conflicts });
+    });
+
+    this.app.post("/api/v1/slashes/:command", async (c) => {
+      const command = c.req.param("command");
+      try {
+        const args = await c.req.json().catch(() => ({}));
+        const result = await this.slashCommandRouter.executeCommand(command, undefined, args);
+        return c.json(result);
+      } catch (error) {
+        if (error instanceof SlashCommandNotFoundError) {
+          return c.json({ error: error.message }, 404);
+        }
+        if (error instanceof SlashCommandConflictError) {
+          return c.json({ error: error.message, conflict: error.conflict }, 409);
+        }
+        logger.error({ command, error }, "Slash command execution failed");
+        return c.json({ error: "Internal server error" }, 500);
+      }
+    });
+
+    this.app.post("/api/v1/slashes/:serverId/:command", async (c) => {
+      const serverId = c.req.param("serverId");
+      const command = c.req.param("command");
+      try {
+        const args = await c.req.json().catch(() => ({}));
+        const result = await this.slashCommandRouter.executeCommand(command, serverId, args);
+        return c.json(result);
+      } catch (error) {
+        if (error instanceof SlashCommandNotFoundError) {
+          return c.json({ error: error.message }, 404);
+        }
+        logger.error({ command, serverId, error }, "Slash command execution failed");
+        return c.json({ error: "Internal server error" }, 500);
+      }
     });
   }
 
