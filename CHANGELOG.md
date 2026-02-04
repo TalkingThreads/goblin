@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2026-02-03
 
+### Features
+
+- **Slash Command Support**: Invoke MCP Prompts using `/command` syntax
+  - `POST /api/v1/slashes/:command`: Execute slash command
+  - `POST /api/v1/slashes/:serverId/:command`: Execute with server qualification
+  - `GET /api/v1/slashes`: List all slash commands and conflicts
+  - CLI commands: `goblin slashes list`, `goblin slashes show`, `goblin slashes exec`
+  - TUI autocomplete: Type `/` for slash command autocomplete
+  - Conflict resolution: Server prefix disambiguation for duplicate prompt names
+  - Unit tests: 12 tests for SlashCommandRouter
+
 ### Performance
 
 - **Async Pino Logging**: Configured async write stream with 4096-byte buffering for non-blocking I/O operations

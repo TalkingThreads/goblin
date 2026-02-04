@@ -50,12 +50,16 @@ export class SlashCommandRouter {
     args?: Record<string, string>,
   ): Promise<SlashCommandResponse> {
     const resolved = this.resolveCommand(command, serverId);
+    const conflicts = this.detectConflicts(command);
 
     if (!resolved) {
       if (serverId) {
         throw new SlashCommandNotFoundError(command, serverId);
       }
-      const conflicts = this.detectConflicts(command);
+      throw new SlashCommandConflictError(command, conflicts);
+    }
+
+    if (!serverId && conflicts) {
       throw new SlashCommandConflictError(command, conflicts);
     }
 
@@ -71,16 +75,18 @@ export class SlashCommandRouter {
   }
 
   resolveCommand(command: string, serverId?: string): { name: string; serverId: string } | null {
+    const allPrompts = this.registry.getAllPrompts();
+
     if (serverId) {
-      const prefixedCommand = `${serverId}_${command}`;
-      const prompt = this.registry.getPrompt(prefixedCommand);
+      const prefixedId = `${serverId}_${command}`;
+      const prompt = allPrompts.find((p) => p.id === prefixedId);
       if (prompt) {
         return { name: prompt.def.name, serverId };
       }
       return null;
     }
 
-    const prompt = this.registry.getPrompt(command);
+    const prompt = allPrompts.find((p) => p.def.name === command);
     if (prompt) {
       return { name: prompt.def.name, serverId: prompt.serverId };
     }
