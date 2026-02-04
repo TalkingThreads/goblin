@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "goblin-http": {
+      "type": "http",
+      "url": "http://localhost:3000",
+      "description": "Goblin MCP Gateway via HTTP transport"
+    }
+  }
+}

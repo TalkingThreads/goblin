@@ -5,7 +5,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SERVER_NAME, SERVER_VERSION } from "../meta.js";
-import { createLogger } from "../observability/logger.js";
+import { createLogger, isDebugEnabled } from "../observability/logger.js";
 import { type Transport, TransportState } from "./interface.js";
 
 const logger = createLogger("transport-stdio");
@@ -45,8 +45,17 @@ export class StdioTransport implements Transport {
       return;
     }
 
+    const debugMode = isDebugEnabled();
     this._state = TransportState.Connecting;
-    logger.info({ server: this.config.name }, "Connecting to STDIO server");
+
+    if (debugMode) {
+      logger.trace(
+        { server: this.config.name, command: this.config.command, args: this.config.args },
+        "Connecting to STDIO server",
+      );
+    } else {
+      logger.info({ server: this.config.name }, "Connecting to STDIO server");
+    }
 
     try {
       this.transport = new StdioClientTransport({
@@ -83,7 +92,11 @@ export class StdioTransport implements Transport {
       await this.client.connect(this.transport);
       this._state = TransportState.Connected;
 
-      logger.info({ server: this.config.name }, "Connected to STDIO server");
+      if (debugMode) {
+        logger.trace({ server: this.config.name }, "Connected to STDIO server");
+      } else {
+        logger.info({ server: this.config.name }, "Connected to STDIO server");
+      }
     } catch (error) {
       logger.error({ server: this.config.name, error }, "Failed to connect to STDIO server");
       this._state = TransportState.Error;
@@ -97,7 +110,11 @@ export class StdioTransport implements Transport {
       return;
     }
 
-    logger.info({ server: this.config.name }, "Disconnecting from STDIO server");
+    if (isDebugEnabled()) {
+      logger.trace({ server: this.config.name }, "Disconnecting from STDIO server");
+    } else {
+      logger.info({ server: this.config.name }, "Disconnecting from STDIO server");
+    }
 
     try {
       if (this.client) {

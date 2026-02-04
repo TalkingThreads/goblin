@@ -16,6 +16,21 @@ interface TuiLogEntry {
   data?: Record<string, unknown>;
 }
 
+/**
+ * Check if debug mode is enabled
+ * Set DEBUG=1 to enable trace-level logging
+ */
+export function isDebugEnabled(): boolean {
+  return process.env["DEBUG"] === "1";
+}
+
+/**
+ * Get debug log path from environment
+ */
+export function getDebugLogPath(): string {
+  return process.env["DEBUG_LOG"] ?? "./logs/debug.log";
+}
+
 class TuiLogBuffer {
   private entries: TuiLogEntry[] = [];
   private maxSize: number;
@@ -98,7 +113,10 @@ export function createLogger(component: string, options?: LoggerOptions): Logger
     return cached;
   }
 
-  const level = options?.level ?? (process.env["LOG_LEVEL"] as LogLevel) ?? "info";
+  // Check if DEBUG mode is enabled - use trace level if so
+  const isDebug = isDebugEnabled();
+  const level =
+    options?.level ?? (process.env["LOG_LEVEL"] as LogLevel) ?? (isDebug ? "trace" : "info");
   const format = options?.format ?? "json";
   const isDev = process.env["NODE_ENV"] !== "production";
   const logPath = process.env["LOG_PATH"] ?? "./logs/app.log";

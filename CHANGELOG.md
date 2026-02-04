@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Features
+
+- **Debugging Toolkit**: Comprehensive debugging tools for developers and agents
+  - `tools/debug/` folder with shell scripts and PowerShell scripts
+  - Inspector integration scripts for STDIO, HTTP, and SSE transports
+  - Health diagnostics scripts (`goblin-health.sh/ps1`)
+  - Process management scripts (start-debug, stop)
+  - Log viewing and filtering (`goblin-logs.sh/ps1`)
+  - Connection testing (`goblin-test-connection.sh/ps1`)
+  - Pre-configured Inspector templates for all transport modes
+  - Environment configuration files for debugging
+
+- **Debug Logging**: Optional debug-level logging support
+  - `DEBUG=1` environment variable enables trace-level logging
+  - `isDebugEnabled()` function in logger for conditional debug logging
+  - Trace-level logging for connection events (stdio transport)
+  - Trace-level logging for request routing decisions
+
 ## [0.4.0] - 2026-02-03
 
 ### Features

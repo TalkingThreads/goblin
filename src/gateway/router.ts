@@ -15,7 +15,7 @@ import {
   ToolNotFoundError,
 } from "../errors/types.js";
 import { getRequestId } from "../observability/correlation.js";
-import { createLogger } from "../observability/logger.js";
+import { createLogger, isDebugEnabled } from "../observability/logger.js";
 import { mcpToolCallsTotal, mcpToolDuration } from "../observability/metrics.js";
 import type { TransportPool } from "../transport/index.js";
 import type { Registry } from "./registry.js";
@@ -162,10 +162,19 @@ export class Router {
   ): Promise<T> {
     const start = performance.now();
     const timeoutMs = this.config.policies.defaultTimeout;
+    const debugMode = isDebugEnabled();
+
+    if (debugMode) {
+      logger.trace({ type, id, timeoutMs, requestId: getRequestId() }, "Request routing started");
+    }
 
     try {
       // 1. Resolve target
       const entry = lookupFn();
+
+      if (debugMode) {
+        logger.trace({ type, id, serverId: entry?.serverId }, "Target resolved");
+      }
 
       if (!entry) {
         // Use type-specific error classes
@@ -192,6 +201,10 @@ export class Router {
       }
 
       const transport = await this.transportPool.getTransport(serverConfig);
+
+      if (debugMode) {
+        logger.trace({ type, id, serverId, transportType: transport.type }, "Transport acquired");
+      }
 
       if (!transport.isConnected()) {
         throw new ConnectionError(serverId, "Transport not connected");

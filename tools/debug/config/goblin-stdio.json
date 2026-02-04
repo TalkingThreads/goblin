@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "goblin-stdio": {
+      "command": "bun",
+      "args": ["run", "dev"],
+      "env": {
+        "LOG_LEVEL": "info"
+      },
+      "description": "Goblin MCP Gateway in development mode"
+    }
+  }
+}

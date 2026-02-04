@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "goblin-sse": {
+      "type": "sse",
+      "url": "http://localhost:3000/events",
+      "description": "Goblin MCP Gateway via SSE transport"
+    }
+  }
+}
