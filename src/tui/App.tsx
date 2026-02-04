@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import PromptsPanel from "./PromptsPanel.js";
 import ResourcesPanel from "./ResourcesPanel.js";
@@ -6,15 +6,11 @@ import MetricsPanel from "./MetricsPanel.js";
 import { useGatewayData } from "./hooks/useGatewayData.js";
 import type { GoblinGateway } from "../core/gateway.js";
 
-/**
- * HEADER COMPONENT
- * Displays the gateway version, global status, and key metrics summary.
- */
-const Header = ({
+const Header = memo(function Header({
   gateway,
 }: {
   gateway: GoblinGateway | null;
-}) => {
+}) {
   const { metrics } = useGatewayData(gateway);
 
   return (
@@ -41,114 +37,146 @@ const Header = ({
       </Box>
     </Box>
   );
-};
+});
 
-/**
- * SERVERS PANE
- * A table-like view of connected MCP servers.
- */
-const ServersPane = ({ servers }: { servers: Array<{ id: string; name: string; transport: string; status: "online" | "offline"; tools: number }> }) => (
-  <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={1} minWidth={40}>
-    <Box marginBottom={1}>
-      <Text bold underline color="cyan">
-        CONNECTED SERVERS
-      </Text>
-    </Box>
-    <Box>
-      <Box width={15}>
-        <Text bold>Name</Text>
-      </Box>
-      <Box width={12}>
-        <Text bold>Transport</Text>
-      </Box>
-      <Box width={8}>
-        <Text bold>Tools</Text>
+const ServersPane = memo(function ServersPane({
+  servers,
+}: {
+  servers: Array<{
+    id: string;
+    name: string;
+    transport: string;
+    status: "online" | "offline";
+    tools: number;
+  }>;
+}) {
+  return (
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      paddingX={1}
+      flexGrow={1}
+      minWidth={40}
+    >
+      <Box marginBottom={1}>
+        <Text bold underline color="cyan">
+          CONNECTED SERVERS
+        </Text>
       </Box>
       <Box>
-        <Text bold>Status</Text>
+        <Box width={15}>
+          <Text bold>Name</Text>
+        </Box>
+        <Box width={12}>
+          <Text bold>Transport</Text>
+        </Box>
+        <Box width={8}>
+          <Text bold>Tools</Text>
+        </Box>
+        <Box>
+          <Text bold>Status</Text>
+        </Box>
+      </Box>
+      <Box flexDirection="column" marginTop={1}>
+        {servers.map((server) => (
+          <Box key={server.id}>
+            <Box width={15}>
+              <Text>{server.name}</Text>
+            </Box>
+            <Box width={12}>
+              <Text color="gray">{server.transport}</Text>
+            </Box>
+            <Box width={8}>
+              <Text>{server.tools}</Text>
+            </Box>
+            <Box>
+              <Text color={server.status === "online" ? "green" : "red"}>
+                {server.status === "online" ? "🟢" : "🔴"}{" "}
+                {server.status.toUpperCase()}
+              </Text>
+            </Box>
+          </Box>
+        ))}
+        {servers.length === 0 && (
+          <Box>
+            <Text color="gray">No servers connected</Text>
+          </Box>
+        )}
       </Box>
     </Box>
-    <Box flexDirection="column" marginTop={1}>
-      {servers.map((server) => (
-        <Box key={server.id}>
-          <Box width={15}>
-            <Text>{server.name}</Text>
-          </Box>
-          <Box width={12}>
-            <Text color="gray">{server.transport}</Text>
-          </Box>
-          <Box width={8}>
-            <Text>{server.tools}</Text>
-          </Box>
-          <Box>
-            <Text color={server.status === "online" ? "green" : "red"}>
-              {server.status === "online" ? "🟢" : "🔴"}{" "}
-              {server.status.toUpperCase()}
+  );
+});
+
+const LogsPane = memo(function LogsPane({
+  logs,
+}: {
+  logs: Array<{
+    timestamp: Date;
+    message: string;
+    level: "info" | "warn" | "error" | "debug";
+  }>;
+}) {
+  return (
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      paddingX={1}
+      flexGrow={2}
+      marginLeft={1}
+    >
+      <Box marginBottom={1}>
+        <Text bold underline color="yellow">
+          RECENT ACTIVITY
+        </Text>
+      </Box>
+      <Box flexDirection="column">
+        {logs.slice(-12).map((log, i) => (
+          <Box key={i}>
+            <Text color="gray" dimColor>
+              [{log.timestamp.toLocaleTimeString()}]
+            </Text>
+            <Text
+              color={
+                log.level === "error"
+                  ? "red"
+                  : log.level === "warn"
+                    ? "yellow"
+                    : "white"
+              }
+            >
+              {" "}
+              {log.message}
             </Text>
           </Box>
-        </Box>
-      ))}
-      {servers.length === 0 && (
-        <Box>
-          <Text color="gray">No servers connected</Text>
-        </Box>
-      )}
+        ))}
+        {logs.length === 0 && (
+          <Box>
+            <Text color="gray">No activity yet</Text>
+          </Box>
+        )}
+      </Box>
     </Box>
-  </Box>
-);
+  );
+});
 
-/**
- * LOGS PANE
- * A scrolling log view with real gateway logs.
- */
-const LogsPane = ({ logs }: { logs: Array<{ timestamp: Date; message: string; level: "info" | "warn" | "error" | "debug" }> }) => (
-  <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={2} marginLeft={1}>
-    <Box marginBottom={1}>
-      <Text bold underline color="yellow">
-        RECENT ACTIVITY
-      </Text>
+const Footer = memo(function Footer({ showMetrics }: { showMetrics: boolean }) {
+  return (
+    <Box marginTop={1} paddingX={1} justifyContent="space-between">
+      <Box>
+        <Text color="gray">
+          q: <Text dimColor>Quit</Text>
+          <Text color="gray"> | r: </Text>
+          <Text dimColor>Reload</Text>
+          <Text color="gray"> | m: </Text>
+          <Text dimColor={!showMetrics}>Metrics</Text>
+        </Text>
+      </Box>
+      <Box>
+        <Text dimColor>Goblin Dashboard v0.1</Text>
+      </Box>
     </Box>
-    <Box flexDirection="column">
-      {logs.slice(-12).map((log, i) => (
-        <Box key={i}>
-          <Text color="gray" dimColor>
-            [{log.timestamp.toLocaleTimeString()}]
-          </Text>
-          <Text color={log.level === "error" ? "red" : log.level === "warn" ? "yellow" : "white"}>
-            {" "}
-            {log.message}
-          </Text>
-        </Box>
-      ))}
-      {logs.length === 0 && (
-        <Box>
-          <Text color="gray">No activity yet</Text>
-        </Box>
-      )}
-    </Box>
-  </Box>
-);
-
-/**
- * FOOTER COMPONENT
- * Help text for the TUI.
- */
-const Footer = ({ showMetrics }: { showMetrics: boolean }) => (
-  <Box marginTop={1} paddingX={1} justifyContent="space-between">
-    <Box>
-      <Text color="gray">
-        q: <Text dimColor>Quit</Text>
-        <Text color="gray"> | r: </Text>
-        <Text dimColor>Reload</Text>
-        <Text color="gray"> | m: </Text>
-        <Text dimColor={!showMetrics}>Metrics</Text>
-      </Text>
-    </Box>
-    <Box>
-      <Text dimColor>Goblin Dashboard v0.1</Text>
-    </Box>
-  </Box>
-);
+  );
+});
 
 /**
  * MAIN APP COMPONENT

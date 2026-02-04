@@ -7,6 +7,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
 import { streamSSE } from "hono/streaming";
+import { timeout } from "hono/timeout";
 import type { Config } from "../config/index.js";
 import { getOrCreateRequestId, getRequestId } from "../observability/correlation.js";
 import { createLogger } from "../observability/logger.js";
@@ -22,6 +23,9 @@ import type { Router } from "./router.js";
 import { GatewayServer } from "./server.js";
 
 const logger = createLogger("http-gateway");
+
+const TIMEOUT_MS = 30000;
+const MCP_TIMEOUT_MS = 60000;
 
 export class HttpGateway {
   public app: Hono;
@@ -54,6 +58,9 @@ export class HttpGateway {
   private setupMiddleware(): void {
     this.app.use("*", honoLogger());
     this.app.use("*", cors());
+
+    this.app.use("/api/*", timeout(TIMEOUT_MS));
+    this.app.use("/api/mcp/*", timeout(MCP_TIMEOUT_MS));
 
     // Request ID middleware
     this.app.use("*", async (c, next) => {

@@ -1,6 +1,6 @@
 import { type Config, ConfigWatcher, generateSchema, loadConfig } from "../config/index.js";
 import { HttpGateway, Registry, Router } from "../gateway/index.js";
-import { createLogger } from "../observability/logger.js";
+import { createLogger, flushLogs } from "../observability/logger.js";
 import { catalogList, catalogSearch } from "../tools/meta/catalog.js";
 import { health } from "../tools/meta/health.js";
 import { catalogPrompts, describePrompt, searchPrompts } from "../tools/meta/prompts.js";
@@ -111,6 +111,20 @@ export class GoblinGateway {
    */
   async stop(): Promise<void> {
     logger.info("Stopping Goblin Gateway...");
+
+    const shutdown = async (signal: string): Promise<void> => {
+      logger.info({ signal }, "Shutdown signal received");
+      await this.stop();
+      await flushLogs();
+      setTimeout(() => {
+        logger.info("Logs flushed, exiting");
+        process.exit(0);
+      }, 1000);
+    };
+
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
+
     if (this.configWatcher) {
       this.configWatcher.stop();
     }

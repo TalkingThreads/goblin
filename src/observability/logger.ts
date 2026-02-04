@@ -2,12 +2,12 @@
  * Enhanced structured logger using pino
  */
 
+import { createWriteStream } from "node:fs";
 import pino from "pino";
 import type { LogFormat, LoggingConfig, LogLevel } from "../config/schema.js";
 
 export type Logger = pino.Logger;
 
-// TUI log buffer for integration
 interface TuiLogEntry {
   timestamp: Date;
   level: string;
@@ -51,56 +51,63 @@ class TuiLogBuffer {
   }
 }
 
-// Global TUI log buffer instance
 export const tuiLogBuffer = new TuiLogBuffer();
 
-/**
- * Logger options
- */
+let logWriteStream: ReturnType<typeof createWriteStream> | null = null;
+
+export function setLogWriteStream(stream: ReturnType<typeof createWriteStream>): void {
+  logWriteStream = stream;
+}
+
+export function flushLogs(): Promise<void> {
+  return new Promise((resolve) => {
+    if (logWriteStream) {
+      logWriteStream.once("finish", resolve);
+      logWriteStream.end();
+      logWriteStream = null;
+    } else {
+      resolve();
+    }
+  });
+}
+
 export interface LoggerOptions {
-  /**
-   * Log level (overrides config and env var)
-   */
   level?: LogLevel;
-
-  /**
-   * Log format (pretty or json)
-   */
   format?: LogFormat;
-
-  /**
-   * Configuration for sensitive data redaction
-   */
   redact?: {
     paths: string[];
     remove?: boolean;
   };
-
-  /**
-   * Log destinations
-   */
   destinations?: NodeJS.WritableStream[];
 }
 
-/**
- * Create an enhanced logger with component name
- */
 export function createLogger(component: string, options?: LoggerOptions): Logger {
-  // Determine log level (env var overrides options)
   const level = options?.level ?? (process.env["LOG_LEVEL"] as LogLevel) ?? "info";
-
-  // Determine format
   const format = options?.format ?? "json";
   const isDev = process.env["NODE_ENV"] !== "production";
+  const logPath = process.env["LOG_PATH"] ?? "./logs/app.log";
 
-  // Build pino options
   const pinoOptions: pino.LoggerOptions = {
     name: "goblin",
     level,
     timestamp: pino.stdTimeFunctions.isoTime,
   };
 
-  // Add redaction if configured
+  if (format !== "pretty") {
+    let stream: ReturnType<typeof createWriteStream> | null = null;
+    try {
+      stream = createWriteStream(logPath, { flags: "a", encoding: "utf8" });
+      setLogWriteStream(stream);
+      (pinoOptions as Record<string, unknown>)["writeTo"] = {
+        dest: stream,
+        sync: false,
+        minLength: 4096,
+      };
+    } catch {
+      // If log directory doesn't exist, use default logging (stdout)
+    }
+  }
+
   if (options?.redact) {
     pinoOptions.redact = {
       paths: options.redact.paths,
@@ -108,7 +115,6 @@ export function createLogger(component: string, options?: LoggerOptions): Logger
     };
   }
 
-  // Add pretty printing for development
   if (format === "pretty" && isDev) {
     pinoOptions.transport = {
       target: "pino-pretty",
@@ -121,27 +127,18 @@ export function createLogger(component: string, options?: LoggerOptions): Logger
     };
   }
 
-  // Configure destinations
   if (options?.destinations && options.destinations.length > 0) {
     pinoOptions.base = pinoOptions.base ?? {};
     (pinoOptions.base as Record<string, unknown>)["destinations"] = options.destinations;
   }
 
-  // Create base logger
   const baseLogger = pino(pinoOptions);
-
-  // Create child logger
   const childLogger = baseLogger.child({ component });
 
-  // Wrap with TUI integration
   return createTuiIntegratedLogger(childLogger, component);
 }
 
-/**
- * Wrap a pino logger to integrate with TUI log buffer
- */
 function createTuiIntegratedLogger(logger: pino.Logger, component: string): pino.Logger {
-  // Store original methods
   const originalMethods = {
     trace: logger.trace,
     debug: logger.debug,
@@ -151,7 +148,6 @@ function createTuiIntegratedLogger(logger: pino.Logger, component: string): pino
     fatal: logger.fatal,
   };
 
-  // Override each log method
   logger.trace = ((obj: unknown, msg?: string) => {
     captureLog("trace", component, obj, msg);
     return originalMethods.trace.call(logger, obj, msg);
@@ -185,9 +181,6 @@ function createTuiIntegratedLogger(logger: pino.Logger, component: string): pino
   return logger;
 }
 
-/**
- * Capture log entry to TUI buffer
- */
 function captureLog(level: string, component: string, obj: unknown, msg?: string): void {
   const entry: TuiLogEntry = {
     timestamp: new Date(),
@@ -199,18 +192,12 @@ function captureLog(level: string, component: string, obj: unknown, msg?: string
   tuiLogBuffer.push(entry);
 }
 
-/**
- * Logger factory with configuration
- */
 export function createLoggerWithConfig(component: string, config?: LoggingConfig): Logger {
   if (!config) {
     return createLogger(component);
   }
 
-  // Determine log level (env var overrides config)
   const level = (process.env["LOG_LEVEL"] as LogLevel) ?? config.level;
-
-  // Determine format
   const format =
     config.format === "pretty" && process.env["NODE_ENV"] !== "production" ? "pretty" : "json";
 
@@ -226,28 +213,16 @@ export function createLoggerWithConfig(component: string, config?: LoggingConfig
   });
 }
 
-/**
- * Base logger instance
- */
 export const logger = createLogger("core");
 
-/**
- * Get TUI log buffer for TUI components
- */
 export function getTuiLogs(): TuiLogEntry[] {
   return tuiLogBuffer.getAll();
 }
 
-/**
- * Subscribe to TUI log updates
- */
 export function subscribeToTuiLogs(callback: (entry: TuiLogEntry) => void): () => void {
   return tuiLogBuffer.subscribe(callback);
 }
 
-/**
- * Clear TUI log buffer
- */
 export function clearTuiLogs(): void {
   tuiLogBuffer.clear();
 }
