@@ -41,6 +41,11 @@ export class Router {
     }
   }
 
+  updateConfig(newConfig: Config): void {
+    this.config = newConfig;
+    this.rebuildServerMap();
+  }
+
   /**
    * Route a tool call to the appropriate backend
    */

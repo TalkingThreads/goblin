@@ -36,13 +36,11 @@ export class GoblinGateway {
   }
 
   /**
-   * Initialize and start the gateway
-   *
-   * @param customConfig - Optional pre-loaded configuration
-   * @param configPath - Optional path to the configuration file
+   * Initialize the gateway core components (Registry, Router, Backends)
+   * without starting the HTTP listener.
    */
-  async start(customConfig?: Config, configPath?: string): Promise<void> {
-    logger.info("Starting Goblin Gateway Core...");
+  async initialize(customConfig?: Config, configPath?: string): Promise<Config> {
+    logger.info("Initializing Goblin Gateway Core...");
 
     // Generate Schema
     try {
@@ -62,26 +60,10 @@ export class GoblinGateway {
     if (config.virtualTools) {
       logger.info({ count: config.virtualTools.length }, "Registering virtual tools");
       for (const vt of config.virtualTools) {
-        // For MVP, we use a generic input schema as inference is complex
-        // Ideally, we'd infer it from the first operation's input requirements
         const def = createVirtualToolDefinition(vt.id, vt.description);
         this.registry.registerLocalTool(def);
       }
     }
-
-    // Start HTTP
-    // biome-ignore lint/style/noNonNullAssertion: Router initialized just above on line 56
-    this.httpGateway = new HttpGateway(this.registry, this.router!, config);
-
-    // Set up shutdown callback for graceful stop via API
-    this.httpGateway.setShutdownCallback(() => {
-      this.stop().catch((error) => {
-        logger.error({ error }, "Error during shutdown");
-        process.exit(1);
-      });
-    });
-
-    this.httpGateway.start();
 
     // Connect Servers
     for (const server of config.servers) {
@@ -103,7 +85,82 @@ export class GoblinGateway {
     });
     this.configWatcher.start();
 
-    logger.info("Goblin Gateway Core ready");
+    logger.info("Goblin Gateway Core initialized");
+    return config;
+  }
+
+  /**
+   * Reload configuration (used for SIGHUP in STDIO mode)
+   * Updates the router config and manages server additions/removals
+   */
+  async reloadConfig(newConfig: Config): Promise<void> {
+    logger.info("Reloading Goblin Gateway configuration...");
+
+    if (!this.router) {
+      logger.warn("Router not initialized, cannot reload config");
+      return;
+    }
+
+    this.router.updateConfig(newConfig);
+
+    const currentServers = new Set(this.registry.getServerNames());
+    const newServerNames = new Set(newConfig.servers.map((s) => s.name));
+
+    for (const server of newConfig.servers) {
+      if (!currentServers.has(server.name) && server.enabled) {
+        try {
+          const transport = await this.transportPool.getTransport(server);
+          await this.registry.addServer(server.name, transport.getClient());
+          logger.info({ server: server.name }, "Added new server via config reload");
+        } catch (error) {
+          logger.error({ server: server.name, error }, "Failed to add server during config reload");
+        }
+      }
+    }
+
+    for (const serverName of currentServers) {
+      if (!newServerNames.has(serverName)) {
+        await this.registry.removeServer(serverName);
+        logger.info({ server: serverName }, "Removed server via config reload");
+      }
+    }
+
+    this.registry.clearLocalTools();
+    this.registerMetaTools();
+
+    if (newConfig.virtualTools) {
+      logger.info({ count: newConfig.virtualTools.length }, "Registering virtual tools");
+      for (const vt of newConfig.virtualTools) {
+        const def = createVirtualToolDefinition(vt.id, vt.description);
+        this.registry.registerLocalTool(def);
+      }
+    }
+
+    logger.info("Goblin Gateway configuration reloaded");
+  }
+
+  /**
+   * Initialize and start the gateway
+   *
+   * @param customConfig - Optional pre-loaded configuration
+   * @param configPath - Optional path to the configuration file
+   */
+  async start(customConfig?: Config, configPath?: string): Promise<void> {
+    const config = await this.initialize(customConfig, configPath);
+
+    // Start HTTP
+    // biome-ignore lint/style/noNonNullAssertion: Router initialized in initialize()
+    this.httpGateway = new HttpGateway(this.registry, this.router!, config);
+
+    // Set up shutdown callback for graceful stop via API
+    this.httpGateway.setShutdownCallback(() => {
+      this.stop().catch((error) => {
+        logger.error({ error }, "Error during shutdown");
+        process.exit(1);
+      });
+    });
+
+    this.httpGateway.start();
   }
 
   /**

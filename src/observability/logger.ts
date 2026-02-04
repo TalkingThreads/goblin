@@ -3,6 +3,7 @@
  */
 
 import { createWriteStream } from "node:fs";
+import { Writable } from "node:stream";
 import pino from "pino";
 import type { LogFormat, LoggingConfig, LogLevel } from "../config/schema.js";
 
@@ -29,6 +30,28 @@ export function isDebugEnabled(): boolean {
  */
 export function getDebugLogPath(): string {
   return process.env["DEBUG_LOG"] ?? "./logs/debug.log";
+}
+
+/**
+ * Switchable stream that can redirect between stdout and stderr
+ */
+class SwitchableStream extends Writable {
+  private useStderr = false;
+
+  setStderr(enabled: boolean) {
+    this.useStderr = enabled;
+  }
+
+  _write(chunk: unknown, encoding: BufferEncoding, callback: (error?: Error | null) => void): void {
+    const target = this.useStderr ? process.stderr : process.stdout;
+    target.write(chunk as any, encoding, callback);
+  }
+}
+
+export const globalLogStream = new SwitchableStream();
+
+export function setLogToStderr(enabled: boolean): void {
+  globalLogStream.setStderr(enabled);
 }
 
 class TuiLogBuffer {
@@ -127,18 +150,25 @@ export function createLogger(component: string, options?: LoggerOptions): Logger
     timestamp: pino.stdTimeFunctions.isoTime,
   };
 
+  let destination: NodeJS.WritableStream | undefined;
+
   if (format !== "pretty") {
     let stream: ReturnType<typeof createWriteStream> | null = null;
     try {
-      stream = createWriteStream(logPath, { flags: "a", encoding: "utf8" });
-      setLogWriteStream(stream);
-      (pinoOptions as Record<string, unknown>)["writeTo"] = {
-        dest: stream,
-        sync: false,
-        minLength: 4096,
-      };
+      // Only try to open file if LOG_PATH is explicitly set or we're running in a mode where it makes sense
+      if (process.env["LOG_PATH"]) {
+        stream = createWriteStream(logPath, { flags: "a", encoding: "utf8" });
+        setLogWriteStream(stream);
+        // If file stream is successfully created, we use it
+        destination = stream;
+      }
     } catch {
-      // If log directory doesn't exist, use default logging (stdout)
+      // If log directory doesn't exist, fall back
+    }
+
+    if (!destination) {
+      // If no file stream, use global switchable stream
+      destination = globalLogStream;
     }
   }
 
@@ -166,7 +196,9 @@ export function createLogger(component: string, options?: LoggerOptions): Logger
     (pinoOptions.base as Record<string, unknown>)["destinations"] = options.destinations;
   }
 
-  const baseLogger = pino(pinoOptions);
+  // If destination is set (file or globalLogStream), use it.
+  // If pretty, destination is undefined (pino-pretty transport used)
+  const baseLogger = destination ? pino(pinoOptions, destination) : pino(pinoOptions);
   const childLogger = baseLogger.child({ component });
 
   const result = createTuiIntegratedLogger(childLogger, component);

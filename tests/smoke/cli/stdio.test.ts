@@ -1,0 +1,167 @@
+/**
+ * CLI Stdio Command Smoke Tests
+ */
+
+import { describe, expect, it } from "bun:test";
+import { Buffer } from "node:buffer";
+import { spawn } from "node:child_process";
+
+describe("CLI Stdio Command", () => {
+  it("should start and respond to JSON-RPC over stdio", async () => {
+    const child = spawn("node", ["dist/cli/index.js", "stdio"], {
+      env: { ...process.env, NO_COLOR: "1" },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+    let responseReceived = false;
+
+    child.stdout.on("data", (data) => {
+      stdout += data.toString();
+      if (stdout.includes("jsonrpc")) {
+        responseReceived = true;
+      }
+    });
+
+    child.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve();
+      }, 2000);
+
+      child.stderr.on("data", (data) => {
+        if (data.toString().includes("Goblin STDIO server running")) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    // Send initialize request
+    const initRequest = JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2024-11-05",
+        capabilities: {},
+        clientInfo: { name: "test-client", version: "1.0.0" },
+      },
+    });
+
+    const message = `Content-Length: ${Buffer.byteLength(initRequest)}\r\n\r\n${initRequest}`;
+    child.stdin.write(message);
+
+    await new Promise<void>((resolve, reject) => {
+      if (responseReceived) {
+        resolve();
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        child.kill();
+        reject(new Error(`Timeout waiting for response.`));
+      }, 10000);
+
+      const checkInterval = setInterval(() => {
+        if (responseReceived) {
+          clearInterval(checkInterval);
+          clearTimeout(timeout);
+          resolve();
+        }
+      }, 100);
+    });
+
+    child.kill();
+
+    expect(stdout).toContain("jsonrpc");
+    expect(stdout).toContain("result");
+    expect(stderr).toContain("Goblin STDIO server running");
+  });
+
+  it("should list tools via stdio", async () => {
+    const child = spawn("node", ["dist/cli/index.js", "stdio"], {
+      env: { ...process.env, NO_COLOR: "1" },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve();
+      }, 2000);
+
+      child.stderr.on("data", (data) => {
+        if (data.toString().includes("Goblin STDIO server running")) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    // Send initialize request
+    const initRequest = JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2024-11-05",
+        capabilities: {},
+        clientInfo: { name: "test-client", version: "1.0.0" },
+      },
+    });
+    let message = `Content-Length: ${Buffer.byteLength(initRequest)}\r\n\r\n${initRequest}`;
+    child.stdin.write(message);
+
+    // Wait a bit for initialization
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Send list tools request
+    const listToolsRequest = JSON.stringify({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/list",
+      params: {},
+    });
+    message = `Content-Length: ${Buffer.byteLength(listToolsRequest)}\r\n\r\n${listToolsRequest}`;
+    child.stdin.write(message);
+
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => {
+        child.kill();
+        resolve();
+      }, 5000);
+
+      const checkInterval = setInterval(() => {
+        if (
+          stdout.includes('"tools":[') ||
+          stdout.includes('"method":"notifications/tools/list_changed"')
+        ) {
+          clearInterval(checkInterval);
+          clearTimeout(timeout);
+          resolve();
+        }
+      }, 100);
+    });
+
+    child.kill();
+
+    // Verify we got a tools list response
+    expect(stdout).toContain("tools");
+    expect(stderr).toContain("Goblin STDIO server running");
+  });
+});

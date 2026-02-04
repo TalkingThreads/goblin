@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+- **STDIO Server Transport**: Run Goblin as subprocess MCP server for CLI integration
+  - `goblin stdio` command for STDIO mode
+  - Custom `StdioServerTransport` with JSON-RPC 2.0 framing (Content-Length headers)
+  - Support for Claude CLI integration via MCP config
+  - Support for Smithery integration
+  - SIGHUP config reload on Unix systems
+  - Logs redirected to stderr, stdout kept clean for JSON-RPC protocol
+  - Environment variable overrides: `GOBLIN_PORT`, `GOBLIN_HOST`, `GOBLIN_AUTH_MODE`, `GOBLIN_AUTH_APIKEY`
+  - Unit tests and smoke tests for STDIO transport
+  - Documentation: `docs/cli-reference.md`
+
 - **Everything Server Integration Tests**: Comprehensive end-to-end tests verifying Goblin correctly exposes all MCP protocol features using the Everything MCP server
   - Test file at `tests/integration/everything-server.test.ts`
   - Tests for tools (listing, invocation, error handling)

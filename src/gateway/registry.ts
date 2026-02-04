@@ -210,6 +210,20 @@ export class Registry extends EventEmitter {
     this.emit("change");
   }
 
+  getServerNames(): string[] {
+    return Array.from(this.serverTools.keys());
+  }
+
+  clearLocalTools(): void {
+    for (const id of this.localTools.keys()) {
+      this.tools.delete(id);
+    }
+    this.localTools.clear();
+    this.invalidateCache();
+    this.emit("tool-change");
+    this.emit("change");
+  }
+
   // --- Tools ---
 
   listTools(): ToolCard[] {

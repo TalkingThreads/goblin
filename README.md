@@ -39,7 +39,7 @@ Built with Bun, TypeScript, Hono, and the MCP SDK, Goblin offers blazing-fast pe
 - **🔌 Unified Aggregation**: Single endpoint aggregating tools, prompts, and resources from multiple MCP backends
 - **🎛️ Intelligent Routing**: Namespaced tool calls with timeout enforcement and error mapping
 - **🚀 Multi-Transport**: STDIO, HTTP, and SSE transports with automatic connection pooling
-- **🔧 Hot Reload**: Configuration changes applied atomically without restart
+- **🔧 Hot Reload**: Configuration changes applied atomically without restart (HTTP mode) or via SIGHUP (STDIO mode)
 - **📊 Full Observability**: Structured logging, custom metrics, and real-time TUI dashboard
 - **✅ Enterprise Ready**: 668+ tests, smoke tests for CI, performance benchmarks
 
@@ -92,6 +92,54 @@ That's it! Goblin is now running at `http://127.0.0.1:3000`.
 
 See [Getting Started](docs/getting-started.md) for a detailed guide.
 
+### STDIO Mode (Subprocess Integration)
+
+Goblin can run in STDIO mode for integration with MCP-compatible clients like Claude CLI or Smithery:
+
+```bash
+# Run as subprocess MCP server
+goblin stdio
+
+# With custom config
+goblin stdio --config /path/to/config.json
+
+# Environment variables
+GOBLIN_PORT=3000          # Override gateway port
+GOBLIN_HOST=127.0.0.1    # Override gateway host
+GOBLIN_AUTH_MODE=dev      # Authentication mode (dev/apikey)
+GOBLIN_AUTH_APIKEY=xxx   # API key for apikey mode
+```
+
+#### Integration Examples
+
+**Claude CLI:**
+```json
+{
+  "mcpServers": {
+    "goblin": {
+      "command": "goblin",
+      "args": ["stdio"]
+    }
+  }
+}
+```
+
+**Smithery:**
+```json
+{
+  "mcpServers": {
+    "goblin": {
+      "command": "npx",
+      "args": ["-y", "goblin", "stdio"]
+    }
+  }
+}
+```
+
+> **Note**: STDIO mode is single-connection. Each request spawns a new Goblin process. For persistent connections, use HTTP mode with SSE transport.
+
+See [CLI Reference](docs/cli-reference.md) for complete STDIO mode documentation.
+
 ## Documentation
 
 | Topic | Description |
@@ -109,6 +157,10 @@ See [Getting Started](docs/getting-started.md) for a detailed guide.
 goblin start                    # Default settings
 goblin start --tui             # Enable TUI mode
 goblin start --port 3000       # Custom port
+
+# STDIO mode (for CLI/subprocess integration)
+goblin stdio                   # Run as subprocess MCP server
+goblin stdio --config /path   # Custom config path
 
 # Gateway status
 goblin status                   # Human-readable
@@ -217,6 +269,10 @@ We welcome contributions! Please see [CONTRIBUTE.md](CONTRIBUTE.md) for guidelin
 |----------|-------------|---------|
 | `LOG_LEVEL` | Logging level (trace/debug/info/warn/error/fatal) | `info` |
 | `GOBLIN_CONFIG_PATH` | Custom config file path | OS-specific default |
+| `GOBLIN_PORT` | Gateway port override (STDIO/HTTP) | From config |
+| `GOBLIN_HOST` | Gateway host override (STDIO/HTTP) | From config |
+| `GOBLIN_AUTH_MODE` | Authentication mode (dev/apikey) | From config |
+| `GOBLIN_AUTH_APIKEY` | API key for authentication | From config |
 | `NODE_ENV` | Environment (development/production) | `development` |
 
 ## Support

@@ -9,6 +9,7 @@ import { serversCommand } from "./commands/servers.js";
 import { registerSlashCommands } from "./commands/slashes/index.js";
 import { startGateway } from "./commands/start.jsx";
 import { statusCommand } from "./commands/status.js";
+import { startStdioGateway } from "./commands/stdio.js";
 import { stopCommand } from "./commands/stop.js";
 import { toolsCommand } from "./commands/tools.js";
 
@@ -63,6 +64,14 @@ async function main(): Promise<void> {
     .option("--config <path>", "Path to config file")
     .action(async (options: StartOptions) => {
       await startGateway(options);
+    });
+
+  program
+    .command("stdio")
+    .description("Start Goblin in STDIO mode")
+    .option("--config <path>", "Path to config file")
+    .action(async (options: { config?: string }) => {
+      await startStdioGateway(options);
     });
 
   program

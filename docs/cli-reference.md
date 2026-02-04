@@ -78,6 +78,83 @@ goblin start --config /path/to/config.json
 goblin start --json
 ```
 
+### `goblin stdio`
+
+Start Goblin in STDIO mode for CLI/subprocess integration. This mode is designed for running Goblin as a child process (e.g., as an MCP server for Claude or Smithery).
+
+**Basic Usage**:
+```bash
+goblin stdio
+```
+
+**Options**:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--config` | Path to config file | OS default |
+| `--port` | Port override (accepted but ignored for listening) | - |
+
+**Behavior**:
+- Reads JSON-RPC messages from `stdin`
+- Writes JSON-RPC messages to `stdout`
+- Writes logs to `stderr` (preserving `stdout` for protocol traffic)
+- Exits on `SIGINT`, `SIGTERM`, or when `stdin` closes/errors
+
+**Examples**:
+```bash
+# Run as Claude server
+goblin stdio
+
+# Run with custom config
+goblin stdio --config /path/to/goblin.json
+```
+
+**Smithery Integration**:
+Smithery is a platform for discovering and deploying MCP servers. To register Goblin with Smithery:
+
+1. Ensure Goblin is installed and accessible
+2. Create a Smithery-compatible configuration file
+3. Submit your server to the Smithery registry
+
+Example Smithery configuration (`smithery.json`):
+```json
+{
+  "name": "goblin",
+  "version": "0.3.0",
+  "description": "MCP Gateway that aggregates multiple MCP servers",
+  "command": "goblin",
+  "args": ["stdio"],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "gateway": {
+        "type": "object",
+        "properties": {
+          "port": { "type": "number", "default": 3000 },
+          "host": { "type": "string", "default": "127.0.0.1" }
+        }
+      },
+      "auth": {
+        "type": "object",
+        "properties": {
+          "mode": { "type": "string", "enum": ["dev", "apikey"], "default": "dev" },
+          "apiKey": { "type": "string" }
+        }
+      }
+    }
+  }
+}
+```
+
+**Authentication in STDIO Mode**:
+- When running in STDIO mode, Goblin supports both `dev` (development) and `apikey` authentication modes
+- In `dev` mode, no authentication is required - any client can connect
+- In `apikey` mode, clients must provide a valid API key via the `Authorization` header or `X-API-Key` header
+- Configure authentication using environment variables:
+  ```bash
+  GOBLIN_AUTH_MODE=apikey GOBLIN_AUTH_APIKEY=your-secret-key goblin stdio
+  ```
+- For Claude CLI integration, `dev` mode is recommended as Claude handles authentication separately
+
 ### `goblin status`
 
 Show gateway status with server information.
@@ -739,6 +816,8 @@ goblin completion fish > ~/.config/fish/completions/goblin.fish
 | `GOBLIN_PORT` | Gateway port | 3000 |
 | `GOBLIN_HOST` | Gateway host | 127.0.0.1 |
 | `GOBLIN_TIMEOUT` | Default timeout | 30s |
+| `GOBLIN_AUTH_MODE` | Auth mode (dev/apikey) | dev |
+| `GOBLIN_AUTH_APIKEY` | API key for apikey mode | - |
 
 **Examples**:
 ```bash
@@ -845,6 +924,13 @@ fi
 | `GOBLIN_HOST` | Gateway host | 127.0.0.1 |
 | `GOBLIN_TIMEOUT` | Default timeout | 30s |
 | `GOBLIN_LOG_FORMAT` | Log format (json/plain) | plain |
+
+### Authentication Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GOBLIN_AUTH_MODE` | Auth mode (dev/apikey) | dev |
+| `GOBLIN_AUTH_APIKEY` | API key for apikey mode | - |
 
 ### Development Variables
 
