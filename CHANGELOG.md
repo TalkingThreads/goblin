@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+- **Everything Server Integration Tests**: Comprehensive end-to-end tests verifying Goblin correctly exposes all MCP protocol features using the Everything MCP server
+  - Test file at `tests/integration/everything-server.test.ts`
+  - Tests for tools (listing, invocation, error handling)
+  - Tests for resources (listing, reading, templates, MIME types)
+  - Tests for prompts (listing, retrieval, rendering)
+  - Tests for notifications and request routing
+  - Tests for error handling (connection errors, protocol errors, error propagation)
+  - EverythingServerProcess class for spawning and managing test server
+  - EverythingServerFixture for test setup/teardown
+  - GatewayTestFixture for gateway integration testing
+  - Uses @modelcontextprotocol/server-everything package
+
 - **Debugging Toolkit**: Comprehensive debugging tools for developers and agents
   - `tools/debug/` folder with shell scripts and PowerShell scripts
   - Inspector integration scripts for STDIO, HTTP, and SSE transports
