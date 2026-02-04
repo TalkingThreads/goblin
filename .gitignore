@@ -23,6 +23,9 @@ Thumbs.db
 *.log
 logs
 
+#Benchmarks
+benchmarks
+
 # Test coverage
 coverage
 
@@ -39,3 +42,5 @@ test-results
 
 # OpenSpec Development Workflow
 openspec
+
+
