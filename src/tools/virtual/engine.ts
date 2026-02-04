@@ -35,7 +35,8 @@ export class VirtualToolEngine {
     try {
       // Sequential execution for MVP
       for (let i = 0; i < definition.ops.length; i++) {
-        const op = definition.ops[i]!; // Checked by loop
+        // biome-ignore lint/style/noNonNullAssertion: Loop bounds guarantee existence
+        const op = definition.ops[i]!;
         await this.executeOp(op, context, i);
       }
 
@@ -110,6 +111,7 @@ export class VirtualToolEngine {
 
   private resolveVariable(path: string, context: ExecutionContext): unknown {
     const parts = path.split(".");
+    // biome-ignore lint/suspicious/noExplicitAny: Dynamic property resolution requires any
     let current: any = context.results;
 
     for (const part of parts) {

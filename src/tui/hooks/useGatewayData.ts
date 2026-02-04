@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GoblinGateway } from "../../core/gateway.js";
 import type { PromptEntry, ResourceEntry, ToolCard } from "../../gateway/types.js";
 
@@ -57,7 +57,7 @@ export function useGatewayData(gateway: GoblinGateway | null): GatewayData {
   const logsRef = useRef<LogEntry[]>([]);
 
   // Add log entry
-  const addLog = (message: string, level: LogEntry["level"] = "info") => {
+  const addLog = useCallback((message: string, level: LogEntry["level"] = "info") => {
     const entry: LogEntry = {
       timestamp: new Date(),
       message,
@@ -65,8 +65,9 @@ export function useGatewayData(gateway: GoblinGateway | null): GatewayData {
     };
     logsRef.current = [...logsRef.current.slice(-50), entry]; // Keep last 50 logs
     setLogs(logsRef.current);
-  };
+  }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: addLog is memoized with useCallback
   useEffect(() => {
     if (!gateway) {
       addLog("Gateway not initialized", "warn");

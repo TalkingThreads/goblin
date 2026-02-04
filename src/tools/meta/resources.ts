@@ -134,6 +134,7 @@ export const searchResources = defineMetaTool({
 
     // Map to Compact Card
     const resources = results.map((r) => {
+      // biome-ignore lint/suspicious/noExplicitAny: MiniSearch internal typing requires any
       const def = r["def"] as any;
       const uri = r.id || r["uri"];
       return {

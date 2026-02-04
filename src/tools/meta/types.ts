@@ -37,7 +37,7 @@ export function defineMetaTool<T extends z.ZodType>(
  * Convert MetaToolDefinition to MCP Tool schema
  */
 export function toTool(def: MetaToolDefinition): Tool {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: zodToJsonSchema typing is complex, safe cast for internal use
   const schema = zodToJsonSchema(def.parameters as any) as any;
 
   return {

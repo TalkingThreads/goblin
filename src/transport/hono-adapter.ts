@@ -49,6 +49,6 @@ export function createHonoSseTransport(
     },
   };
 
-  // Cast to any to satisfy ServerResponse type requirement
+  // biome-ignore lint/suspicious/noExplicitAny: SDK ServerResponse type mismatch with Hono
   return new SSEServerTransport(endpoint, res as any);
 }

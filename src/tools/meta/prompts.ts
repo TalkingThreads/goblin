@@ -114,11 +114,13 @@ export const searchPrompts = defineMetaTool({
     // Map to Compact Card
     const prompts = results.map((r) => {
       // MiniSearch stores storeFields with underscore prefix internally
+      // biome-ignore lint/suspicious/noExplicitAny: MiniSearch internal typing requires any
       const def = r["def"] as any;
       const id = r.id || r["name"] || r["id"];
       return {
         name: id,
         description: getPromptSmartSummary(def?.description || ""),
+        // biome-ignore lint/suspicious/noExplicitAny: zod parameter typing requires any
         arguments: def?.arguments?.map((arg: any) => arg.name) || [],
         serverId: r["serverId"],
         score: r.score,

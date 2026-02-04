@@ -80,8 +80,8 @@ export function createRequestLoggingMiddleware(
 /**
  * Simple request ID middleware
  */
-export function requestIdMiddleware(): (c: any, next: () => Promise<void>) => Promise<void> {
-  return async (c: any, next: () => Promise<void>): Promise<void> => {
+export function requestIdMiddleware(): (c: Context, next: () => Promise<void>) => Promise<void> {
+  return async (c: Context, next: () => Promise<void>): Promise<void> => {
     const requestId = c.get("requestId") || generateRequestId();
     c.set("requestId", requestId);
     await next();

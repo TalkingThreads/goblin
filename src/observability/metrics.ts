@@ -230,6 +230,7 @@ export class MetricsRegistryImpl implements MetricsRegistry {
       this.counters.set(name, new CounterImpl());
       if (help) this.descriptions.set(name, help);
     }
+    // biome-ignore lint/style/noNonNullAssertion: Existence guaranteed by has() check above
     return this.counters.get(name)!;
   }
 
@@ -238,6 +239,7 @@ export class MetricsRegistryImpl implements MetricsRegistry {
       this.gauges.set(name, new GaugeImpl());
       if (help) this.descriptions.set(name, help);
     }
+    // biome-ignore lint/style/noNonNullAssertion: Existence guaranteed by has() check above
     return this.gauges.get(name)!;
   }
 
@@ -250,6 +252,7 @@ export class MetricsRegistryImpl implements MetricsRegistry {
       this.histograms.set(name, new HistogramImpl(buckets));
       if (help) this.descriptions.set(name, help);
     }
+    // biome-ignore lint/style/noNonNullAssertion: Existence guaranteed by has() check above
     return this.histograms.get(name)!;
   }
 

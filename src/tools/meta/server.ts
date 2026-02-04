@@ -5,12 +5,18 @@ import { defineMetaTool } from "./types.js";
 /**
  * Helper to generate a "Server Compact Card" summary
  */
-function getServerSummary(server: any): string {
+interface ServerSummary {
+  description?: string;
+  transport?: string;
+  [key: string]: unknown;
+}
+
+function getServerSummary(server: ServerSummary): string {
   return server.description
     ? server.description.length > 100
       ? `${server.description.slice(0, 97)}...`
       : server.description
-    : `MCP Server (${server.transport})`;
+    : `MCP Server (${server.transport ?? "unknown"})`;
 }
 
 /**
