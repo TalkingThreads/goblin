@@ -10,8 +10,10 @@ if ! bun run typecheck 2>&1; then
   exit 1
 fi
 
-# Biome check on source files only (test files can use 'any' types)
-if bun run biome check src/ 2>&1 | grep -E "Found [0-9]+ errors"; then
+# Biome check on source files only (test files can use 'any' types for mocking)
+# Only check src directory to avoid test file errors
+BIOME_OUTPUT=$(bun run biome check src/ 2>&1)
+if echo "$BIOME_OUTPUT" | grep -E "Found [0-9]+ errors"; then
   echo "❌ Lint errors found in source files!"
   exit 1
 fi
