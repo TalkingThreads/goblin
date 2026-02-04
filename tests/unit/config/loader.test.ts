@@ -3,11 +3,11 @@ import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadConfig, validateConfig } from "../../../src/config/loader.js";
+import { loadConfig } from "../../../src/config/loader.js";
 import { ConfigWatcher } from "../../../src/config/watcher.js";
 
 // Mock env-paths to point to a temp directory
-const tempDir = join(tmpdir(), "goblin-test-config-" + Math.random().toString(36).slice(2));
+const tempDir = join(tmpdir(), `goblin-test-config-${Math.random().toString(36).slice(2)}`);
 const tempConfigPath = join(tempDir, "config.json");
 
 mock.module("../../../src/config/paths.js", () => ({
@@ -97,7 +97,7 @@ describe("Config Watcher", () => {
     await writeFile(tempConfigPath, JSON.stringify(newConfig));
 
     // Wait for update
-    const updatedConfig = (await updatePromise) as any;
+    const updatedConfig = (await updatePromise) as import("../../../src/config/schema.js").Config;
 
     expect(updatedConfig.gateway.port).toBe(4000);
     watcher.stop();

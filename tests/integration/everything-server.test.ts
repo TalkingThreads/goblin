@@ -23,6 +23,13 @@ const EVERYTHING_SERVER_PATH = join(
   "index.js",
 );
 
+// Helper to strip ANSI codes for robust string matching
+function stripAnsi(str: string): string {
+  // Use constructor to avoid linter errors with control characters
+  const esc = String.fromCharCode(27);
+  return str.replace(new RegExp(`${esc}\\[[0-9;]*m`, "g"), "");
+}
+
 /**
  * Test configuration for Everything server connection
  */
@@ -65,7 +72,6 @@ class EverythingServerProcess {
     }
 
     // Check if the Everything server script exists
-    // If not, we'll skip these tests
     try {
       const fs = await import("node:fs/promises");
       await fs.access(EVERYTHING_SERVER_PATH);
@@ -85,47 +91,64 @@ class EverythingServerProcess {
         return;
       }
 
+      // Safety timeout for startup
+      const startupTimeout = setTimeout(() => {
+        if (!this.started) {
+          if (this.process && this.process.exitCode !== null) {
+            reject(
+              new Error(
+                `Everything server process exited before startup with code ${this.process.exitCode}`,
+              ),
+            );
+          } else {
+            reject(new Error("Timeout waiting for Everything server startup message"));
+          }
+          this.stop().catch(console.error);
+        }
+      }, 5000);
+
       // Set up cleanup for the process
       this.cleanup.add("stop everything server", async () => {
         if (this.process) {
           this.process.kill("SIGTERM");
           await new Promise<void>((res) => {
-            this.process!.on("close", () => res());
+            if (!this.process) return res();
+            this.process.on("close", () => res());
             setTimeout(() => {
-              this.process!.kill("SIGKILL");
+              if (this.process && !this.process.killed) {
+                this.process.kill("SIGKILL");
+              }
               res();
-            }, 5000);
+            }, 2000);
           });
         }
       });
 
-      // Give the server a moment to start and then mark as ready
-      setTimeout(() => {
-        // Check if process is still running
-        if (this.process && !this.process.killed && this.process.exitCode === null) {
+      // Handle stderr (where logs usually appear)
+      this.process.stderr.on("data", (data) => {
+        const chunk = data.toString();
+        const cleanChunk = stripAnsi(chunk);
+
+        // Check for startup message
+        if (!this.started && cleanChunk.includes("Starting default (STDIO) server")) {
+          clearTimeout(startupTimeout);
           this.started = true;
           resolve();
-        } else {
-          reject(new Error("Everything server process failed to start"));
-        }
-      }, 1000);
-
-      this.process.stderr.on("data", (data) => {
-        const msg = data.toString();
-        // Filter out informational messages from being logged as errors
-        if (msg.includes("Starting default (STDIO) server")) {
-          console.log(`Everything server: ${msg.trim()}`);
-        } else {
-          console.error("Everything server error:", msg);
         }
       });
 
       this.process.on("error", (error) => {
-        reject(error);
+        if (!this.started) {
+          clearTimeout(startupTimeout);
+          reject(error);
+        }
       });
 
       this.process.on("close", (code) => {
-        if (code !== null && code !== 0 && this.started) {
+        if (!this.started) {
+          clearTimeout(startupTimeout);
+          reject(new Error(`Everything server exited early with code ${code}`));
+        } else if (code !== null && code !== 0) {
           console.error(`Everything server exited with code ${code}`);
         }
       });
@@ -135,6 +158,7 @@ class EverythingServerProcess {
   async stop(): Promise<void> {
     await this.cleanup.run();
     this.started = false;
+    this.process = null;
   }
 
   isRunning(): boolean {
@@ -230,133 +254,108 @@ describe("Everything Server Integration Tests", () => {
 
   describe("Tool Tests", () => {
     test("should list all tools from Everything server", async () => {
-      // This test will verify that tools are properly listed
-      // when implemented, it will connect through Goblin to Everything server
       expect(true).toBe(true); // Placeholder
     });
 
     test("should verify tool count matches Everything server", async () => {
-      // This test will verify that the tool count matches exactly
       expect(true).toBe(true); // Placeholder
     });
 
     test("should call multiArg tool with arguments", async () => {
-      // This test will verify tool invocation with multiple arguments
       expect(true).toBe(true); // Placeholder
     });
 
     test("should call thing tool with various parameters", async () => {
-      // This test will verify tool invocation with different parameter types
       expect(true).toBe(true); // Placeholder
     });
 
     test("should propagate tool not found error correctly", async () => {
-      // This test will verify error handling for non-existent tools
       expect(true).toBe(true); // Placeholder
     });
   });
 
   describe("Resource Tests", () => {
     test("should list all resources from Everything server", async () => {
-      // This test will verify that resources are properly listed
       expect(true).toBe(true); // Placeholder
     });
 
     test("should verify resource templates are exposed", async () => {
-      // This test will verify that resource templates are available
       expect(true).toBe(true); // Placeholder
     });
 
     test("should read specific resources", async () => {
-      // This test will verify resource reading functionality
       expect(true).toBe(true); // Placeholder
     });
 
     test("should read templated resources with parameters", async () => {
-      // This test will verify templated resource reading
       expect(true).toBe(true); // Placeholder
     });
 
     test("should preserve resource MIME type", async () => {
-      // This test will verify MIME type handling
       expect(true).toBe(true); // Placeholder
     });
   });
 
   describe("Prompt Tests", () => {
     test("should list all prompts from Everything server", async () => {
-      // This test will verify that prompts are properly listed
       expect(true).toBe(true); // Placeholder
     });
 
     test("should retrieve prompts with arguments", async () => {
-      // This test will verify prompt retrieval with arguments
       expect(true).toBe(true); // Placeholder
     });
 
     test("should render prompts with different argument types", async () => {
-      // This test will verify prompt rendering with various argument types
       expect(true).toBe(true); // Placeholder
     });
   });
 
   describe("Notification and Routing Tests", () => {
     test("should receive resource list change notifications", async () => {
-      // This test will verify resource list change notifications are handled
       expect(true).toBe(true); // Placeholder
     });
 
     test("should receive tool list change notifications", async () => {
-      // This test will verify tool list change notifications are handled
       expect(true).toBe(true); // Placeholder
     });
 
     test("should route requests to correct backend server", async () => {
-      // This test will verify request routing works correctly
       expect(true).toBe(true); // Placeholder
     });
 
     test("should preserve request/response semantics", async () => {
-      // This test will verify that request/response semantics are preserved
       expect(true).toBe(true); // Placeholder
     });
   });
 
   describe("Error Handling Tests", () => {
     test("should handle connection errors when server is unavailable", async () => {
-      // This test will verify connection error handling
       expect(true).toBe(true); // Placeholder
     });
 
     test("should handle protocol errors from Everything server", async () => {
-      // This test will verify protocol error handling
       expect(true).toBe(true); // Placeholder
     });
 
     test("should propagate error codes to client correctly", async () => {
-      // This test will verify error code propagation
       expect(true).toBe(true); // Placeholder
     });
   });
 
   describe("Validation", () => {
     test("should run tests against Everything server", async () => {
-      // This test will validate that all tests can run against the Everything server
       expect(true).toBe(true); // Placeholder
     });
 
     test("should verify all MCP features are exposed through Goblin", async () => {
-      // This test will verify complete MCP feature coverage
       expect(true).toBe(true); // Placeholder
     });
 
     test("should run full test suite without regressions", async () => {
-      // This test will verify no regressions in the full test suite
       expect(true).toBe(true); // Placeholder
     });
 
     test("should document test coverage and limitations", async () => {
-      // This test will document the test coverage and any limitations
       expect(true).toBe(true); // Placeholder
     });
   });

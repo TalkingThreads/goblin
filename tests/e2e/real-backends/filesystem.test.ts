@@ -9,7 +9,7 @@ import { TestEnvironment } from "../shared/environment.js";
 import { type RealMcpServer, ServerPool } from "../shared/real-server.js";
 
 describe("Real Backends - Filesystem Server", () => {
-  let server: RealMcpServer;
+  let _server: RealMcpServer;
   let pool: ServerPool;
   let env: TestEnvironment;
 
@@ -18,7 +18,7 @@ describe("Real Backends - Filesystem Server", () => {
     pool = new ServerPool();
 
     // Create test directory
-    const testDir = await env.createTempDirectory("filesystem-e2e-");
+    const _testDir = await env.createTempDirectory("filesystem-e2e-");
 
     // Register filesystem server (disabled - requires actual MCP server)
     // pool.register({
@@ -60,7 +60,7 @@ describe("Real Backends - Filesystem Server", () => {
 
   test("environment cleanup removes resources", async () => {
     // Test cleanup functionality
-    const dir = await env.createTempDirectory("cleanup-test-");
+    const _dir = await env.createTempDirectory("cleanup-test-");
     await env.cleanup();
 
     // Verify environment info

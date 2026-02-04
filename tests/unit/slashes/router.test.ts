@@ -33,15 +33,12 @@ describe("SlashCommandRouter", () => {
   ];
 
   const mockRegistry = {
-    getAllPrompts: () => mockPrompts as any,
-    getPrompt: (id: string) => mockPrompts.find((p) => p.id === id) as any,
+    getAllPrompts: () => mockPrompts,
+    getPrompt: (id: string) => mockPrompts.find((p) => p.id === id),
   } as unknown as Registry;
 
   const mockRouter = {
-    getPrompt: async () =>
-      ({ content: [{ type: "text", text: "result" }] }) as {
-        content: Array<{ type: string; text: string }>;
-      },
+    getPrompt: async () => ({ content: [{ type: "text", text: "result" }] }),
   } as unknown as Router;
 
   const slashRouter = new SlashCommandRouter(mockRegistry, mockRouter);

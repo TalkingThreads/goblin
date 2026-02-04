@@ -8,6 +8,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import type { Config } from "../../../src/config/schema.js";
 import type { Registry } from "../../../src/gateway/registry.js";
 import type { Router } from "../../../src/gateway/router.js";
 import { GatewayServer } from "../../../src/gateway/server.js";
@@ -27,6 +28,13 @@ mock.module("@modelcontextprotocol/sdk/server/index.js", () => ({
   },
 }));
 
+const testConfig: Config = {
+  servers: [],
+  gateway: { port: 3000, host: "127.0.0.1" },
+  auth: { mode: "dev" },
+  policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
+};
+
 describe("GatewayServer", () => {
   beforeEach(() => {
     mockSetRequestHandler.mockClear();
@@ -37,7 +45,7 @@ describe("GatewayServer", () => {
 
   test("should initialize and register handlers", () => {
     const registry = { on: mock() } as unknown as Registry;
-    new GatewayServer(registry, {} as Router, {} as any);
+    new GatewayServer(registry, {} as Router, testConfig);
 
     const registeredSchemas = mockSetRequestHandler.mock.calls.map((call) => call[0]);
     expect(registeredSchemas).toContain(ListToolsRequestSchema);
@@ -57,7 +65,7 @@ describe("GatewayServer", () => {
       on: mock(),
     } as unknown as Registry;
 
-    new GatewayServer(registry, {} as Router, {} as any);
+    new GatewayServer(registry, {} as Router, testConfig);
 
     const handler = mockSetRequestHandler.mock.calls.find(
       (call) => call[0] === ListToolsRequestSchema,
@@ -79,7 +87,7 @@ describe("GatewayServer", () => {
       on: mock(),
     } as unknown as Registry;
 
-    new GatewayServer(registry, {} as Router, {} as any);
+    new GatewayServer(registry, {} as Router, testConfig);
 
     const handler = mockSetRequestHandler.mock.calls.find(
       (call) => call[0] === ListPromptsRequestSchema,
@@ -96,7 +104,7 @@ describe("GatewayServer", () => {
     } as unknown as Router;
     const registry = { on: mock() } as unknown as Registry;
 
-    new GatewayServer(registry, router, {} as any);
+    new GatewayServer(registry, router, testConfig);
 
     const handler = mockSetRequestHandler.mock.calls.find(
       (call) => call[0] === GetPromptRequestSchema,
@@ -115,7 +123,7 @@ describe("GatewayServer", () => {
       on: mock(),
     } as unknown as Registry;
 
-    new GatewayServer(registry, {} as Router, {} as any);
+    new GatewayServer(registry, {} as Router, testConfig);
 
     const handler = mockSetRequestHandler.mock.calls.find(
       (call) => call[0] === ListResourcesRequestSchema,
@@ -132,7 +140,7 @@ describe("GatewayServer", () => {
     } as unknown as Router;
     const registry = { on: mock() } as unknown as Registry;
 
-    new GatewayServer(registry, router, {} as any);
+    new GatewayServer(registry, router, testConfig);
 
     const handler = mockSetRequestHandler.mock.calls.find(
       (call) => call[0] === ReadResourceRequestSchema,
@@ -146,12 +154,12 @@ describe("GatewayServer", () => {
   test("should send notifications on registry changes", () => {
     const eventHandlers: Record<string, () => void> = {};
     const registryMock = {
-      on: (event: string, handler: any) => {
+      on: (event: string, handler: () => void) => {
         eventHandlers[event] = handler;
       },
     } as unknown as Registry;
 
-    new GatewayServer(registryMock, {} as Router, {} as any);
+    new GatewayServer(registryMock, {} as Router, testConfig);
 
     // Test tool-change
     eventHandlers["tool-change"]?.();

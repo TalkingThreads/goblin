@@ -154,51 +154,183 @@ goblin_request_duration_ms_bucket{le="+Inf"} 1500
 goblin_servers_online 2
 ```
 
-### GET /sse
+### GET /security
 
-Server-Sent Events endpoint for streaming responses.
+New endpoint for security information and audit logs.
 
-**Usage**:
+**Response**:
 
-```javascript
-const eventSource = new EventSource("http://localhost:3000/sse");
-
-eventSource.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log("Received:", data);
-};
-
-eventSource.onerror = (error) => {
-  console.error("SSE Error:", error);
-};
+```json
+{
+  "status": "healthy",
+  "authentication": {
+    "mode": "apikey",
+    "users": 2,
+    "activeTokens": 5,
+    "lastAuthentication": "2026-02-03T11:59:00Z"
+  },
+  "authorization": {
+    "roleBasedAccess": true,
+    "policyEnforcement": true,
+    "lastAuthorization": "2026-02-03T11:59:30Z"
+  },
+  "audit": {
+    "events": 150,
+    "lastEvent": "2026-02-03T11:59:45Z",
+    "retentionDays": 30
+  },
+  "rateLimiting": {
+    "status": "healthy",
+    "requestsPerMinute": 600,
+    "burstSize": 100,
+    "currentRequests": 45
+  },
+  "tls": {
+    "enabled": true,
+    "version": "TLS 1.3",
+    "cipherSuite": "TLS_AES_128_GCM_SHA256",
+    "certificate": {
+      "issuer": "Let's Encrypt",
+      "validFrom": "2026-01-01",
+      "validTo": "2026-04-01"
+    }
+  }
+}
 ```
 
-**Event Types**:
+### POST /security/audit
 
-| Event | Description |
-|-------|-------------|
-| `initialized` | Client successfully connected |
-| `tool-call` | Incoming tool call request |
-| `tool-result` | Tool invocation result |
-| `resource-update` | Resource content changed |
-| `error` | Error occurred |
-
-### POST /messages
-
-JSON-RPC message endpoint for requests.
+Endpoint for retrieving audit logs.
 
 **Request**:
 
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "filesystem_list_files",
-    "arguments": {
-      "path": "/tmp"
+  "startDate": "2026-02-01T00:00:00Z",
+  "endDate": "2026-02-03T23:59:59Z",
+  "user": "admin",
+  "action": "tool-invocation",
+  "limit": 100,
+  "offset": 0
+}
+```
+
+**Response**:
+
+```json
+{
+  "logs": [
+    {
+      "timestamp": "2026-02-03T11:59:45Z",
+      "user": "admin",
+      "action": "tool-invocation",
+      "resource": "filesystem_list_files",
+      "status": "success",
+      "metadata": {
+        "arguments": {"path": "/tmp"},
+        "durationMs": 15
+      }
     }
+  ],
+  "total": 150,
+  "limit": 100,
+  "offset": 0
+}
+```
+
+### POST /security/scan
+
+Endpoint for security scanning and vulnerability assessment.
+
+**Request**:
+
+```json
+{
+  "type": "vulnerability-scan",
+  "scope": "full",
+  "include": ["authentication", "authorization", "rate-limiting", "tls"]
+}
+```
+
+**Response**:
+
+```json
+{
+  "scanId": "scan-12345",
+  "type": "vulnerability-scan",
+  "status": "in-progress",
+  "startedAt": "2026-02-03T12:00:00Z",
+  "estimatedCompletion": "2026-02-03T12:05:00Z",
+  "results": {
+    "authentication": {
+      "status": "healthy",
+      "issues": 0,
+      "recommendations": []
+    },
+    "authorization": {
+      "status": "healthy",
+      "issues": 0,
+      "recommendations": []
+    },
+    "rateLimiting": {
+      "status": "healthy",
+      "issues": 0,
+      "recommendations": []
+    },
+    "tls": {
+      "status": "healthy",
+      "issues": 0,
+      "recommendations": []
+    }
+  }
+}
+```
+
+### GET /v1/security/scan/{scanId}
+
+Endpoint for checking security scan status.
+
+**Response**:
+
+```json
+{
+  "scanId": "scan-12345",
+  "type": "vulnerability-scan",
+  "status": "completed",
+  "startedAt": "2026-02-03T12:00:00Z",
+  "completedAt": "2026-02-03T12:04:30Z",
+  "duration": 270,
+  "results": {
+    "overallStatus": "healthy",
+    "criticalIssues": 0,
+    "highIssues": 0,
+    "mediumIssues": 0,
+    "lowIssues": 0,
+    "recommendations": [
+      "Consider implementing IP whitelisting",
+      "Enable multi-factor authentication for admin users"
+    ]
+  }
+}
+```
+
+### POST /v1/security/audit
+
+Endpoint for creating audit events (used by internal components).
+
+**Request**:
+
+```json
+{
+  "user": "admin",
+  "action": "tool-invocation",
+  "resource": "filesystem_list_files",
+  "status": "success",
+  "metadata": {
+    "arguments": {"path": "/tmp"},
+    "durationMs": 15,
+    "clientIp": "192.168.1.100",
+    "userAgent": "Goblin CLI/1.0.0"
   }
 }
 ```
@@ -207,206 +339,192 @@ JSON-RPC message endpoint for requests.
 
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "file1.txt\nfile2.txt\nfile3.txt"
-      }
-    ]
-  }
+  "eventId": "event-67890",
+  "timestamp": "2026-02-03T12:05:00Z",
+  "status": "accepted"
+}
+```
+
+### GET /v1/users
+
+Endpoint for user management (admin only).
+
+**Response**:
+
+```json
+{
+  "users": [
+    {
+      "username": "admin",
+      "roles": ["admin", "developer"],
+      "active": true,
+      "lastLogin": "2026-02-03T10:00:00Z",
+      "createdAt": "2026-01-15T08:00:00Z"
+    },
+    {
+      "username": "developer",
+      "roles": ["developer"],
+      "active": true,
+      "lastLogin": "2026-02-03T09:30:00Z",
+      "createdAt": "2026-01-20T14:00:00Z"
+    }
+  ],
+  "total": 2,
+  "active": 2
+}
+```
+
+### POST /v1/users
+
+Endpoint for creating new users (admin only).
+
+**Request**:
+
+```json
+{
+  "username": "newuser",
+  "password": "SecurePassword123!",
+  "roles": ["developer"],
+  "active": true
+}
+```
+
+**Response**:
+
+```json
+{
+  "userId": "user-12345",
+  "username": "newuser",
+  "apiKey": "new-api-key-xyz",
+  "roles": ["developer"],
+  "active": true,
+  "createdAt": "2026-02-03T12:10:00Z"
+}
+```
+
+### PUT /v1/users/{username}
+
+Endpoint for updating user information (admin only).
+
+**Request**:
+
+```json
+{
+  "roles": ["developer", "auditor"],
+  "active": true
+}
+```
+
+**Response**:
+
+```json
+{
+  "userId": "user-12345",
+  "username": "newuser",
+  "roles": ["developer", "auditor"],
+  "active": true,
+  "updatedAt": "2026-02-03T12:15:00Z"
+}
+```
+
+### DELETE /v1/users/{username}
+
+Endpoint for deleting users (admin only).
+
+**Response**:
+
+```json
+{
+  "userId": "user-12345",
+  "username": "newuser",
+  "deletedAt": "2026-02-03T12:20:00Z",
+  "status": "deleted"
 }
 ```
 
 ---
 
+---
+
 ## CLI Commands
 
-### goblin start
+### goblin security
 
-Start the MCP Gateway.
-
-```bash
-goblin start [options]
-```
-
-**Options**:
-
-| Option | Description |
-|--------|-------------|
-| `--port, -p` | Gateway port (default: 3000) |
-| `--host` | Gateway host (default: 127.0.0.1) |
-| `--config, -c` | Config file path |
-| `--tui` | Enable TUI mode |
-| `--no-tui` | Disable TUI (headless mode) |
-| `--log-level` | Logging level |
-| `--auth-mode` | Authentication mode |
-
-**Examples**:
+New security management commands.
 
 ```bash
-# Default start
-goblin start
-
-# Custom port
-goblin start --port 8080
-
-# With config file
-goblin start --config /path/to/config.json
-
-# With TUI
-goblin start --tui
-
-# Production mode
-goblin start --port 443 --auth-mode production
-```
-
-### goblin status
-
-Show gateway status.
-
-```bash
-goblin status [options]
-```
-
-**Options**:
-
-| Option | Description |
-|--------|-------------|
-| `--json` | JSON output |
-| `--url` | Remote gateway URL |
-| `--verbose` | Verbose output |
-
-**Examples**:
-
-```bash
-goblin status
-goblin status --json
-goblin status --url http://localhost:8080 --verbose
-```
-
-### goblin tools
-
-List available tools.
-
-```bash
-goblin tools [options]
-```
-
-**Options**:
-
-| Option | Description |
-|--------|-------------|
-| `--server` | Filter by server name |
-| `--search` | Search query |
-| `--json` | JSON output |
-| `--limit` | Maximum results |
-
-**Examples**:
-
-```bash
-goblin tools
-goblin tools --server filesystem
-goblin tools --search "list"
-goblin tools --json --limit 10
-```
-
-### goblin servers
-
-List configured servers.
-
-```bash
-goblin servers [options]
-```
-
-**Options**:
-
-| Option | Description |
-|--------|-------------|
-| `--status` | Filter by status (online/offline) |
-| `--json` | JSON output |
-
-**Examples**:
-
-```bash
-goblin servers
-goblin servers --status online --json
-```
-
-### goblin config
-
-Configuration management commands.
-
-```bash
-goblin config <subcommand> [options]
+goblin security [subcommand] [options]
 ```
 
 **Subcommands**:
 
 | Subcommand | Description |
 |------------|-------------|
-| `validate` | Validate config file |
-| `show` | Display current config |
-| `path` | Show config file path |
+| `scan` | Run security scan |
+| `audit` | View audit logs |
+| `users` | User management |
+| `policies` | Policy management |
 
 **Examples**:
 
 ```bash
-goblin config validate
-goblin config show
-goblin config show --json
+# Run security scan
+goblin security scan
+
+# View audit logs
+goblin security audit --user admin --limit 50
+
+# User management
+goblin security users list
+goblin security users create --username newuser --role developer
+goblin security users update --username admin --role admin,auditor
+goblin security users delete --username olduser
+
+# Policy management
+goblin security policies list
+goblin security policies create --name tool-access --tool filesystem_list_files --roles developer,admin
+goblin security policies update --name tool-access --roles admin only
+goblin security policies delete --name old-policy
 ```
 
-### goblin logs
+### goblin users
 
-View gateway logs.
+User management commands (admin only).
 
 ```bash
-goblin logs [options]
+goblin users [subcommand] [options]
 ```
 
-**Options**:
+**Subcommands**:
 
-| Option | Description |
-|--------|-------------|
-| `--level` | Filter by level (error/warn/info/debug) |
-| `--follow, -f` | Follow log output |
-| `--json` | JSON output |
-| `--lines` | Number of lines (default: 50) |
+| Subcommand | Description |
+|------------|-------------|
+| `list` | List all users |
+| `create` | Create new user |
+| `update` | Update user information |
+| `delete` | Delete user |
+| `reset-key` | Reset user API key |
 
 **Examples**:
 
 ```bash
-goblin logs
-goblin logs --level error
-goblin logs -f --level info
-goblin logs --json | jq '.'
+# List users
+goblin users list
+
+# Create user
+goblin users create --username newuser --role developer --active
+
+# Update user
+goblin users update --username admin --role admin,auditor
+
+# Reset API key
+goblin users reset-key --username admin
+
+# Delete user
+goblin users delete --username olduser
 ```
 
-### goblin health
-
-Show health status.
-
-```bash
-goblin health [options]
-```
-
-**Options**:
-
-| Option | Description |
-|--------|-------------|
-| `--json` | JSON output |
-| `--url` | Remote gateway URL |
-| `--verbose` | Include detailed metrics |
-
-**Examples**:
-
-```bash
-goblin health
-goblin health --json --verbose
-```
+---
 
 ---
 
@@ -535,10 +653,34 @@ Goblin uses structured error codes for debugging:
 | `TOOL-003` | Tool timeout |
 | `CFG-001` | Invalid configuration |
 | `CFG-002` | Config file not found |
-| `AUTH-001` | Authentication required |
-| `AUTH-002` | Invalid API key |
-| `TRANSPORT-001` | Transport error |
-| `INTERNAL-001` | Internal error |
+| `AUTH-003` | User not found |
+| `AUTH-004` | User disabled |
+| `AUTH-005` | Invalid credentials |
+| `AUTH-006` | Token expired |
+| `AUTH-007` | Rate limit exceeded |
+| `AUTH-008` | Permission denied |
+| `AUTH-009` | Role not authorized |
+| `AUTH-010` | Security scan failed |
+| `AUTH-011` | Audit log not found |
+| `AUTH-012` | User already exists |
+| `AUTH-013` | Insufficient permissions |
+| `AUTH-014` | Invalid API key format |
+| `AUTH-015` | Authentication timeout |
+| `POLICY-001` | Policy violation |
+| `POLICY-002` | Rate limit exceeded |
+| `POLICY-003` | Output size limit exceeded |
+| `POLICY-004` | Timeout exceeded |
+| `POLICY-005` | Invalid policy configuration |
+| `SECURITY-001` | Security scan failed |
+| `SECURITY-002` | Audit log not found |
+| `SECURITY-003` | Invalid security configuration |
+| `SECURITY-004` | Unauthorized access attempt |
+| `SECURITY-005` | Suspicious activity detected |
+| `SECURITY-006` | Certificate validation failed |
+| `SECURITY-007` | Encryption required |
+| `SECURITY-008` | Decryption failed |
+| `SECURITY-009` | Key management error |
+| `SECURITY-010` | Audit trail corrupted |
 
 ---
 

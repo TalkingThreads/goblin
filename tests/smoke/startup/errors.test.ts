@@ -78,8 +78,8 @@ describe("Gateway Startup Errors", () => {
       try {
         await manager.start(["--port", port.toString()]);
         expect(true).toBe(false); // Should not reach here
-      } catch (error: any) {
-        const message = error.message.toLowerCase();
+      } catch (error: unknown) {
+        const message = (error as Error).message.toLowerCase();
         // Check if it contains relevant error info
         expect(message).toContain("failed");
 
@@ -101,8 +101,8 @@ describe("Gateway Startup Errors", () => {
     try {
       await manager.start(["--config", invalidConfigPath]);
       expect(true).toBe(false); // Should not reach here
-    } catch (error: any) {
-      const message = error.message.toLowerCase();
+    } catch (error: unknown) {
+      const message = (error as Error).message.toLowerCase();
       expect(message).toContain("config");
       // Could be 'parsing' or 'validation' depending on the exact failure
       const hasRelevance =

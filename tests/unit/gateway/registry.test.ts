@@ -8,14 +8,14 @@ describe("Registry", () => {
 
     // Mock Client with pagination for tools, and simple for others
     const client = {
-      listTools: mock(async (args: any) => {
-        if (!args?.cursor) {
+      listTools: mock(async (_args: { cursor?: string }) => {
+        if (!_args?.cursor) {
           return {
             tools: [{ name: "tool1", description: "desc1", inputSchema: {} }],
             nextCursor: "page2",
           };
         }
-        if (args.cursor === "page2") {
+        if (_args.cursor === "page2") {
           return {
             tools: [{ name: "tool2", description: "desc2", inputSchema: {} }],
           };
@@ -107,12 +107,12 @@ describe("Registry", () => {
     await registry.addServer("server1", client);
 
     const toolEntry = registry.getTool("server1_tool1");
-    expect(toolEntry?.def).toEqual(toolDef as any);
+    expect(toolEntry?.def).toEqual(toolDef);
 
     const promptEntry = registry.getPrompt("server1_prompt1");
-    expect(promptEntry?.def).toEqual(promptDef as any);
+    expect(promptEntry?.def).toEqual(promptDef);
 
     const resourceEntry = registry.getResource("mcp://server1/res%3A%2F%2F1");
-    expect(resourceEntry?.def).toEqual(resourceDef as any);
+    expect(resourceEntry?.def).toEqual(resourceDef);
   });
 });

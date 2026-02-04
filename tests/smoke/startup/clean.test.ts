@@ -4,8 +4,7 @@
  * Tests for gateway initialization and startup
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { spawn } from "node:child_process";
+import { describe, expect, it } from "bun:test";
 
 describe("Gateway Startup", () => {
   it("should accept custom port configuration", async () => {

@@ -5,8 +5,6 @@
  * tool selection, context management, and complex workflows.
  */
 
-import type { Prompt, Resource, Tool, ToolResult } from "@modelcontextprotocol/sdk/types.js";
-
 export type AgentState = "idle" | "waiting_for_tool" | "processing" | "done" | "error";
 
 export interface AgentMessage {
@@ -163,7 +161,7 @@ export class AgentSimulator {
   /**
    * Simulate tool selection and execution
    */
-  private async selectTool(toolName: string, args: Record<string, unknown>): Promise<void> {
+  private async selectTool(toolName: string, _args: Record<string, unknown>): Promise<void> {
     this.toolsUsed.push(toolName);
     this.conversation.push({
       role: "assistant",
@@ -197,7 +195,7 @@ export class AgentSimulator {
   /**
    * Request and use a prompt
    */
-  private async requestPrompt(promptName: string, args: Record<string, string>): Promise<void> {
+  private async requestPrompt(promptName: string, _args: Record<string, string>): Promise<void> {
     this.toolsUsed.push(`prompt:${promptName}`);
     this.conversation.push({
       role: "assistant",

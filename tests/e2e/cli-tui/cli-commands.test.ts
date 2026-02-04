@@ -5,15 +5,8 @@
  */
 
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import { join } from "node:path";
-import {
-  checkServerHealth,
-  startTestServer,
-  stopTestServer,
-} from "../../performance/shared/test-server.js";
-import { CliTester, isCliBinaryAvailable } from "../shared/cli-tester.js";
+import { CliTester } from "../shared/cli-tester.js";
 import { TestEnvironment } from "../shared/environment.js";
-import { createSampleProject, getSampleProject } from "../shared/fixtures.js";
 
 describe("CLI - Command Execution", () => {
   let cli: CliTester;

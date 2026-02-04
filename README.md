@@ -9,11 +9,19 @@
 ![Build](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/main.yml?style=flat-square&logo=github)
 ![Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/tests.yml?style=flat-square&logo=github)
 ![Smoke Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/smoke-tests.yml?style=flat-square&logo=github)
+![Performance Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/performance-tests.yml?style=flat-square&logo=github)
+![Coverage](https://img.shields.io/codecov/c/github/TalkingThreads/goblin?style=flat-square&logo=codecov)
 
 ### Version & License
 
 ![Version](https://img.shields.io/npm/v/goblin?style=flat-square&logo=npm)
+![Version](https://img.shields.io/badge/Version-0.4.0-blue?style=flat-square&logo=version)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
+
+### Roadmap
+
+![v1](https://img.shields.io/badge/Roadmap-v1%20Production--Ready-green?style=flat-square&logo=roadmap)
+![v2](https://img.shields.io/badge/Roadmap-v2%20Enterprise--Ready-blue?style=flat-square&logo=roadmap)
 
 ### Technology
 

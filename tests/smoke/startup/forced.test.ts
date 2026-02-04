@@ -4,12 +4,13 @@ import { ProcessManager } from "../shared/process-manager.js";
 import {
   cleanupTestEnvironment,
   createTestEnvironment,
+  type TestEnvironment,
   writeTestConfig,
 } from "../shared/test-config.js";
 
 describe("Forced Shutdown", () => {
   let manager: ProcessManager | null = null;
-  let env: any;
+  let env: TestEnvironment;
 
   beforeAll(() => {
     env = createTestEnvironment("goblin-forced-test-");

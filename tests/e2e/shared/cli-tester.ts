@@ -188,12 +188,13 @@ export class CliTester {
    * Type command into running process
    */
   async typeCommand(command: string): Promise<void> {
-    if (!this.process || !this.process.stdin) {
+    if (!this.process?.stdin) {
       throw new Error("No running process");
     }
+    const { stdin } = this.process;
 
     return new Promise((resolve, reject) => {
-      this.process!.stdin!.write(command + "\n", (error) => {
+      stdin.write(command + "\n", (error) => {
         if (error) reject(error);
         else resolve();
       });
@@ -204,12 +205,13 @@ export class CliTester {
    * Press key in running process
    */
   async pressKey(key: string): Promise<void> {
-    if (!this.process || !this.process.stdin) {
+    if (!this.process?.stdin) {
       throw new Error("No running process");
     }
+    const { stdin } = this.process;
 
     return new Promise((resolve, reject) => {
-      this.process!.stdin!.write(key, (error) => {
+      stdin.write(key, (error) => {
         if (error) reject(error);
         else resolve();
       });
@@ -334,13 +336,14 @@ export class InteractiveSession {
    * Send keystrokes
    */
   async sendKeys(keys: string[]): Promise<void> {
-    if (!this.process || !this.process.stdin) {
+    if (!this.process?.stdin) {
       throw new Error("No running process");
     }
+    const { stdin } = this.process;
 
     for (const key of keys) {
       await new Promise<void>((resolve) => {
-        this.process!.stdin!.write(key, () => resolve());
+        stdin.write(key, () => resolve());
       });
       await new Promise<void>((r) => setTimeout(r, 50));
     }
@@ -350,12 +353,13 @@ export class InteractiveSession {
    * Send text input
    */
   async sendText(text: string): Promise<void> {
-    if (!this.process || !this.process.stdin) {
+    if (!this.process?.stdin) {
       throw new Error("No running process");
     }
+    const { stdin } = this.process;
 
     await new Promise<void>((resolve, reject) => {
-      this.process!.stdin!.write(text + "\n", (error) => {
+      stdin.write(text + "\n", (error) => {
         if (error) reject(error);
         else resolve();
       });

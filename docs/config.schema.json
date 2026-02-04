@@ -1,0 +1,531 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Goblin Configuration",
+  "description": "Configuration for the Goblin MCP Gateway",
+  "type": "object",
+  "properties": {
+    "servers": {
+      "type": "array",
+      "description": "List of MCP servers to aggregate",
+      "items": {
+        "type": "object",
+        "required": ["name", "transport"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique identifier for the server",
+            "pattern": "^[a-z0-9_-]{1,64}$"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the server",
+            "maxLength": 1024
+          },
+          "transport": {
+            "type": "string",
+            "description": "Transport mechanism for the server",
+            "enum": ["stdio", "http", "sse"]
+          },
+          "command": {
+            "type": "string",
+            "description": "Command to execute for stdio transport",
+            "minLength": 1
+          },
+          "args": {
+            "type": "array",
+            "description": "Arguments for the command",
+            "items": { "type": "string" }
+          },
+          "url": {
+            "type": "string",
+            "description": "URL for http/sse transport",
+            "format": "uri"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the server is enabled",
+            "default": true
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Connection timeout in milliseconds",
+            "minimum": 1000,
+            "maximum": 300000
+          },
+          "retries": {
+            "type": "number",
+            "description": "Number of connection retries",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "auth": {
+            "type": "object",
+            "description": "Authentication configuration for this server",
+            "properties": {
+              "strategy": {
+                "type": "string",
+                "enum": ["no_auth", "passthrough", "obo_preferred", "obo_required"]
+              },
+              "targetAudience": { "type": "string" },
+              "requiredScopes": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "customHeaders": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "gateway": {
+      "type": "object",
+      "description": "Gateway server configuration",
+      "properties": {
+        "port": {
+          "type": "number",
+          "description": "Port to listen on",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 3000
+        },
+        "host": {
+          "type": "string",
+          "description": "Host to bind to",
+          "default": "127.0.0.1"
+        },
+        "cors": {
+          "type": "object",
+          "description": "CORS configuration",
+          "properties": {
+            "origin": {
+              "type": "string",
+              "description": "Allowed origin(s)",
+              "pattern": "^(https?://[^\\s]+|\\\\*)\\/?$"
+            },
+            "methods": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "headers": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "description": "Authentication configuration",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Authentication mode",
+          "enum": ["dev", "apikey", "oauth"]
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "API key for dev/auth mode",
+          "minLength": 1
+        },
+        "oauth": {
+          "type": "object",
+          "description": "OAuth configuration",
+          "properties": {
+            "issuer": { "type": "string", "format": "uri" },
+            "jwksUri": { "type": "string", "format": "uri" },
+            "clientId": { "type": "string" },
+            "clientSecret": { "type": "string" },
+            "audience": { "type": "string" },
+            "requiredScopes": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "clockSkewTolerance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3600
+            },
+            "jwksCacheTtl": {
+              "type": "number",
+              "minimum": 60,
+              "maximum": 86400
+            },
+            "introspectionEndpoint": { "type": "string", "format": "uri" },
+            "introspectionCacheTtl": {
+              "type": "number",
+              "minimum": 60,
+              "maximum": 3600
+            }
+          }
+        }
+      }
+    },
+    "rbac": {
+      "type": "object",
+      "description": "Role-based access control configuration",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "defaultRole": {
+          "type": "string",
+          "enum": ["admin", "operator", "readonly", "agent"]
+        },
+        "roleMappings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "policies": {
+      "type": "object",
+      "description": "Security and policy configuration",
+      "properties": {
+        "outputSizeLimit": {
+          "type": "number",
+          "description": "Maximum output size in bytes",
+          "minimum": 1024,
+          "maximum": 1048576,
+          "default": 65536
+        },
+        "defaultTimeout": {
+          "type": "number",
+          "description": "Default timeout in milliseconds",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 30000
+        },
+        "redactionRules": {
+          "type": "array",
+          "description": "Custom redaction rules",
+          "items": {
+            "type": "object",
+            "required": ["pattern", "replacement"],
+            "properties": {
+              "pattern": { "type": "string" },
+              "replacement": { "type": "string" }
+            }
+          }
+        },
+        "sanitizeToolNames": {
+          "type": "string",
+          "enum": ["strict", "lenient", "disabled"],
+          "default": "disabled"
+        }
+      }
+    },
+    "rateLimits": {
+      "type": "object",
+      "description": "Rate limiting configuration",
+      "properties": {
+        "default": {
+          "type": "object",
+          "properties": {
+            "tokens": { "type": "number", "minimum": 1 },
+            "window": { "type": "number", "minimum": 1 }
+          }
+        },
+        "perServer": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "tokens": { "type": "number", "minimum": 1 },
+              "window": { "type": "number", "minimum": 1 }
+            }
+          }
+        },
+        "perKey": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "tokens": { "type": "number", "minimum": 1 },
+              "window": { "type": "number", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "description": "Skills configuration",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "directories": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "search": {
+          "type": "object",
+          "properties": {
+            "embeddings": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["local", "openai", "cohere"]
+                },
+                "model": { "type": "string" },
+                "dimensions": { "type": "number" },
+                "quantization": {
+                  "type": "string",
+                  "enum": ["fp32", "fp16", "int8"]
+                },
+                "cacheSize": { "type": "number" },
+                "preWarm": { "type": "boolean" }
+              }
+            },
+            "mode": {
+              "type": "string",
+              "enum": ["hybrid", "vector", "keyword"],
+              "default": "hybrid"
+            },
+            "fallback": { "type": "boolean", "default": true },
+            "boostRecent": { "type": "boolean", "default": true },
+            "boostFrequent": { "type": "boolean", "default": true }
+          }
+        },
+        "loading": {
+          "type": "object",
+          "properties": {
+            "maxConcurrent": { "type": "number" },
+            "cacheSize": { "type": "number" },
+            "autoUnloadThreshold": { "type": "number" },
+            "preloadMetadata": { "type": "boolean" }
+          }
+        },
+        "installation": {
+          "type": "object",
+          "properties": {
+            "allowGitHub": { "type": "boolean", "default": true },
+            "allowZip": { "type": "boolean", "default": true },
+            "allowMarketplace": { "type": "boolean", "default": false },
+            "defaultRef": { "type": "string", "default": "main" }
+          }
+        },
+        "legacyFormat": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "autoConvert": { "type": "boolean", "default": true }
+          }
+        },
+        "marketplaces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "type", "source"],
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["curated", "github-org", "registry"]
+              },
+              "source": { "type": "string" },
+              "indexUrl": { "type": "string", "format": "uri" },
+              "enabled": { "type": "boolean", "default": true },
+              "autoSync": { "type": "boolean", "default": true },
+              "syncInterval": { "type": "string" }
+            }
+          }
+        },
+        "updates": {
+          "type": "object",
+          "properties": {
+            "checkOnStartup": { "type": "boolean", "default": true },
+            "checkInterval": { "type": "string", "default": "24h" },
+            "autoUpdate": {
+              "type": "string",
+              "enum": ["manual", "patch", "minor", "all"],
+              "default": "manual"
+            },
+            "breakingChanges": {
+              "type": "string",
+              "enum": ["ignore", "prompt", "block"],
+              "default": "prompt"
+            }
+          }
+        },
+        "discovery": {
+          "type": "object",
+          "properties": {
+            "showTrending": { "type": "boolean", "default": true },
+            "showRecommended": { "type": "boolean", "default": true },
+            "trackUsage": { "type": "boolean", "default": true },
+            "shareAnonymousStats": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+    "kits": {
+      "type": "object",
+      "properties": {
+        "searchPaths": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["json", "sqlite"],
+          "default": "json"
+        },
+        "path": { "type": "string" }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "queueTimeout": { "type": "number", "default": 86400000 },
+        "requireAdminApproval": { "type": "boolean", "default": true }
+      }
+    },
+    "observability": {
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": ["json", "prometheus", "both"],
+              "default": "json"
+            },
+            "enabled": { "type": "boolean", "default": true },
+            "prefix": { "type": "string", "default": "goblin_" },
+            "histogramBuckets": {
+              "type": "object",
+              "properties": {
+                "latency": {
+                  "type": "array",
+                  "items": { "type": "number" }
+                },
+                "duration": {
+                  "type": "array",
+                  "items": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "prometheus": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "port": { "type": "number", "default": 9090 },
+            "defaultMetrics": { "type": "boolean", "default": true }
+          }
+        }
+      }
+    },
+    "marketplace": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "apiUrl": { "type": "string", "format": "uri" },
+        "allowUntrusted": { "type": "boolean", "default": false },
+        "autoApproveRiskScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.3
+        }
+      }
+    },
+    "sandbox": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["none", "chroot", "container", "process"],
+          "default": "none"
+        },
+        "maxMemoryMB": { "type": "number", "default": 512 },
+        "maxCPUPercent": { "type": "number", "default": 50 },
+        "networkAccess": {
+          "type": "string",
+          "enum": ["allow", "deny", "proxy"],
+          "default": "allow"
+        },
+        "filesystem": {
+          "type": "string",
+          "enum": ["readwrite", "readonly", "isolated"],
+          "default": "readwrite"
+        }
+      }
+    },
+    "distributed": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "clusterId": { "type": "string" },
+        "databaseUrl": { "type": "string", "format": "uri" },
+        "leaderElection": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "electionTimeout": { "type": "number", "default": 10000 }
+          }
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "ipAllowlist": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ipBlocklist": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "geoFencing": {
+          "type": "object",
+          "properties": {
+            "allowedCountries": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "blockedCountries": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "mtls": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "caCertPath": { "type": "string" }
+          }
+        }
+      }
+    },
+    "webui": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "port": { "type": "number", "default": 8080 },
+        "authMode": {
+          "type": "string",
+          "enum": ["oauth", "apikey", "oauth+apikey"],
+          "default": "oauth"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

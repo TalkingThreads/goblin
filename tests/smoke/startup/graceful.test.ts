@@ -10,12 +10,13 @@ import { ProcessManager } from "../shared/process-manager.js";
 import {
   cleanupTestEnvironment,
   createTestEnvironment,
+  type TestEnvironment,
   writeTestConfig,
 } from "../shared/test-config.js";
 
 describe("Graceful Shutdown", () => {
   let processManager: ProcessManager;
-  let testEnv: any;
+  let testEnv: TestEnvironment;
   let configPath: string;
 
   beforeAll(() => {
@@ -68,8 +69,8 @@ describe("Graceful Shutdown", () => {
 
     // Establish an SSE connection which is long-lived
     // Using a side effect to keep the connection open
-    let sseError: any = null;
-    const ssePromise = client.get("/sse").catch((err) => {
+    let sseError: Error | null = null;
+    const ssePromise = client.get("/sse").catch((err: Error) => {
       sseError = err;
     });
 
@@ -112,8 +113,8 @@ describe("Graceful Shutdown", () => {
 
     // Establish an SSE connection which is long-lived
     // Using a side effect to keep the connection open
-    let sseError: any = null;
-    const ssePromise = client.get("/sse").catch((err) => {
+    let sseError: Error | null = null;
+    const ssePromise = client.get("/sse").catch((err: Error) => {
       sseError = err;
     });
 

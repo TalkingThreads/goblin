@@ -301,40 +301,169 @@ Gateway continues operating even if individual backend servers fail.
 
 ### Authentication
 
-- Development: Open access
-- Production: API key or OAuth
+#### Current Authentication Modes
 
-### Authorization
+#### Development Mode (`dev`)
+- Open access with no authentication required
+- Suitable for local development and testing
+- No API keys or credentials needed
 
-- Per-client API keys
-- Rate limiting
-- Request size limits
+#### API Key Authentication (`apikey`)
+- Requires API key for client authentication
+- API keys configured in `auth.apiKey` configuration
+- Basic authentication mechanism for production use
 
-### Isolation
+### Authorization and Access Control
 
-- Backend servers isolated from each other
-- Config changes validated before apply
-- Sensitive data redacted in logs
+#### Server-Level Access Control
+- Individual servers can be enabled/disabled via `enabled` flag
+- Servers can be configured with different transport types
+- Environment variable isolation for child processes
+
+#### Policy-Based Controls
+- **Output Size Limits**: Configurable maximum response size (default: 64KB)
+- **Timeouts**: Configurable default timeouts (default: 30 seconds)
+- **Connection Limits**: Configurable maximum concurrent connections
+- **Rate Limiting**: Configurable requests per minute and burst size
+
+### Future Security Enhancements (v1.0.0)
+
+#### OAuth 2.0 and OIDC Integration
+- Native OAuth 2.0 authentication flows
+- OpenID Connect (OIDC) support
+- Integration with popular identity providers
+- Token-based authentication
+
+#### Role-Based Access Control (RBAC)
+- User role management
+- Permission-based access control
+- Group-based authorization
+- Resource-level permissions
+
+#### Tool-Level Authorization Policies
+- Granular tool access control
+- Policy-based tool filtering
+- Dynamic policy evaluation
+- Audit logging for authorization decisions
+
+#### Advanced Security Features
+- IP whitelisting and network policies
+- Encryption at rest for sensitive configuration
+- Multi-factor authentication support
+- Compliance certifications (SOC 2, GDPR, etc.)
 
 ## Extensibility
 
+### Custom Authentication
+
+#### v1.0.0 Features
+
+1. **Implement `Authenticator` interface**
+2. **Register in configuration**
+3. **Add middleware to HTTP gateway**
+
+#### Custom Authenticator Interface
+
+```typescript
+interface Authenticator {
+  authenticate(request: Request): Promise<AuthenticationResult>;
+  authorize(user: User, resource: Resource): Promise<AuthorizationResult>;
+  getUser(request: Request): Promise<User>;
+}
+```
+
 ### Adding a New Transport
 
-1. Implement `Transport` interface
-2. Register in `TransportPool`
-3. Add CLI options for configuration
+#### v1.0.0 Enhancements
+
+1. **Implement `Transport` interface**
+2. **Register in `TransportPool`**
+3. **Add CLI options for configuration**
+4. **Add security configuration**
+
+#### Transport Security Configuration
+
+```typescript
+interface TransportSecurity {
+  encryption?: boolean;
+  authentication?: boolean;
+  authorization?: boolean;
+  auditLogging?: boolean;
+}
+```
 
 ### Adding a New Meta Tool
 
-1. Create tool implementation
-2. Register in `MetaTools` registry
-3. Document in CLI help
+#### v1.0.0 Features
 
-### Custom Authentication
+1. **Create tool implementation**
+2. **Register in `MetaTools` registry**
+3. **Document in CLI help**
+4. **Add security policies**
 
-1. Implement `Authenticator` interface
-2. Register in configuration
-3. Add middleware to HTTP gateway
+#### Meta Tool Security Policies
+
+```typescript
+interface MetaToolPolicy {
+  accessControl?: {
+    roles?: string[];
+    permissions?: string[];
+    conditions?: PolicyCondition[];
+  };
+  auditLogging?: boolean;
+  rateLimiting?: {
+    requestsPerMinute?: number;
+    burstSize?: number;
+  };
+}
+```
+
+## Performance Considerations
+
+### v1.0.0 Performance Targets
+
+#### Enhanced Latency Targets
+
+| Operation | Target P95 |
+|-----------|------------|
+| Tool listing | < 30ms |
+| Tool invocation | < 50ms |
+| Resource read | < 100ms |
+| Authentication | < 20ms |
+| Authorization | < 10ms |
+
+#### Scalability Improvements
+
+- **Connections**: Enhanced connection pooling with security context
+- **Search**: Optimized search with security-aware indexing
+- **Memory**: Bounded memory with security constraints
+- **Throughput**: Enhanced throughput with security processing
+
+## Design Principles (v1.0.0)
+
+### 6. Security-First
+
+All components are designed with security as a primary concern:
+- Defense in depth approach
+- Principle of least privilege
+- Secure defaults
+- Security by design
+
+### 7. Compliance-Driven
+
+Built to meet common compliance requirements:
+- Data protection regulations
+- Access control standards
+- Audit requirements
+- Industry certifications
+
+### 8. Enterprise-Ready
+
+Designed for enterprise deployment:
+- Scalability and performance
+- Security and compliance
+- Monitoring and observability
+- Integration capabilities
 
 ## Related Documentation
 
@@ -344,3 +473,5 @@ Gateway continues operating even if individual backend servers fail.
 | CLI Commands | [CLI Reference](cli-reference.md) |
 | API Reference | [API Overview](api/overview.md) |
 | Contributing | [CONTRIBUTE.md](../CONTRIBUTE.md) |
+| Security | [Security Features](security.md) |
+| Testing | [Testing Approach](testing.md) |

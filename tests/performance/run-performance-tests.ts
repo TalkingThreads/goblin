@@ -8,7 +8,7 @@ import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const PERFORMANCE_DIR = join(import.meta.dir, "..");
+const PERFORMANCE_DIR = import.meta.dir;
 const RESULTS_DIR = join(PERFORMANCE_DIR, "..", "..", "test-results", "performance");
 
 interface PerformanceTestSummary {
@@ -36,7 +36,7 @@ async function runPerformanceTests(): Promise<void> {
   const startTime = Date.now();
 
   return new Promise((resolve, reject) => {
-    const childProcess = spawn("bun", ["test", PERFORMANCE_DIR, "--reporter=verbose"], {
+    const childProcess = spawn("bun", ["test", PERFORMANCE_DIR], {
       cwd: process.cwd(),
       env: {
         ...process.env,

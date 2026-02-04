@@ -5,6 +5,11 @@
 import { describe, expect, test } from "bun:test";
 import { gracefulShutdown, setupShutdownHandlers } from "../../../src/observability/utils.js";
 
+interface MockChildProcess {
+  on(event: string, listener: () => void): MockChildProcess;
+  kill(signal: string): void;
+}
+
 describe("setupShutdownHandlers", () => {
   test("should not throw on any platform", () => {
     expect(() => {
@@ -24,18 +29,20 @@ describe("setupShutdownHandlers", () => {
 
 describe("gracefulShutdown", () => {
   test("should return a promise", () => {
-    const mockProcess = {
+    const mockProcess: MockChildProcess = {
       on: () => mockProcess,
       kill: () => {},
-    } as any;
+    };
 
-    const result = gracefulShutdown(mockProcess);
+    const result = gracefulShutdown(
+      mockProcess as unknown as import("node:child_process").ChildProcess,
+    );
     expect(result).toBeInstanceOf(Promise);
   });
 
   test("should handle immediate process exit", async () => {
     let exitListener: (() => void) | null = null;
-    const mockProcess = {
+    const mockProcess: MockChildProcess = {
       on: (event: string, listener: () => void) => {
         if (event === "exit") {
           exitListener = listener;
@@ -43,9 +50,11 @@ describe("gracefulShutdown", () => {
         return mockProcess;
       },
       kill: () => {},
-    } as any;
+    };
 
-    const result = gracefulShutdown(mockProcess);
+    const result = gracefulShutdown(
+      mockProcess as unknown as import("node:child_process").ChildProcess,
+    );
 
     // Simulate immediate exit
     if (exitListener) {
@@ -57,22 +66,22 @@ describe("gracefulShutdown", () => {
   });
 
   test("should use default timeout", () => {
-    const mockProcess = {
+    const mockProcess: MockChildProcess = {
       on: () => mockProcess,
       kill: (signal: string) => {
         // Verify it sends the expected signal
         expect(signal).toBe(process.platform === "win32" ? "SIGINT" : "SIGTERM");
       },
-    } as any;
+    };
 
-    gracefulShutdown(mockProcess);
+    gracefulShutdown(mockProcess as unknown as import("node:child_process").ChildProcess);
     // Test passes if kill was called with correct signal
     expect(true).toBe(true);
   });
 
   test("should handle custom timeout", async () => {
     let exitListener: (() => void) | null = null;
-    const mockProcess = {
+    const mockProcess: MockChildProcess = {
       on: (event: string, listener: () => void) => {
         if (event === "exit") {
           exitListener = listener;
@@ -85,10 +94,13 @@ describe("gracefulShutdown", () => {
           expect(signal).toBe(process.platform === "win32" ? "SIGINT" : "SIGTERM");
         }
       },
-    } as any;
+    };
 
     const startTime = Date.now();
-    const result = gracefulShutdown(mockProcess, 100);
+    const result = gracefulShutdown(
+      mockProcess as unknown as import("node:child_process").ChildProcess,
+      100,
+    );
 
     // Should initiate shutdown process
     expect(result).toBeInstanceOf(Promise);

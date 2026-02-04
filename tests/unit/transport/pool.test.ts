@@ -54,7 +54,7 @@ describe("TransportPool", () => {
     const transport = await pool.getTransport(config);
     expect(transport).toBeDefined();
     expect(transport.isConnected()).toBe(true);
-    expect((transport as any).connectCount).toBe(1);
+    expect((transport as MockTransport).connectCount).toBe(1);
   });
 
   test("should reuse existing transport", async () => {
@@ -71,7 +71,7 @@ describe("TransportPool", () => {
     const t2 = await pool.getTransport(config);
 
     expect(t1).toBe(t2);
-    expect((t1 as any).connectCount).toBe(1); // Should not connect again
+    expect((t1 as MockTransport).connectCount).toBe(1); // Should not connect again
   });
 
   test("should reconnect if disconnected", async () => {
@@ -91,7 +91,7 @@ describe("TransportPool", () => {
     const t2 = await pool.getTransport(config);
     expect(t2).toBe(t1); // Same instance
     expect(t2.isConnected()).toBe(true); // Reconnected
-    expect((t1 as any).connectCount).toBe(2);
+    expect((t1 as MockTransport).connectCount).toBe(2);
   });
 
   test("should release transport", async () => {
@@ -107,7 +107,7 @@ describe("TransportPool", () => {
     const t1 = await pool.getTransport(config);
     await pool.releaseTransport("server1");
 
-    expect((t1 as any).disconnectCount).toBe(1);
+    expect((t1 as MockTransport).disconnectCount).toBe(1);
 
     // Should create new one
     const t2 = await pool.getTransport(config);
@@ -140,7 +140,7 @@ describe("TransportPool", () => {
     }
 
     // Should only connect once
-    expect((transports[0] as any).connectCount).toBe(1);
+    expect((transports[0] as MockTransport).connectCount).toBe(1);
   });
 
   test("should handle rapid sequential requests correctly", async () => {
@@ -160,7 +160,7 @@ describe("TransportPool", () => {
     // Immediate follow-up request should reuse the connection
     const t2 = await pool.getTransport(config);
     expect(t2).toBe(t1);
-    expect((t1 as any).connectCount).toBe(1);
+    expect((t1 as MockTransport).connectCount).toBe(1);
   });
 
   test("should not create duplicate connections under rapid load", async () => {
@@ -187,6 +187,6 @@ describe("TransportPool", () => {
     }
 
     // Verify only one connection was made
-    expect((transports[0] as any).connectCount).toBe(1);
+    expect((transports[0] as MockTransport).connectCount).toBe(1);
   });
 });

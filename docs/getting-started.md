@@ -42,7 +42,7 @@ Create a configuration file to define your MCP servers:
 
 ```json
 {
-  "$schema": "https://goblin.sh/schema/config.json",
+  "$schema": "./config.schema.json",
   "servers": [
     {
       "name": "filesystem",
@@ -67,6 +67,10 @@ Create a configuration file to define your MCP servers:
   },
   "auth": {
     "mode": "dev"
+  },
+  "policies": {
+    "outputSizeLimit": 65536,
+    "defaultTimeout": 30000
   }
 }
 ```
@@ -97,12 +101,49 @@ bun run start
 goblin start --tui
 ```
 
+### CLI Commands
+
+Goblin v0.4.0 introduces a comprehensive CLI for gateway management:
+
+```bash
+# Start the gateway
+goblin start                    # Default settings
+goblin start --tui             # Enable TUI mode
+goblin start --port 3000       # Custom port
+
+# Gateway status
+goblin status                   # Human-readable
+goblin status --json           # JSON output
+
+# List resources
+goblin tools                   # All tools
+goblin tools --server server1 # Filter by server
+goblin servers                 # All servers
+goblin servers --status online # Filter by status
+
+# Configuration
+goblin config validate         # Validate config
+goblin config show            # Display config
+
+# Logs and health
+goblin logs                   # Show logs
+goblin logs -f                # Follow output
+goblin logs --level info      # Filter by level
+goblin health                 # Health status
+
+# Slash commands (v0.4.0 feature)
+goblin slashes list            # List all slash commands
+goblin slashes show /command  # Show slash command details
+goblin slashes exec /command  # Execute slash command
+```
+
 The TUI provides an interactive dashboard with:
 - Server status panel
 - Tools catalog
 - Prompts browser
 - Resources viewer
 - Real-time metrics
+- Slash command autocomplete (type `/` to see suggestions)
 
 ## Verifying Installation
 
@@ -248,3 +289,27 @@ const response = await fetch("http://127.0.0.1:3000/messages", {
 - **Issues**: [GitHub Issues](https://github.com/TalkingThreads/goblin/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/TalkingThreads/goblin/discussions)
 - **Contributing**: See [CONTRIBUTE.md](../CONTRIBUTE.md)
+
+## v1 and v2 Roadmap
+
+Goblin is actively developing toward production and enterprise readiness:
+
+### v1: Production-Ready (In Development)
+- OAuth 2.1 authentication and JWT validation
+- Role-based access control (RBAC)
+- Local Skills service for semantic discovery
+- Self-provisioning with admin approval
+- Enhanced observability and audit trails
+- SQLite persistence option
+- Circuit breaker and rate limiting
+
+### v2: Enterprise-Ready (Future)
+- Prometheus metrics export
+- Kit marketplace integrations
+- Advanced skill marketplace features
+- Enhanced observability with Grafana dashboards
+- Advanced reliability features
+- Distributed deployment support
+- Web UI for administration
+
+See [.octocode/plan/goblin-v1/plan.md](../.octocode/plan/goblin-v1/plan.md) and [.octocode/plan/goblin-v2/plan.md](../.octocode/plan/goblin-v2/plan.md) for detailed roadmaps.

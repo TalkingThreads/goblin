@@ -8,10 +8,12 @@ describe("Router", () => {
   test("should route tool call to correct server", async () => {
     // Mock Config
     const config: Config = {
-      servers: [{ name: "server1", transport: "stdio", command: "echo", enabled: true }],
-      gateway: {} as any,
-      auth: {} as any,
-      policies: { defaultTimeout: 1000 } as any,
+      servers: [
+        { name: "server1", transport: "stdio", command: "echo", enabled: true, mode: "stateful" },
+      ],
+      gateway: { port: 3000, host: "127.0.0.1" },
+      auth: { mode: "dev" },
+      policies: { outputSizeLimit: 65536, defaultTimeout: 1000 },
     };
 
     // Mock Client
@@ -54,19 +56,19 @@ describe("Router", () => {
     expect(mockRegistry.getTool).toHaveBeenCalledWith("server1_tool1");
     expect(mockPool.getTransport).toHaveBeenCalled();
     expect(mockClient.callTool).toHaveBeenCalled();
-    expect(result).toEqual({ content: [{ type: "text", text: "success" }] } as any);
+    expect(result).toEqual({ content: [{ type: "text", text: "success" }] });
   });
 
   test("should throw if tool not found", async () => {
     const config: Config = {
       servers: [],
-      gateway: {} as any,
-      auth: {} as any,
-      policies: {} as any,
+      gateway: { port: 3000, host: "127.0.0.1" },
+      auth: { mode: "dev" },
+      policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
     };
     const router = new Router(
-      { getTool: () => undefined, getLocalTool: () => undefined } as any,
-      {} as any,
+      { getTool: () => undefined, getLocalTool: () => undefined } as unknown as Registry,
+      {} as unknown as TransportPool,
       config,
     );
 
@@ -76,16 +78,16 @@ describe("Router", () => {
   test("should throw if server config not found", async () => {
     const config: Config = {
       servers: [],
-      gateway: {} as any,
-      auth: {} as any,
-      policies: {} as any,
+      gateway: { port: 3000, host: "127.0.0.1" },
+      auth: { mode: "dev" },
+      policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
     };
     const registry = {
       getTool: () => ({ serverId: "missing", def: { name: "tool" } }),
       getLocalTool: () => undefined,
-    } as any;
+    } as unknown as Registry;
 
-    const router = new Router(registry, {} as any, config);
+    const router = new Router(registry, {} as unknown as TransportPool, config);
 
     expect(router.callTool("t1", {})).rejects.toThrow("Server not found: missing");
   });

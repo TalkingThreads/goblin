@@ -200,7 +200,7 @@ describe("CLI - Color and Formatting", () => {
 
     // With NO_COLOR set, output should not have ANSI codes
     // The CliTester already sets NO_COLOR=1
-    const ansiPattern = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m");
+    const ansiPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`);
     const hasAnsiCodes = ansiPattern.test(result.stdout);
     expect(hasAnsiCodes).toBe(false);
   });

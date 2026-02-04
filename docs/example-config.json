@@ -7,25 +7,131 @@
       "transport": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allow"],
-      "enabled": true
+      "enabled": true,
+      "policies": {
+        "outputSizeLimit": 131072,
+        "defaultTimeout": 15000,
+        "rateLimit": {
+          "requestsPerMinute": 120,
+          "burstSize": 20
+        }
+      },
+      "auth": {
+        "mode": "apikey",
+        "apiKey": "server-filesystem-key"
+      }
     },
     {
       "name": "example-http",
       "description": "Example HTTP MCP server",
       "transport": "http",
-      "url": "http://localhost:8080/mcp",
-      "enabled": false
+      "url": "https://api.example.com/mcp",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {{OAUTH_TOKEN}}"
+      },
+      "policies": {
+        "outputSizeLimit": 65536,
+        "defaultTimeout": 30000,
+        "maxConnections": 50
+      }
     }
   ],
   "gateway": {
-    "port": 3000,
-    "host": "127.0.0.1"
+    "port": 3443,
+    "host": "0.0.0.0",
+    "tls": {
+      "enabled": true,
+      "certPath": "/etc/ssl/certs/goblin.crt",
+      "keyPath": "/etc/ssl/private/goblin.key"
+    }
   },
   "auth": {
-    "mode": "dev"
+    "mode": "apikey",
+    "apiKey": "gateway-master-key",
+    "users": [
+      {
+        "username": "admin",
+        "apiKey": "admin-key-123",
+        "roles": ["admin", "developer"]
+      },
+      {
+        "username": "developer",
+        "apiKey": "dev-key-456",
+        "roles": ["developer"]
+      }
+    ]
   },
   "policies": {
     "outputSizeLimit": 65536,
-    "defaultTimeout": 30000
-  }
+    "defaultTimeout": 30000,
+    "maxConnections": 1000,
+    "rateLimit": {
+      "requestsPerMinute": 600,
+      "burstSize": 100
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "destinations": "both",
+    "file": {
+      "path": "/var/log/goblin/app.log",
+      "maxSize": "100M",
+      "maxFiles": 7
+    },
+    "redact": {
+      "enabled": true,
+      "paths": ["password", "token", "apiKey", "accessToken", "refreshToken", "authorization", "cookie"],
+      "remove": false
+    },
+    "sampling": {
+      "enabled": true,
+      "rate": 0.1
+    },
+    "requestLogging": {
+      "enabled": true,
+      "includeBody": false,
+      "includeResponseBody": false,
+      "excludePaths": ["/health", "/metrics", "/status"]
+    }
+  },
+  "virtualTools": [
+    {
+      "id": "audit_log",
+      "description": "Audit logging tool",
+      "ops": [
+        {
+          "tool": "filesystem_write_file",
+          "args": {
+            "path": "/var/log/goblin/audit.log",
+            "content": "{{TIMESTAMP}} - {{USERNAME}} - {{ACTION}} - {{DETAILS}}"
+          }
+        }
+      ],
+      "timeoutMs": 5000,
+      "stopOnError": true
+    },
+    {
+      "id": "security_scan",
+      "description": "Security scan tool",
+      "ops": [
+        {
+          "tool": "http_get",
+          "args": {
+            "url": "https://security-api.example.com/scan"
+          }
+        },
+        {
+          "tool": "filesystem_write_file",
+          "args": {
+            "path": "/var/log/goblin/security-scan-{{TIMESTAMP}}.log",
+            "content": "{{SCAN_RESULT}}"
+          }
+        }
+      ],
+      "timeoutMs": 30000,
+      "stopOnError": false
+    }
+  ]
 }

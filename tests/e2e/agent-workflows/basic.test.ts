@@ -6,12 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import {
-  AgentSimulator,
-  type AgentWorkflow,
-  TestWorkflows,
-  type WorkflowResult,
-} from "../shared/agent-simulator.js";
+import { AgentSimulator, type AgentWorkflow, TestWorkflows } from "../shared/agent-simulator.js";
 
 describe("Agent Workflows - Multi-turn Conversations", () => {
   let simulator: AgentSimulator;
