@@ -102,7 +102,7 @@ class EverythingServerProcess {
       // Give the server a moment to start and then mark as ready
       setTimeout(() => {
         // Check if process is still running
-        if (this.process && !this.process.killed) {
+        if (this.process && !this.process.killed && this.process.exitCode === null) {
           this.started = true;
           resolve();
         } else {
@@ -111,7 +111,13 @@ class EverythingServerProcess {
       }, 1000);
 
       this.process.stderr.on("data", (data) => {
-        console.error("Everything server error:", data.toString());
+        const msg = data.toString();
+        // Filter out informational messages from being logged as errors
+        if (msg.includes("Starting default (STDIO) server")) {
+          console.log(`Everything server: ${msg.trim()}`);
+        } else {
+          console.error("Everything server error:", msg);
+        }
       });
 
       this.process.on("error", (error) => {
@@ -132,7 +138,7 @@ class EverythingServerProcess {
   }
 
   isRunning(): boolean {
-    return this.started && this.process !== null;
+    return this.started && this.process !== null && this.process.exitCode === null;
   }
 
   getStdio(): {
@@ -198,12 +204,10 @@ function createEverythingServerFixture(): EverythingServerFixture {
 
 describe("Everything Server Integration Tests", () => {
   let fixture: EverythingServerFixture | null = null;
-  let isServerAvailable = false;
 
   beforeAll(async () => {
     fixture = createEverythingServerFixture();
     await fixture.setup();
-    isServerAvailable = fixture.isAvailable();
   });
 
   afterAll(async () => {
@@ -212,10 +216,7 @@ describe("Everything Server Integration Tests", () => {
     }
   });
 
-  // Only run tests if Everything server is available
-  const describeIfAvailable = isServerAvailable ? describe : describe.skip;
-
-  describeIfAvailable("Server Availability", () => {
+  describe("Server Availability", () => {
     test("Everything server should be running", () => {
       expect(fixture!.isAvailable()).toBe(true);
     });
