@@ -48,7 +48,6 @@
     "perf:throughput": "bun test tests/performance/throughput",
     "perf:baseline": "bun test tests/performance/baseline",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky",
     "coverage": "bun test --coverage",
     "coverage:unit": "bun test tests/unit --coverage",
     "coverage:report": "bun test --coverage && open coverage/index.html",
