@@ -76,6 +76,9 @@ test-results/
 junit.xml
 coverage.xml
 
+# Test temporary files
+test-output/
+
 # TypeScript
 *.tsbuildinfo
 

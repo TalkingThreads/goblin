@@ -6,10 +6,11 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
-import { rm, writeFile } from "node:fs/promises";
 import http from "node:http";
 import net from "node:net";
 import { join } from "node:path";
+
+import { getTestFileManager } from "./test-file-manager.js";
 
 export interface GatewayConfig {
   $schema?: string;
@@ -73,7 +74,6 @@ export function createTestEnvironment(options: {
   name: string;
   useDocker?: boolean;
 }): TestEnvironment {
-  const tempDirs: string[] = [];
   const processes: ChildProcess[] = [];
 
   const cleanup = async () => {
@@ -84,13 +84,8 @@ export function createTestEnvironment(options: {
         // Ignore cleanup errors
       }
     }
-    for (const dir of tempDirs) {
-      try {
-        await rm(dir, { recursive: true, force: true });
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
+    const fileManager = getTestFileManager();
+    await fileManager.cleanup();
   };
 
   const createGatewayConfig = (
@@ -120,9 +115,9 @@ export function createTestEnvironment(options: {
   };
 
   const startGoblinGateway = async (config: GatewayConfig): Promise<ChildProcess> => {
-    const configPath = join(process.cwd(), `test-config-${Date.now()}.json`);
-    const configContent = JSON.stringify(config, null, 2);
-    await writeFile(configPath, configContent);
+    const fileManager = getTestFileManager();
+    const configHandle = await fileManager.createConfigFile(config, { prefix: "goblin" });
+    const configPath = configHandle.path;
 
     const goblinBinary = join(process.cwd(), "dist", "cli", "index.js");
 

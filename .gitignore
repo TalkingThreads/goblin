@@ -35,6 +35,9 @@ bun.lockb
 # Test Results
 test-results
 
+# Test temporary files
+test-output
+
 # AI Context & Development Tools
 .octocode
 .opencode
