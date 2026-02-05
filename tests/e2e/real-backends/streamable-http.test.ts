@@ -1,248 +1,512 @@
 /**
  * Real Backend Tests - Streamable HTTP Transport
  *
- * Tests against real MCP servers using Streamable HTTP transport for authentic validation.
+ * Tests against mock Streamable HTTP MCP server for authentic validation
+ * without requiring external MCP server dependencies.
  */
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { TestEnvironment } from "../shared/environment.js";
-import { ServerPool } from "../shared/real-server.js";
+import { MockStreamableHttpServer } from "../shared/mock-streamable-http-server.js";
+
+function getSessionId(response: Response): string | undefined {
+  const header = response.headers.get("mcp-session-id");
+  return header === null ? undefined : header;
+}
+
+function requireSessionId(response: Response): string {
+  const sessionId = getSessionId(response);
+  expect(sessionId).toBeTruthy();
+  return sessionId as string;
+}
 
 describe("Real Backends - Streamable HTTP Transport", () => {
-  let pool: ServerPool;
-  let env: TestEnvironment;
+  let mockServer: MockStreamableHttpServer;
 
   beforeEach(async () => {
-    env = new TestEnvironment({ name: "streamable-http-test", useDocker: false });
-    pool = new ServerPool();
-
-    const testDir = await env.createTempDirectory("streamable-http-e2e-");
-
-    pool.register({
-      name: "filesystem",
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-filesystem", testDir],
-      startupTimeout: 30000,
-    });
+    mockServer = new MockStreamableHttpServer({ port: 0 });
+    await mockServer.start();
   });
 
   afterEach(async () => {
-    await pool.cleanup();
-    await env.cleanup();
+    await mockServer.stop();
   });
 
-  test("can create streamablehttp server config", () => {
-    const config = env.createMockServerConfig("test-streamablehttp", "streamablehttp");
-
-    expect(config).toHaveProperty("name", "test-streamablehttp");
-    expect(config).toHaveProperty("transport", "streamablehttp");
-    expect(config).toHaveProperty("enabled", true);
-    expect(config).toHaveProperty("url", "http://localhost:3003/mcp");
+  test("server can start and stop", async () => {
+    expect(mockServer.portNumber).toBeGreaterThan(0);
+    expect(mockServer.activeSessions).toBe(0);
+    expect(mockServer.requestCountTotal).toBe(0);
   });
 
-  test("server pool can register servers", async () => {
-    const servers = pool.listNames();
-    expect(servers).toContain("filesystem");
+  test("server accepts initialize request", async () => {
+    const response = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test-client", version: "1.0.0" },
+        },
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    requireSessionId(response);
+
+    const data = await response.json();
+    expect(data.jsonrpc).toBe("2.0");
+    expect(data.id).toBe(1);
+    expect(data.result).toHaveProperty("protocolVersion", "2025-11-05");
+    expect(data.result).toHaveProperty("serverInfo");
+    expect(data.result.serverInfo.name).toBe("mock-mcp-server");
   });
 
-  test("can start and stop server", async () => {
-    const server = pool.get("filesystem");
-    expect(server).toBeDefined();
+  test("server creates unique session IDs", async () => {
+    const response1 = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
 
-    if (server) {
-      await server.start();
-      const status = server.getStatus();
-      expect(status).toBe("running");
+    const response2 = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
 
-      await server.stop();
-      const stoppedStatus = server.getStatus();
-      expect(stoppedStatus).toBe("stopped");
-    }
+    const sessionId1 = getSessionId(response1);
+    const sessionId2 = getSessionId(response2);
+
+    expect(sessionId1).toBeTruthy();
+    expect(sessionId2).toBeTruthy();
+    expect(sessionId1).not.toBe(sessionId2);
+    expect(mockServer.activeSessions).toBe(2);
   });
 
-  test("server health check returns status", async () => {
-    const server = pool.get("filesystem");
-    expect(server).toBeDefined();
+  test("server maintains session with mcp-session-id header", async () => {
+    const initResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
 
-    if (server) {
-      await server.start();
-      const health = await server.healthCheck();
+    const sessionId = requireSessionId(initResponse);
 
-      expect(health).toHaveProperty("healthy");
-      expect(health).toHaveProperty("latency");
-    }
+    const pingResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "mcp-session-id": sessionId,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "ping",
+        params: {},
+      }),
+    });
+
+    expect(pingResponse.status).toBe(200);
+    const pingData = await pingResponse.json();
+    expect(pingData.jsonrpc).toBe("2.0");
+    expect(pingData.id).toBe(2);
+  });
+
+  test("server returns tools list", async () => {
+    const initResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
+
+    const sessionId = requireSessionId(initResponse);
+
+    const toolsResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "mcp-session-id": sessionId,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/list",
+        params: {},
+      }),
+    });
+
+    expect(toolsResponse.status).toBe(200);
+    const toolsData = await toolsResponse.json();
+    expect(toolsData.result.tools).toBeInstanceOf(Array);
+    expect(toolsData.result.tools.length).toBeGreaterThan(0);
+    expect(toolsData.result.tools[0].name).toBe("mock_tool");
+  });
+
+  test("server handles tool calls", async () => {
+    const initResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
+
+    const sessionId = requireSessionId(initResponse);
+
+    const callResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "mcp-session-id": sessionId,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "mock_tool",
+          arguments: { message: "Hello World" },
+        },
+      }),
+    });
+
+    expect(callResponse.status).toBe(200);
+    const callData = await callResponse.json();
+    expect(callData.result.content[0].text).toContain("Hello World");
+  });
+
+  test("server returns resources list", async () => {
+    const initResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
+
+    const sessionId = requireSessionId(initResponse);
+
+    const resourcesResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "mcp-session-id": sessionId,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "resources/list",
+        params: {},
+      }),
+    });
+
+    expect(resourcesResponse.status).toBe(200);
+    const resourcesData = await resourcesResponse.json();
+    expect(resourcesData.result.resources).toBeInstanceOf(Array);
+    expect(resourcesData.result.resources[0].uri).toBe("mock://resource/test");
+  });
+
+  test("server returns prompts list", async () => {
+    const initResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
+
+    const sessionId = requireSessionId(initResponse);
+
+    const promptsResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "mcp-session-id": sessionId,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "prompts/list",
+        params: {},
+      }),
+    });
+
+    expect(promptsResponse.status).toBe(200);
+    const promptsData = await promptsResponse.json();
+    expect(promptsData.result.prompts).toBeInstanceOf(Array);
+    expect(promptsData.result.prompts[0].name).toBe("mock_prompt");
+  });
+
+  test("server rejects invalid session", async () => {
+    const pingResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "mcp-session-id": "invalid-session-id",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "ping",
+        params: {},
+      }),
+    });
+
+    expect(pingResponse.status).toBe(404);
   });
 });
 
 describe("Real Backends - Streamable HTTP Configuration", () => {
-  let env: TestEnvironment;
-
-  beforeEach(() => {
-    env = new TestEnvironment({ name: "streamablehttp-config-test", useDocker: false });
+  test("can create mock server with custom port", async () => {
+    const mockServer = new MockStreamableHttpServer({ port: 9999 });
+    await mockServer.start();
+    expect(mockServer.portNumber).toBe(9999);
+    await mockServer.stop();
   });
 
-  afterEach(async () => {
-    await env.cleanup();
+  test("can create mock server with response delay", async () => {
+    const mockServer = new MockStreamableHttpServer({ port: 0, responseDelay: 100 });
+    await mockServer.start();
+    const start = Date.now();
+    await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeGreaterThanOrEqual(100);
+    await mockServer.stop();
   });
 
-  test("streamablehttp config includes url", () => {
-    const config = env.createMockServerConfig("test-sh", "streamablehttp");
+  test("mock server tracks request count", async () => {
+    const mockServer = new MockStreamableHttpServer({ port: 0 });
+    await mockServer.start();
 
-    expect(config).toHaveProperty("url", "http://localhost:3003/mcp");
-    expect(config).not.toHaveProperty("command");
-    expect(config).not.toHaveProperty("args");
-  });
-
-  test("can create gateway config with streamablehttp servers", () => {
-    const servers = [
-      env.createMockServerConfig("server1", "streamablehttp"),
-      env.createMockServerConfig("server2", "streamablehttp"),
-    ];
-    const config = env.createGatewayConfig(servers);
-
-    expect(config).toHaveProperty("$schema", "./config.schema.json");
-    expect(config).toHaveProperty("servers");
-    expect((config as Record<string, unknown>).servers).toHaveLength(2);
-    expect(config).toHaveProperty("gateway");
-    expect(config).toHaveProperty("auth");
-    expect(config).toHaveProperty("policies");
-  });
-
-  test("can mix transport types in gateway config", () => {
-    const servers = [
-      env.createMockServerConfig("stdio-server", "stdio"),
-      env.createMockServerConfig("http-server", "http"),
-      env.createMockServerConfig("sse-server", "sse"),
-      env.createMockServerConfig("streamablehttp-server", "streamablehttp"),
-    ];
-    const config = env.createGatewayConfig(servers);
-
-    expect((config as Record<string, unknown>).servers).toHaveLength(4);
-  });
-});
-
-describe("Real Backends - Streamable HTTP Pool Management", () => {
-  let pool: ServerPool;
-
-  beforeEach(() => {
-    pool = new ServerPool();
-  });
-
-  afterEach(async () => {
-    await pool.cleanup();
-  });
-
-  test("can register multiple streamablehttp servers", () => {
-    pool.register({
-      name: "server1",
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp/server1"],
-      startupTimeout: 5000,
+    await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
     });
 
-    pool.register({
-      name: "server2",
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp/server2"],
-      startupTimeout: 5000,
+    await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "ping",
+        params: {},
+      }),
     });
 
-    expect(pool.listNames()).toHaveLength(2);
+    expect(mockServer.requestCountTotal).toBe(2);
+    await mockServer.stop();
   });
 
-  test("pool tracks servers correctly", async () => {
-    pool.register({
-      name: "server1",
-      command: "echo",
-      args: ["test1"],
-      startupTimeout: 5000,
+  test("mock server reset clears sessions", async () => {
+    const mockServer = new MockStreamableHttpServer({ port: 0 });
+    await mockServer.start();
+
+    const response = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
     });
 
-    pool.register({
-      name: "server2",
-      command: "echo",
-      args: ["test2"],
-      startupTimeout: 5000,
-    });
+    expect(response.status).toBe(200);
+    expect(mockServer.activeSessions).toBe(1);
 
-    expect(pool.listNames()).toHaveLength(2);
+    mockServer.reset();
 
-    await pool.startAll();
-
-    const health = await pool.healthCheckAll();
-    expect(health.size).toBe(2);
-
-    await pool.stopAll();
+    expect(mockServer.activeSessions).toBe(0);
+    await mockServer.stop();
   });
 });
 
 describe("Real Backends - Streamable HTTP Headers", () => {
-  let env: TestEnvironment;
+  test("handles requests with Bearer token header", async () => {
+    const mockServer = new MockStreamableHttpServer({ port: 0 });
+    await mockServer.start();
 
-  beforeEach(() => {
-    env = new TestEnvironment({ name: "streamablehttp-headers-test", useDocker: false });
-  });
-
-  afterEach(async () => {
-    await env.cleanup();
-  });
-
-  test("headers are configurable for streamablehttp", () => {
-    const headers = {
-      Authorization: "Bearer token123",
-      "X-Custom-Header": "custom-value",
-    };
-
-    const config = {
-      name: "server-with-headers",
-      transport: "streamablehttp",
-      url: "http://localhost:3003/mcp",
-      headers,
-      enabled: true,
-    };
-
-    expect(config).toHaveProperty("transport", "streamablehttp");
-    expect(config).toHaveProperty("headers");
-    expect((config as Record<string, unknown>).headers).toEqual(headers);
-  });
-
-  test("can create config with Bearer token", () => {
-    const config = {
-      name: "authenticated-server",
-      transport: "streamablehttp",
-      url: "http://localhost:3003/mcp",
+    const response = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
       headers: {
-        Authorization: "Bearer my-secret-token",
+        "Content-Type": "application/json",
+        Authorization: "Bearer test-token-123",
       },
-      enabled: true,
-    };
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
 
-    expect(config).toHaveProperty("headers");
-    expect((config as Record<string, unknown>).headers as Record<string, string>).toHaveProperty(
-      "Authorization",
-    );
-    expect((config as Record<string, unknown>).headers as Record<string, string>).toHaveProperty(
-      "Authorization",
-      "Bearer my-secret-token",
-    );
+    expect(response.status).toBe(200);
+    await mockServer.stop();
   });
 
-  test("can create config with multiple headers", () => {
-    const headers = {
-      Authorization: "Bearer token123",
-      "X-API-Key": "api-key-456",
-      "X-Client-Version": "1.0.0",
-      "X-Request-ID": "req-789",
-    };
+  test("handles requests with multiple custom headers", async () => {
+    const mockServer = new MockStreamableHttpServer({ port: 0 });
+    await mockServer.start();
 
-    const config = {
-      name: "multi-header-server",
-      transport: "streamablehttp",
-      url: "http://localhost:3003/mcp",
-      headers,
-      enabled: true,
-    };
+    const response = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Custom-Header": "custom-value",
+        "X-Request-ID": "req-12345",
+        "X-Client-Version": "1.0.0",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
 
-    expect((config as Record<string, unknown>).headers as Record<string, string>).toEqual(headers);
+    expect(response.status).toBe(200);
+    await mockServer.stop();
+  });
+});
+
+describe("Real Backends - Streamable HTTP Calculator Tool", () => {
+  test("calculator tool handles addition", async () => {
+    const mockServer = new MockStreamableHttpServer({ port: 0 });
+    await mockServer.start();
+
+    const initResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-11-05",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0" },
+        },
+      }),
+    });
+
+    const sessionId = requireSessionId(initResponse);
+
+    const calcResponse = await fetch(`http://localhost:${mockServer.portNumber}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "mcp-session-id": sessionId,
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "mock_calculator",
+          arguments: { a: 10, b: 5 },
+        },
+      }),
+    });
+
+    const calcData = await calcResponse.json();
+    expect(calcData.result.content[0].text).toContain("15");
+    await mockServer.stop();
   });
 });
