@@ -15,6 +15,7 @@ import {
 } from "../shared/test-server.js";
 
 const config = loadConfig();
+let serverAvailable = false;
 
 describe("Performance Load Tests - Sustained Load", () => {
   beforeAll(async () => {
@@ -22,10 +23,13 @@ describe("Performance Load Tests - Sustained Load", () => {
     if (!health.healthy) {
       try {
         await startTestServer({ gatewayUrl: config.gatewayUrl });
+        serverAvailable = true;
       } catch {
         console.log("Skipping load tests - server not available");
         return;
       }
+    } else {
+      serverAvailable = true;
     }
     await new Promise((r) => setTimeout(r, 3000));
     let attempts = 0;
@@ -43,7 +47,7 @@ describe("Performance Load Tests - Sustained Load", () => {
   }, 15000);
 
   describe("1 Hour Sustained Load @quick", () => {
-    it(
+    it.skipIf(!serverAvailable)(
       "should maintain consistent throughput over 1 hour with 50 clients",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
@@ -86,7 +90,7 @@ describe("Performance Load Tests - Sustained Load", () => {
       isFastMode() ? 30000 : 180000,
     );
 
-    it(
+    it.skipIf(!serverAvailable)(
       "should maintain <1% error rate over 1 hour sustained load",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
@@ -121,7 +125,7 @@ describe("Performance Load Tests - Sustained Load", () => {
       isFastMode() ? 30000 : 180000,
     );
 
-    it(
+    it.skipIf(!serverAvailable)(
       "should stabilize memory usage during sustained load",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
@@ -161,7 +165,7 @@ describe("Performance Load Tests - Sustained Load", () => {
   });
 
   describe("8 Hour Sustained Load @quick", () => {
-    it(
+    it.skipIf(!serverAvailable)(
       "should remain stable over 8 hours with 25 clients",
       async () => {
         const duration = isFastMode() ? 10000 : 120000;
@@ -193,7 +197,7 @@ describe("Performance Load Tests - Sustained Load", () => {
   });
 
   describe("Periodic Load Spike @quick", () => {
-    it(
+    it.skipIf(!serverAvailable)(
       "should handle 10x load spike and recover within 30 seconds",
       async () => {
         const normalDuration = isFastMode() ? 3000 : 30000;

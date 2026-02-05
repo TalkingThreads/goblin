@@ -87,21 +87,28 @@ export class ProcessManager {
         const output = data.toString();
         combinedOutput += output;
 
-        if (
-          combinedOutput.includes("started") ||
-          combinedOutput.includes("listening") ||
-          combinedOutput.includes("ready") ||
-          combinedOutput.includes("running")
-        ) {
-          if (!started) {
-            started = true;
-            clearTimeout(timeout);
-            resolve({
-              process: this.process!,
-              pid: this.process!.pid!,
-              port,
-              baseUrl,
-            });
+        // Only look for startup messages in plain text output (not JSON logs)
+        // Skip lines that look like JSON (contain { and })
+        const isPlainText = !output.includes("{") && !output.includes("}");
+
+        if (isPlainText) {
+          const lowerOutput = output.toLowerCase();
+          if (
+            lowerOutput.includes("started") ||
+            lowerOutput.includes("listening") ||
+            lowerOutput.includes("ready") ||
+            lowerOutput.includes("running")
+          ) {
+            if (!started) {
+              started = true;
+              clearTimeout(timeout);
+              resolve({
+                process: this.process!,
+                pid: this.process!.pid!,
+                port,
+                baseUrl,
+              });
+            }
           }
         }
       };

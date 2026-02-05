@@ -41,7 +41,7 @@ Built with Bun, TypeScript, Hono, and the MCP SDK, Goblin offers blazing-fast pe
 - **🚀 Multi-Transport**: STDIO, HTTP, SSE, and Streamable HTTP transports with automatic connection pooling
 - **🔧 Hot Reload**: Configuration changes applied atomically without restart (HTTP mode) or via SIGHUP (STDIO mode)
 - **📊 Full Observability**: Structured logging, custom metrics, and real-time TUI dashboard
-- **✅ Enterprise Ready**: 668+ tests, smoke tests for CI, performance benchmarks
+- **✅ Enterprise Ready**: 1083+ tests, smoke tests for CI, performance benchmarks
 
 ## Quick Start
 

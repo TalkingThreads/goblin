@@ -19,24 +19,30 @@ import {
 import { type ThroughputConfig, throughputTester } from "../shared/throughput-tester.js";
 
 const config = loadConfig();
+let serverAvailable = false;
 
 describe("Performance - Streamable HTTP Transport (Load Tests)", () => {
   beforeAll(async () => {
     const health = await checkServerHealth(config.gatewayUrl);
-    if (!health.healthy) {
-      try {
-        await startTestServer({ gatewayUrl: config.gatewayUrl });
-      } catch {
-        console.log("Skipping streamablehttp load performance tests - server not available");
-      }
+    if (health.healthy) {
+      serverAvailable = true;
+      return;
     }
-  });
+    try {
+      await startTestServer({ gatewayUrl: config.gatewayUrl });
+      serverAvailable = true;
+    } catch {
+      console.log("Skipping streamablehttp load performance tests - server not available");
+    }
+  }, 60000);
 
   afterAll(async () => {
-    await stopTestServer();
-  });
+    if (serverAvailable) {
+      await stopTestServer();
+    }
+  }, 10000);
 
-  describe("Throughput - Streamable HTTP", () => {
+  describe.skipIf(!serverAvailable)("Throughput - Streamable HTTP", () => {
     it("should measure throughput with streamablehttp transport", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
       const throughputConfig: ThroughputConfig = {
@@ -57,7 +63,7 @@ describe("Performance - Streamable HTTP Transport (Load Tests)", () => {
       });
 
       expect(result.maxStableRps).toBeGreaterThan(0);
-    });
+    }, 60000);
 
     it("should measure capacity with streamablehttp transport", async () => {
       const throughputConfig: ThroughputConfig = {
@@ -78,10 +84,10 @@ describe("Performance - Streamable HTTP Transport (Load Tests)", () => {
       });
 
       expect(analysis.recommendedMaxRps).toBeGreaterThan(0);
-    });
+    }, 60000);
   });
 
-  describe("Latency Under Load - Streamable HTTP", () => {
+  describe.skipIf(!serverAvailable)("Latency Under Load - Streamable HTTP", () => {
     it("should maintain latency under load with streamablehttp", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
 
@@ -102,10 +108,10 @@ describe("Performance - Streamable HTTP Transport (Load Tests)", () => {
       });
 
       expect(results.p95).toBeLessThan(config.thresholds.latencyP95);
-    });
+    }, 30000);
   });
 
-  describe("Session Performance", () => {
+  describe.skipIf(!serverAvailable)("Session Performance", () => {
     it("should handle session creation efficiently", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
       const start = Date.now();
@@ -144,7 +150,7 @@ describe("Performance - Streamable HTTP Transport (Load Tests)", () => {
     });
   });
 
-  describe("Concurrent Sessions - Streamable HTTP", () => {
+  describe.skipIf(!serverAvailable)("Concurrent Sessions - Streamable HTTP", () => {
     it("should measure concurrent session performance", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
       const concurrentSessions = 10;
@@ -182,81 +188,94 @@ describe("Performance - Streamable HTTP Transport (Load Tests)", () => {
 
       expect(successfulSessions).toBeGreaterThan(0);
       expect(avgTime).toBeLessThan(500);
-    });
+    }, 30000);
   });
 });
 
 describe("Performance - Streamable HTTP Comparison", () => {
   beforeAll(async () => {
     const health = await checkServerHealth(config.gatewayUrl);
-    if (!health.healthy) {
-      try {
-        await startTestServer({ gatewayUrl: config.gatewayUrl });
-      } catch {
-        console.log("Skipping comparison tests - server not available");
-      }
+    if (health.healthy) {
+      serverAvailable = true;
+      return;
     }
-  });
+    try {
+      await startTestServer({ gatewayUrl: config.gatewayUrl });
+      serverAvailable = true;
+    } catch {
+      console.log("Skipping comparison tests - server not available");
+    }
+  }, 60000);
 
   afterAll(async () => {
-    await stopTestServer();
-  });
+    if (serverAvailable) {
+      await stopTestServer();
+    }
+  }, 10000);
 
-  it("should compare latency between transports", async () => {
-    const gatewayUrl = getServerUrl() || config.gatewayUrl;
+  it.skipIf(!serverAvailable)(
+    "should compare latency between transports",
+    async () => {
+      const gatewayUrl = getServerUrl() || config.gatewayUrl;
 
-    const { latencyMeasurer } = await import("../shared/latency-measurer.js");
-    const streamableHttpLatency = await latencyMeasurer.measureLatency(
-      async () => {
-        await fetch(`${gatewayUrl}/health`);
-      },
-      { samples: 30, warmupRequests: 5 },
-    );
+      const { latencyMeasurer } = await import("../shared/latency-measurer.js");
+      const streamableHttpLatency = await latencyMeasurer.measureLatency(
+        async () => {
+          await fetch(`${gatewayUrl}/health`);
+        },
+        { samples: 30, warmupRequests: 5 },
+      );
 
-    console.log("Streamable HTTP vs SSE latency comparison:", {
-      streamablehttpP50: `${streamableHttpLatency.p50}ms`,
-      streamablehttpP95: `${streamableHttpLatency.p95}ms`,
-    });
-
-    expect(streamableHttpLatency.p50).toBeLessThan(config.thresholds.latencyP50);
-  });
-
-  it("should measure concurrent session performance", async () => {
-    const gatewayUrl = getServerUrl() || config.gatewayUrl;
-    const concurrentSessions = 10;
-
-    const sessionPromises = Array.from({ length: concurrentSessions }, async (_, i) => {
-      const start = Date.now();
-
-      const response = await fetch(`${gatewayUrl}/mcp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: i + 1,
-          method: "initialize",
-          params: {
-            protocolVersion: "2025-11-05",
-            capabilities: {},
-            clientInfo: { name: "concurrent-test", version: "1.0" },
-          },
-        }),
+      console.log("Streamable HTTP vs SSE latency comparison:", {
+        streamablehttpP50: `${streamableHttpLatency.p50}ms`,
+        streamablehttpP95: `${streamableHttpLatency.p95}ms`,
       });
 
-      return { sessionId: response.headers.get("mcp-session-id"), time: Date.now() - start };
-    });
+      expect(streamableHttpLatency.p50).toBeLessThan(config.thresholds.latencyP50);
+    },
+    30000,
+  );
 
-    const results = await Promise.all(sessionPromises);
-    const successfulSessions = results.filter((r) => r.sessionId).length;
-    const avgTime = results.reduce((a, b) => a + b.time, 0) / results.length;
+  it.skipIf(!serverAvailable)(
+    "should measure concurrent session performance",
+    async () => {
+      const gatewayUrl = getServerUrl() || config.gatewayUrl;
+      const concurrentSessions = 10;
 
-    console.log("Concurrent session performance:", {
-      concurrentSessions,
-      successfulSessions,
-      avgTime: `${avgTime.toFixed(2)}ms`,
-    });
+      const sessionPromises = Array.from({ length: concurrentSessions }, async (_, i) => {
+        const start = Date.now();
 
-    expect(successfulSessions).toBeGreaterThan(0);
-    expect(avgTime).toBeLessThan(500);
-  });
+        const response = await fetch(`${gatewayUrl}/mcp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: i + 1,
+            method: "initialize",
+            params: {
+              protocolVersion: "2025-11-05",
+              capabilities: {},
+              clientInfo: { name: "concurrent-test", version: "1.0" },
+            },
+          }),
+        });
+
+        return { sessionId: response.headers.get("mcp-session-id"), time: Date.now() - start };
+      });
+
+      const results = await Promise.all(sessionPromises);
+      const successfulSessions = results.filter((r) => r.sessionId).length;
+      const avgTime = results.reduce((a, b) => a + b.time, 0) / results.length;
+
+      console.log("Concurrent session performance:", {
+        concurrentSessions,
+        successfulSessions,
+        avgTime: `${avgTime.toFixed(2)}ms`,
+      });
+
+      expect(successfulSessions).toBeGreaterThan(0);
+      expect(avgTime).toBeLessThan(500);
+    },
+    30000,
+  );
 });

@@ -41,14 +41,16 @@ export async function startTestServer(config: TestServerConfig = {}): Promise<st
     return serverUrl;
   }
 
-  const binaryExists = existsSync(join(process.cwd(), "dist/index.js"));
+  const binaryExists = existsSync(join(process.cwd(), "dist/cli/index.js"));
 
   if (!binaryExists) {
-    throw new Error("Gateway binary not found at dist/index.js. Run 'bun run build' first.");
+    throw new Error(
+      "Gateway binary not found at dist/cli/index.js. Run 'bun run build:cli' first.",
+    );
   }
 
   const command = "bun";
-  const scriptArgs = ["run", "dist/cli/index.js"];
+  const scriptArgs = ["dist/cli/index.js"];
   const serverArgs = ["start", "--port", port.toString()];
   if (config.configPath) {
     serverArgs.push("--config", config.configPath);

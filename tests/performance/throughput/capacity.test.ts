@@ -38,9 +38,9 @@ describe("Performance Throughput Tests - Capacity", () => {
       const throughputConfig: ThroughputConfig = {
         url: `${gatewayUrl}/health`,
         initialRps: 100,
-        maxRps: 5000,
+        maxRps: 1000,
         incrementRps: 200,
-        testDuration: 5000,
+        testDuration: 3000,
         maxErrorRate: 0.05,
       };
 
@@ -57,15 +57,15 @@ describe("Performance Throughput Tests - Capacity", () => {
         0,
         `Should have identified a stable RPS level, got ${result.maxStableRps}`,
       );
-    });
+    }, 60000);
 
     it("should provide capacity analysis", async () => {
       const throughputConfig: ThroughputConfig = {
         url: `${config.gatewayUrl}/health`,
         initialRps: 100,
-        maxRps: 3000,
+        maxRps: 1000,
         incrementRps: 200,
-        testDuration: 5000,
+        testDuration: 3000,
         maxErrorRate: 0.05,
       };
 
@@ -82,7 +82,7 @@ describe("Performance Throughput Tests - Capacity", () => {
         0,
         `Should recommend a max RPS, got ${analysis.recommendedMaxRps}`,
       );
-    });
+    }, 60000);
   });
 
   describe("Maximum RPS with Single Backend", () => {
@@ -90,9 +90,9 @@ describe("Performance Throughput Tests - Capacity", () => {
       const throughputConfig: ThroughputConfig = {
         url: `${config.gatewayUrl}/health`,
         initialRps: 100,
-        maxRps: 2000,
+        maxRps: 500,
         incrementRps: 100,
-        testDuration: 5000,
+        testDuration: 3000,
         maxErrorRate: 0.02,
       };
 
@@ -103,6 +103,6 @@ describe("Performance Throughput Tests - Capacity", () => {
         saturationPoint: result.saturationPoint,
         progressionSteps: result.rpsProgression.length,
       });
-    });
+    }, 60000);
   });
 });

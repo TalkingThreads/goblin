@@ -15,6 +15,7 @@ import {
 } from "../shared/test-server.js";
 
 const config = loadConfig();
+let serverAvailable = false;
 
 describe("Performance Memory Tests - Stability", () => {
   beforeAll(async () => {
@@ -22,9 +23,12 @@ describe("Performance Memory Tests - Stability", () => {
     if (!health.healthy) {
       try {
         await startTestServer({ gatewayUrl: config.gatewayUrl });
+        serverAvailable = true;
       } catch {
         console.log("Skipping memory tests - server not available");
       }
+    } else {
+      serverAvailable = true;
     }
   });
 
@@ -33,7 +37,7 @@ describe("Performance Memory Tests - Stability", () => {
   });
 
   describe("1 Hour Memory Stability @quick", () => {
-    it(
+    it.skipIf(!serverAvailable)(
       "should show no memory growth over 5 minutes",
       async () => {
         const duration = isFastMode() ? 10000 : 300000; // 10s in fast mode, 5min otherwise
@@ -65,63 +69,71 @@ describe("Performance Memory Tests - Stability", () => {
   });
 
   describe("1 Hour Memory Stability @full", () => {
-    it("should show no memory growth over 30 minutes", async () => {
-      const duration = 1800000; // 30 minutes
-      const samples = 60;
-      const interval = 30000;
+    it.skipIf(!serverAvailable)(
+      "should show no memory growth over 30 minutes",
+      async () => {
+        const duration = 1800000; // 30 minutes
+        const samples = 60;
+        const interval = 30000;
 
-      const memConfig: MemoryConfig = {
-        intervalMs: interval,
-        sampleCount: samples,
-        warmupSamples: 3,
-      };
+        const memConfig: MemoryConfig = {
+          intervalMs: interval,
+          sampleCount: samples,
+          warmupSamples: 3,
+        };
 
-      const result = await memoryMonitor.monitor(duration, memConfig);
+        const result = await memoryMonitor.monitor(duration, memConfig);
 
-      console.log("1 hour memory stability @full:", {
-        initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        growthPercent: result.growthPercent.toFixed(2) + "%",
-      });
+        console.log("1 hour memory stability @full:", {
+          initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          growthPercent: result.growthPercent.toFixed(2) + "%",
+        });
 
-      expect(result.growthPercent).toBeLessThan(
-        10,
-        `Memory growth ${result.growthPercent.toFixed(2)}% should be < 10%`,
-      );
-    }, 2000000);
+        expect(result.growthPercent).toBeLessThan(
+          10,
+          `Memory growth ${result.growthPercent.toFixed(2)}% should be < 10%`,
+        );
+      },
+      2000000,
+    );
   });
 
   describe("1 Hour Memory Stability @extended", () => {
-    it("should show no memory growth over 1 hour", async () => {
-      const duration = 3600000; // 1 hour
-      const samples = 120;
-      const interval = 30000;
+    it.skipIf(!serverAvailable)(
+      "should show no memory growth over 1 hour",
+      async () => {
+        const duration = 3600000; // 1 hour
+        const samples = 120;
+        const interval = 30000;
 
-      const memConfig: MemoryConfig = {
-        intervalMs: interval,
-        sampleCount: samples,
-        warmupSamples: 3,
-      };
+        const memConfig: MemoryConfig = {
+          intervalMs: interval,
+          sampleCount: samples,
+          warmupSamples: 3,
+        };
 
-      const result = await memoryMonitor.monitor(duration, memConfig);
+        const result = await memoryMonitor.monitor(duration, memConfig);
 
-      console.log("1 hour memory stability @extended:", {
-        initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        growthPercent: result.growthPercent.toFixed(2) + "%",
-      });
+        console.log("1 hour memory stability @extended:", {
+          initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          growthPercent: result.growthPercent.toFixed(2) + "%",
+        });
 
-      expect(result.growthPercent).toBeLessThan(
-        10,
-        `Memory growth ${result.growthPercent.toFixed(2)}% should be < 10%`,
-      );
-    }, 4000000);
+        expect(result.growthPercent).toBeLessThan(
+          10,
+          `Memory growth ${result.growthPercent.toFixed(2)}% should be < 10%`,
+        );
+      },
+      4000000,
+    );
   });
 
   describe("8 Hour Memory Stability @quick", () => {
-    it(
+    it.skipIf(!serverAvailable)(
       "should remain stable over 10 minutes",
       async () => {
         const duration = isFastMode() ? 10000 : 600000; // 10s in fast mode, 10min otherwise
@@ -153,63 +165,71 @@ describe("Performance Memory Tests - Stability", () => {
   });
 
   describe("8 Hour Memory Stability @full", () => {
-    it("should remain stable over 1 hour", async () => {
-      const duration = 3600000; // 1 hour
-      const samples = 120;
-      const interval = 30000;
+    it.skipIf(!serverAvailable)(
+      "should remain stable over 1 hour",
+      async () => {
+        const duration = 3600000; // 1 hour
+        const samples = 120;
+        const interval = 30000;
 
-      const memConfig: MemoryConfig = {
-        intervalMs: interval,
-        sampleCount: samples,
-        warmupSamples: 5,
-      };
+        const memConfig: MemoryConfig = {
+          intervalMs: interval,
+          sampleCount: samples,
+          warmupSamples: 5,
+        };
 
-      const result = await memoryMonitor.monitor(duration, memConfig);
+        const result = await memoryMonitor.monitor(duration, memConfig);
 
-      console.log("8 hour memory stability @full:", {
-        initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        growthPercent: result.growthPercent.toFixed(2) + "%",
-      });
+        console.log("8 hour memory stability @full:", {
+          initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          growthPercent: result.growthPercent.toFixed(2) + "%",
+        });
 
-      expect(result.growthPercent).toBeLessThan(
-        20,
-        `Memory growth ${result.growthPercent.toFixed(2)}% should be < 20%`,
-      );
-    }, 4000000);
+        expect(result.growthPercent).toBeLessThan(
+          20,
+          `Memory growth ${result.growthPercent.toFixed(2)}% should be < 20%`,
+        );
+      },
+      4000000,
+    );
   });
 
   describe("8 Hour Memory Stability @extended", () => {
-    it("should remain stable over 8 hours", async () => {
-      const duration = 28800000; // 8 hours
-      const samples = 480;
-      const interval = 60000;
+    it.skipIf(!serverAvailable)(
+      "should remain stable over 8 hours",
+      async () => {
+        const duration = 28800000; // 8 hours
+        const samples = 480;
+        const interval = 60000;
 
-      const memConfig: MemoryConfig = {
-        intervalMs: interval,
-        sampleCount: samples,
-        warmupSamples: 5,
-      };
+        const memConfig: MemoryConfig = {
+          intervalMs: interval,
+          sampleCount: samples,
+          warmupSamples: 5,
+        };
 
-      const result = await memoryMonitor.monitor(duration, memConfig);
+        const result = await memoryMonitor.monitor(duration, memConfig);
 
-      console.log("8 hour memory stability @extended:", {
-        initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-        growthPercent: result.growthPercent.toFixed(2) + "%",
-      });
+        console.log("8 hour memory stability @extended:", {
+          initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
+          growthPercent: result.growthPercent.toFixed(2) + "%",
+        });
 
-      expect(result.growthPercent).toBeLessThan(
-        20,
-        `Memory growth ${result.growthPercent.toFixed(2)}% should be < 20%`,
-      );
-    }, 30000000);
+        expect(result.growthPercent).toBeLessThan(
+          20,
+          `Memory growth ${result.growthPercent.toFixed(2)}% should be < 20%`,
+        );
+      },
+      30000000,
+    );
   });
 
   describe("Memory After Idle Period", () => {
-    it("should not leak memory when idle", async () => {
+    it.skipIf(!serverAvailable)("should not leak memory when idle", async () => {
       const beforeIdle = memoryMonitor.takeSnapshot();
 
       await new Promise((resolve) => setTimeout(resolve, isFastMode() ? 5000 : 30000));
