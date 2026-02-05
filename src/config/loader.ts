@@ -19,6 +19,12 @@ const DEFAULT_CONFIG: Config = {
   gateway: {
     port: 3000,
     host: "127.0.0.1",
+    transport: "both",
+  },
+  streamableHttp: {
+    sseEnabled: true,
+    sessionTimeout: 300000,
+    maxSessions: 1000,
   },
   auth: {
     mode: "dev",

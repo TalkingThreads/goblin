@@ -15,6 +15,7 @@ export type {
   GatewayConfig,
   PoliciesConfig,
   ServerConfig,
+  StreamableHttpConfig,
   TransportType,
   VirtualTool,
   VirtualToolOp,

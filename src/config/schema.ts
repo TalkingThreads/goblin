@@ -72,6 +72,31 @@ export const GatewayConfigSchema = z.object({
    * HTTP server host
    */
   host: z.string().default("127.0.0.1"),
+
+  /**
+   * Preferred transport mode
+   */
+  transport: z.enum(["sse", "streamablehttp", "both"]).default("both"),
+});
+
+/**
+ * Streamable HTTP transport configuration
+ */
+export const StreamableHttpConfigSchema = z.object({
+  /**
+   * Whether to enable SSE fallback for Streamable HTTP
+   */
+  sseEnabled: z.boolean().default(true),
+
+  /**
+   * Session timeout in milliseconds
+   */
+  sessionTimeout: z.number().int().positive().default(300000),
+
+  /**
+   * Maximum number of concurrent sessions
+   */
+  maxSessions: z.number().int().positive().default(1000),
 });
 
 /**
@@ -314,6 +339,16 @@ export const ConfigSchema = z.object({
   gateway: GatewayConfigSchema.default({
     port: 3000,
     host: "127.0.0.1",
+    transport: "both",
+  }),
+
+  /**
+   * Streamable HTTP settings
+   */
+  streamableHttp: StreamableHttpConfigSchema.default({
+    sseEnabled: true,
+    sessionTimeout: 300000,
+    maxSessions: 1000,
   }),
 
   /**
@@ -343,6 +378,7 @@ export const ConfigSchema = z.object({
 export type TransportType = z.infer<typeof TransportTypeSchema>;
 export type ServerConfig = z.infer<typeof ServerConfigSchema>;
 export type GatewayConfig = z.infer<typeof GatewayConfigSchema>;
+export type StreamableHttpConfig = z.infer<typeof StreamableHttpConfigSchema>;
 export type AuthConfig = z.infer<typeof AuthConfigSchema>;
 export type PoliciesConfig = z.infer<typeof PoliciesConfigSchema>;
 export type LogDestinationType = z.infer<typeof LogDestinationTypeSchema>;

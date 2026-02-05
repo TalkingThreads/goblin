@@ -23,6 +23,7 @@ import {
   SlashCommandRouter,
 } from "../slashes/router.js";
 import { createHonoSseTransport } from "../transport/hono-adapter.js";
+import { StreamableHttpServerTransport } from "../transport/http-server.js";
 import type { Registry } from "./registry.js";
 import type { Router } from "./router.js";
 import { GatewayServer } from "./server.js";
@@ -37,6 +38,10 @@ export class HttpGateway {
   private sessions = new Map<
     string,
     { transport: SSEServerTransport; server: GatewayServer | null }
+  >();
+  private streamableHttpSessions = new Map<
+    string,
+    { transport: StreamableHttpServerTransport; server: GatewayServer }
   >();
   private server: ReturnType<typeof Bun.serve> | null = null;
   private onShutdown: (() => void) | null = null;
@@ -320,6 +325,19 @@ export class HttpGateway {
       return c.json({ success: true }); // Acknowledge
     });
 
+    // Streamable HTTP Endpoint (POST /mcp)
+    this.app.all("/mcp", async (c) => {
+      const requestId = getRequestId();
+
+      try {
+        const response = await this.handleStreamableHttpRequest(c.req.raw);
+        return response;
+      } catch (error) {
+        logger.error({ error, requestId }, "Streamable HTTP request failed");
+        return c.json({ error: "Internal server error" }, 500);
+      }
+    });
+
     // Slash Commands Endpoints
     this.app.get("/api/v1/slashes", async (c) => {
       const commands = this.slashCommandRouter.listCommands();
@@ -350,7 +368,7 @@ export class HttpGateway {
       const command = c.req.param("command");
       try {
         const args = await c.req.json().catch(() => ({}));
-        const result = await this.slashCommandRouter.executeCommand(command, serverId, args);
+        const result = this.slashCommandRouter.executeCommand(command, serverId, args);
         return c.json(result);
       } catch (error) {
         if (error instanceof SlashCommandNotFoundError) {
@@ -360,6 +378,45 @@ export class HttpGateway {
         return c.json({ error: "Internal server error" }, 500);
       }
     });
+  }
+
+  /**
+   * Handle Streamable HTTP requests
+   */
+  private async handleStreamableHttpRequest(request: Request): Promise<Response> {
+    const requestId = getRequestId();
+    const sessionId = request.headers.get("mcp-session-id") || undefined;
+
+    logger.info({ requestId, sessionId }, "Streamable HTTP request received");
+
+    let transport: StreamableHttpServerTransport;
+    let server: GatewayServer;
+
+    if (sessionId && this.streamableHttpSessions.has(sessionId)) {
+      const existing = this.streamableHttpSessions.get(sessionId)!;
+      transport = existing.transport;
+      server = existing.server;
+    } else {
+      transport = new StreamableHttpServerTransport({
+        sessionIdGenerator: () => crypto.randomUUID(),
+      });
+      server = new GatewayServer(this.registry, this.router, this.config);
+      server.connect(transport);
+
+      const newSessionId = sessionId || crypto.randomUUID();
+      this.streamableHttpSessions.set(newSessionId, { transport, server });
+
+      if (sessionId !== newSessionId) {
+        logger.info(
+          { requestId, oldSessionId: sessionId, newSessionId },
+          "New session created (original session ID was invalid or missing)",
+        );
+      } else {
+        logger.info({ requestId, sessionId: newSessionId }, "New session created");
+      }
+    }
+
+    return transport.handleRequest(request);
   }
 
   /**
