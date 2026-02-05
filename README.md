@@ -38,7 +38,7 @@ Built with Bun, TypeScript, Hono, and the MCP SDK, Goblin offers blazing-fast pe
 
 - **🔌 Unified Aggregation**: Single endpoint aggregating tools, prompts, and resources from multiple MCP backends
 - **🎛️ Intelligent Routing**: Namespaced tool calls with timeout enforcement and error mapping
-- **🚀 Multi-Transport**: STDIO, HTTP, and SSE transports with automatic connection pooling
+- **🚀 Multi-Transport**: STDIO, HTTP, SSE, and Streamable HTTP transports with automatic connection pooling
 - **🔧 Hot Reload**: Configuration changes applied atomically without restart (HTTP mode) or via SIGHUP (STDIO mode)
 - **📊 Full Observability**: Structured logging, custom metrics, and real-time TUI dashboard
 - **✅ Enterprise Ready**: 668+ tests, smoke tests for CI, performance benchmarks
@@ -136,7 +136,54 @@ GOBLIN_AUTH_APIKEY=xxx   # API key for apikey mode
 }
 ```
 
-> **Note**: STDIO mode is single-connection. Each request spawns a new Goblin process. For persistent connections, use HTTP mode with SSE transport.
+> **Note**: STDIO mode is single-connection. Each request spawns a new Goblin process. For persistent connections, use HTTP mode with SSE transport or Streamable HTTP.
+
+#### Streamable HTTP Mode (Stateful MCP over HTTP)
+
+Goblin supports Streamable HTTP for stateful MCP connections with session management:
+
+```bash
+# Streamable HTTP is enabled by default when using HTTP transport
+goblin start
+```
+
+**Configuration:**
+
+```json
+{
+  "gateway": {
+    "transport": "streamablehttp"
+  },
+  "streamableHttp": {
+    "sseEnabled": true,
+    "sessionTimeout": 300000,
+    "maxSessions": 1000
+  }
+}
+```
+
+**Features:**
+- Session-based stateful connections via `mcp-session-id` header
+- Automatic session timeout and cleanup
+- Stateless mode without session header
+- Up to 1000 concurrent sessions (configurable)
+
+**Example:**
+
+```bash
+# Initial connection
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+
+# Continue with session
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -H "mcp-session-id: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+```
+
+See [API Reference](docs/api/overview.md) for complete Streamable HTTP documentation.
 
 See [CLI Reference](docs/cli-reference.md) for complete STDIO mode documentation.
 

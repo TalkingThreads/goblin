@@ -41,13 +41,16 @@ export class HttpGateway {
   >();
   private streamableHttpSessions = new Map<
     string,
-    { transport: StreamableHttpServerTransport; server: GatewayServer }
+    { transport: StreamableHttpServerTransport; server: GatewayServer; lastActivity: number }
   >();
+  private sessionTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private server: ReturnType<typeof Bun.serve> | null = null;
   private onShutdown: (() => void) | null = null;
   private activeRequests = 0;
   private shutdownPromise: Promise<void> | null = null;
   private slashCommandRouter: SlashCommandRouter;
+  private readonly sessionTimeoutMs: number;
+  private readonly maxSessions: number;
 
   constructor(
     private registry: Registry,
@@ -55,9 +58,47 @@ export class HttpGateway {
     private config: Config,
   ) {
     this.slashCommandRouter = new SlashCommandRouter(this.registry, this.router);
+    this.sessionTimeoutMs = config.streamableHttp?.sessionTimeout ?? 300000;
+    this.maxSessions = config.streamableHttp?.maxSessions ?? 1000;
     this.app = new Hono();
     this.setupMiddleware();
     this.setupRoutes();
+  }
+
+  private getSessionTimeout(): number {
+    return this.sessionTimeoutMs;
+  }
+
+  private clearSessionTimeout(sessionId: string): void {
+    const timeout = this.sessionTimeouts.get(sessionId);
+    if (timeout) {
+      clearTimeout(timeout);
+      this.sessionTimeouts.delete(sessionId);
+    }
+  }
+
+  private setSessionTimeout(sessionId: string): void {
+    this.clearSessionTimeout(sessionId);
+
+    const timeout = setTimeout(() => {
+      logger.info({ sessionId }, "Session timed out");
+      this.closeSession(sessionId);
+    }, this.getSessionTimeout());
+
+    this.sessionTimeouts.set(sessionId, timeout);
+  }
+
+  private closeSession(sessionId: string): void {
+    this.clearSessionTimeout(sessionId);
+
+    const session = this.streamableHttpSessions.get(sessionId);
+    if (session) {
+      session.server.close().catch((error) => {
+        logger.error({ error, sessionId }, "Error closing server during session cleanup");
+      });
+      this.streamableHttpSessions.delete(sessionId);
+      logger.info({ sessionId }, "Session closed and cleaned up");
+    }
   }
 
   /**
@@ -389,13 +430,31 @@ export class HttpGateway {
 
     logger.info({ requestId, sessionId }, "Streamable HTTP request received");
 
+    if (this.streamableHttpSessions.size >= this.maxSessions) {
+      logger.warn(
+        { sessionId, sessionCount: this.streamableHttpSessions.size },
+        "Max sessions reached",
+      );
+      return new Response(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          error: { code: -32000, message: "Too many concurrent sessions" },
+          id: null,
+        }),
+        { status: 429, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     let transport: StreamableHttpServerTransport;
     let server: GatewayServer;
+    const now = Date.now();
 
     if (sessionId && this.streamableHttpSessions.has(sessionId)) {
       const existing = this.streamableHttpSessions.get(sessionId)!;
       transport = existing.transport;
       server = existing.server;
+      existing.lastActivity = now;
+      this.setSessionTimeout(sessionId);
     } else {
       transport = new StreamableHttpServerTransport({
         sessionIdGenerator: () => crypto.randomUUID(),
@@ -404,7 +463,8 @@ export class HttpGateway {
       server.connect(transport);
 
       const newSessionId = sessionId || crypto.randomUUID();
-      this.streamableHttpSessions.set(newSessionId, { transport, server });
+      this.streamableHttpSessions.set(newSessionId, { transport, server, lastActivity: now });
+      this.setSessionTimeout(newSessionId);
 
       if (sessionId !== newSessionId) {
         logger.info(

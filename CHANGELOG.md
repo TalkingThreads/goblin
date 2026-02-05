@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+- **Streamable HTTP Transport**: Stateful MCP connections over HTTP with session management
+  - `POST /mcp` endpoint for Streamable HTTP protocol (MCP 2025-11-05)
+  - `StreamableHttpServerTransport` wrapper around SDK's `WebStandardStreamableHTTPServerTransport`
+  - Session management with automatic timeout (default: 5 minutes)
+  - Session resumption via `mcp-session-id` header
+  - Max concurrent sessions limit (default: 1000)
+  - Configurable via `gateway.streamableHttp.sessionTimeout` and `gateway.streamableHttp.maxSessions`
+  - Compatible with SSE mode via `gateway.streamableHttp.sseEnabled`
+  - Unit tests: 3 passing tests
+  - Integration tests: 30 passing tests
+  - Documentation: `docs/api/overview.md`
+
 - **STDIO Server Transport**: Run Goblin as subprocess MCP server for CLI integration
   - `goblin stdio` command for STDIO mode
   - Custom `StdioServerTransport` with JSON-RPC 2.0 framing (Content-Length headers)

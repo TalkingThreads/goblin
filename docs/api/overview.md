@@ -4,7 +4,12 @@ This section provides detailed API documentation for Goblin MCP Gateway.
 
 ## Table of Contents
 
-- [HTTP Endpoints](#http-endpoints)
+- [GET /health](#get--health)
+- [GET /status](#get--status)
+- [GET /tools](#get--tools)
+- [GET /servers](#get--servers)
+- [POST /mcp](#post--mcp)
+- [GET /metrics](#get--metrics)
 - [CLI Commands](#cli-commands)
 - [Configuration](#configuration)
 - [WebSocket Events](#websocket-events)
@@ -129,6 +134,136 @@ List configured servers with status.
     }
   ]
 }
+```
+
+### POST /mcp
+
+Streamable HTTP endpoint for MCP protocol communication. Supports both stateless and stateful (session-based) connections.
+
+**Headers**:
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Content-Type` | Yes | Must be `application/json` |
+| `mcp-session-id` | No | Session ID for stateful connections. Include to resume an existing session. |
+
+**Request Body**:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-11-05",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "test-client",
+      "version": "1.0.0"
+    }
+  }
+}
+```
+
+**Response** (Stateful - New Session):
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+mcp-session-id: 550e8400-e29b-41d4-a716-446655440000
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "protocolVersion": "2025-11-05",
+    "capabilities": {
+      "tools": { "listChanged": true },
+      "resources": { "subscribe": true, "listChanged": true },
+      "prompts": { "listChanged": true }
+    },
+    "serverInfo": {
+      "name": "goblin",
+      "version": "1.0.0"
+    }
+  }
+}
+```
+
+**Response** (Stateful - Resumed Session):
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+mcp-session-id: 550e8400-e29b-41d4-a716-446655440000
+```
+
+**Response** (Stateless - No Session Header):
+
+For stateless requests, the server processes the request without creating a session.
+
+**Error Responses**:
+
+| Status Code | Description |
+|------------|-------------|
+| 400 | Bad Request - Invalid JSON-RPC message |
+| 401 | Unauthorized - Missing or invalid API key |
+| 404 | Session not found (when providing invalid mcp-session-id) |
+| 429 | Too Many Requests - Max concurrent sessions exceeded |
+
+**Error Response Example**:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32000,
+    "message": "Too many concurrent sessions"
+  },
+  "id": null
+}
+```
+
+**Session Management**:
+
+- Sessions are created automatically on first request (without `mcp-session-id` header)
+- Sessions persist across multiple requests when `mcp-session-id` header is included
+- Sessions time out after inactivity (default: 5 minutes, configurable)
+- Maximum concurrent sessions: 1000 (configurable)
+
+**Configuration**:
+
+```json
+{
+  "gateway": {
+    "transport": "streamablehttp"
+  },
+  "streamableHttp": {
+    "sseEnabled": true,
+    "sessionTimeout": 300000,
+    "maxSessions": 1000
+  }
+}
+```
+
+**Example Usage**:
+
+```bash
+# Initial connection (creates session)
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+
+# Store the session ID from response header
+SESSION_ID="550e8400-e29b-41d4-a716-446655440000"
+
+# Continue session
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -H "mcp-session-id: $SESSION_ID" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
 ```
 
 ### GET /metrics
