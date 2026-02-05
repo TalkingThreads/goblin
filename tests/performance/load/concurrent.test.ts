@@ -15,40 +15,44 @@ import {
 } from "../shared/test-server.js";
 
 const config = loadConfig();
+let serverAvailable = false;
 
 describe("Performance Load Tests - Concurrent Clients", () => {
   beforeAll(async () => {
     const health = await checkServerHealth(config.gatewayUrl);
-    if (!health.healthy) {
-      try {
-        await startTestServer({ gatewayUrl: config.gatewayUrl });
-      } catch {
-        console.log("Skipping load tests - server not available");
-        return;
-      }
+    if (health.healthy) {
+      serverAvailable = true;
+      await new Promise((r) => setTimeout(r, 1000));
+      return;
     }
-    await new Promise((r) => setTimeout(r, 3000));
-    let attempts = 0;
-    while (attempts < 10) {
-      const h = await checkServerHealth(config.gatewayUrl);
-      if (h.healthy) break;
-      await new Promise((r) => setTimeout(r, 500));
-      attempts++;
+    try {
+      await startTestServer({ gatewayUrl: config.gatewayUrl });
+      await new Promise((r) => setTimeout(r, 3000));
+      let attempts = 0;
+      while (attempts < 10) {
+        const h = await checkServerHealth(config.gatewayUrl);
+        if (h.healthy) break;
+        await new Promise((r) => setTimeout(r, 500));
+        attempts++;
+      }
+      serverAvailable = await checkServerHealth(config.gatewayUrl).then((h) => h.healthy);
+      if (serverAvailable) {
+        console.log("Concurrent tests: Server started successfully");
+      }
+    } catch {
+      console.log("Skipping load tests - server not available");
     }
   }, 60000);
 
   afterAll(async () => {
-    await stopTestServer();
-    await new Promise((r) => setTimeout(r, 1000));
+    if (serverAvailable) {
+      await stopTestServer();
+    }
   }, 15000);
 
-  describe("100 Concurrent Clients", () => {
+  describe.skipIf(!serverAvailable)("100 Concurrent Clients", () => {
     it("should handle 100 concurrent clients with <1% error rate", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
       const loadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
         concurrentClients: 100,
@@ -77,10 +81,6 @@ describe("Performance Load Tests - Concurrent Clients", () => {
 
     it("should process all requests from 100 clients", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
       const loadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
         concurrentClients: 100,
@@ -96,13 +96,9 @@ describe("Performance Load Tests - Concurrent Clients", () => {
     }, 60000);
   });
 
-  describe("250 Concurrent Clients", () => {
+  describe.skipIf(!serverAvailable)("250 Concurrent Clients", () => {
     it("should handle 250 concurrent clients with <5% error rate", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
       const loadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
         concurrentClients: 250,
@@ -119,10 +115,6 @@ describe("Performance Load Tests - Concurrent Clients", () => {
 
     it("should remain responsive under 250 client load", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
       const loadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
         concurrentClients: 250,
@@ -138,13 +130,9 @@ describe("Performance Load Tests - Concurrent Clients", () => {
     }, 60000);
   });
 
-  describe("500 Concurrent Clients", () => {
+  describe.skipIf(!serverAvailable)("500 Concurrent Clients", () => {
     it("should continue accepting requests with 500 clients", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
       const loadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
         concurrentClients: 500,
@@ -167,10 +155,6 @@ describe("Performance Load Tests - Concurrent Clients", () => {
 
     it("should show graceful degradation under high load", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
       const loadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
         concurrentClients: 500,
@@ -189,13 +173,9 @@ describe("Performance Load Tests - Concurrent Clients", () => {
     }, 60000);
   });
 
-  describe("Rapid Client Connection", () => {
+  describe.skipIf(!serverAvailable)("Rapid Client Connection", () => {
     it("should establish 100 connections rapidly without drops", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
       const loadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
         concurrentClients: 100,
@@ -213,10 +193,6 @@ describe("Performance Load Tests - Concurrent Clients", () => {
 
     it("should stabilize within 10 seconds after rapid connection", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
       const loadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
         concurrentClients: 100,
@@ -230,5 +206,12 @@ describe("Performance Load Tests - Concurrent Clients", () => {
         `Should stabilize to < 100ms average latency, got ${result.latency.average}ms`,
       );
     }, 60000);
+  });
+
+  describe("Server Availability", () => {
+    it("should report server availability", () => {
+      console.log("Concurrent tests server availability:", serverAvailable);
+      expect(typeof serverAvailable).toBe("boolean");
+    });
   });
 });

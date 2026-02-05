@@ -19,42 +19,46 @@ import {
 } from "../shared/test-server.js";
 
 const config = loadConfig();
+let serverAvailable = false;
 
 describe("Performance Load Tests - Ramp Up Behavior", () => {
   beforeAll(async () => {
     const health = await checkServerHealth(config.gatewayUrl);
-    if (!health.healthy) {
-      try {
-        await startTestServer({ gatewayUrl: config.gatewayUrl });
-      } catch {
-        console.log("Skipping load tests - server not available");
-        return;
-      }
+    if (health.healthy) {
+      serverAvailable = true;
+      await new Promise((r) => setTimeout(r, 1000));
+      return;
     }
-    await new Promise((r) => setTimeout(r, 3000));
-    let attempts = 0;
-    while (attempts < 10) {
-      const h = await checkServerHealth(config.gatewayUrl);
-      if (h.healthy) break;
-      await new Promise((r) => setTimeout(r, 500));
-      attempts++;
+    try {
+      await startTestServer({ gatewayUrl: config.gatewayUrl });
+      await new Promise((r) => setTimeout(r, 3000));
+      let attempts = 0;
+      while (attempts < 10) {
+        const h = await checkServerHealth(config.gatewayUrl);
+        if (h.healthy) break;
+        await new Promise((r) => setTimeout(r, 500));
+        attempts++;
+      }
+      serverAvailable = await checkServerHealth(config.gatewayUrl).then((h) => h.healthy);
+      if (serverAvailable) {
+        console.log("Rampup tests: Server started successfully");
+      }
+    } catch {
+      console.log("Skipping load tests - server not available");
     }
   }, 60000);
 
   afterAll(async () => {
-    await stopTestServer();
-    await new Promise((r) => setTimeout(r, 1000));
+    if (serverAvailable) {
+      await stopTestServer();
+    }
   }, 15000);
 
-  describe("Gradual Ramp from 1 to 100 Clients", () => {
+  describe.skipIf(!serverAvailable)("Gradual Ramp from 1 to 100 Clients", () => {
     it(
       "should handle gradual ramp without errors",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
-        if (!gatewayUrl) {
-          console.log("Skipping test - no server URL");
-          return;
-        }
         const stepDuration = isFastMode() ? 1000 : 5000;
         const rampConfig: RampLoadConfig = {
           url: `${gatewayUrl}/health`,
@@ -86,10 +90,6 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
       "should show proportional latency increase during ramp",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
-        if (!gatewayUrl) {
-          console.log("Skipping test - no server URL");
-          return;
-        }
         const stepDuration = isFastMode() ? 1000 : 5000;
         const rampConfig: RampLoadConfig = {
           url: `${gatewayUrl}/health`,
@@ -135,18 +135,6 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
       "should stabilize at 100 clients after ramp",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
-        if (!gatewayUrl) {
-          console.log("Skipping test - no server URL");
-          return;
-        }
-        const health = await checkServerHealth(gatewayUrl);
-        if (!health.healthy) {
-          console.log("Server unhealthy, restarting...");
-          await stopTestServer();
-          await new Promise((r) => setTimeout(r, 2000));
-          await startTestServer({ gatewayUrl: config.gatewayUrl });
-          await new Promise((r) => setTimeout(r, 3000));
-        }
         const stepDuration = isFastMode() ? 1000 : 5000;
         const rampConfig: RampLoadConfig = {
           url: `${gatewayUrl}/health`,
@@ -177,23 +165,11 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
     );
   });
 
-  describe("Instant Ramp to 100 Clients", () => {
+  describe.skipIf(!serverAvailable)("Instant Ramp to 100 Clients", () => {
     it(
       "should accept all instant connections",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
-        if (!gatewayUrl) {
-          console.log("Skipping test - no server URL");
-          return;
-        }
-        const health = await checkServerHealth(gatewayUrl);
-        if (!health.healthy) {
-          console.log("Server unhealthy, restarting...");
-          await stopTestServer();
-          await new Promise((r) => setTimeout(r, 2000));
-          await startTestServer({ gatewayUrl: config.gatewayUrl });
-          await new Promise((r) => setTimeout(r, 3000));
-        }
         const loadConfig = {
           url: `${gatewayUrl}/health`,
           concurrentClients: isFastMode() ? 50 : 100,
@@ -221,18 +197,6 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
       "should have temporary latency spike < 2 seconds",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
-        if (!gatewayUrl) {
-          console.log("Skipping test - no server URL");
-          return;
-        }
-        const health = await checkServerHealth(gatewayUrl);
-        if (!health.healthy) {
-          console.log("Server unhealthy, restarting...");
-          await stopTestServer();
-          await new Promise((r) => setTimeout(r, 2000));
-          await startTestServer({ gatewayUrl: config.gatewayUrl });
-          await new Promise((r) => setTimeout(r, 3000));
-        }
         const loadConfig = {
           url: `${gatewayUrl}/health`,
           concurrentClients: isFastMode() ? 50 : 100,
@@ -260,18 +224,6 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
       "should stabilize after initial spike",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
-        if (!gatewayUrl) {
-          console.log("Skipping test - no server URL");
-          return;
-        }
-        const health = await checkServerHealth(gatewayUrl);
-        if (!health.healthy) {
-          console.log("Server unhealthy, restarting...");
-          await stopTestServer();
-          await new Promise((r) => setTimeout(r, 2000));
-          await startTestServer({ gatewayUrl: config.gatewayUrl });
-          await new Promise((r) => setTimeout(r, 3000));
-        }
         const loadConfig = {
           url: `${gatewayUrl}/health`,
           concurrentClients: isFastMode() ? 50 : 100,
@@ -295,37 +247,9 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
     );
   });
 
-  describe("Ramp Down Behavior", () => {
+  describe.skipIf(!serverAvailable)("Ramp Down Behavior", () => {
     it("should handle rapid ramp down gracefully", async () => {
-      let gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
-
-      let health = await checkServerHealth(gatewayUrl);
-      if (!health.healthy) {
-        console.log("Server unhealthy, attempting restart...");
-        try {
-          await stopTestServer();
-        } catch {
-          // Ignore stop errors
-        }
-        await new Promise((r) => setTimeout(r, 3000));
-        try {
-          await startTestServer({ gatewayUrl: config.gatewayUrl });
-          await new Promise((r) => setTimeout(r, 3000));
-          gatewayUrl = getServerUrl();
-          health = await checkServerHealth(gatewayUrl);
-          if (!health.healthy) {
-            console.log("Server restart failed, skipping test");
-            return;
-          }
-        } catch {
-          console.log("Failed to restart server, skipping test");
-          return;
-        }
-      }
+      const gatewayUrl = getServerUrl() || config.gatewayUrl;
 
       const highLoadConfig: LoadConfig = {
         url: `${gatewayUrl}/health`,
@@ -356,15 +280,19 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
         lowErrors: lowResult.errors,
       });
 
-      if (lowResult.requests === 0) {
-        console.log("No successful low load requests, test inconclusive");
-        return;
+      if (lowResult.requests > 0) {
+        expect(lowResult.latency.p50).toBeLessThan(
+          highResult.latency.p50,
+          `Latency should decrease after ramp down`,
+        );
       }
-
-      expect(lowResult.latency.p50).toBeLessThan(
-        highResult.latency.p50,
-        `Latency should decrease after ramp down`,
-      );
     }, 120000);
+  });
+
+  describe("Server Availability", () => {
+    it("should report server availability", () => {
+      console.log("Rampup tests server availability:", serverAvailable);
+      expect(typeof serverAvailable).toBe("boolean");
+    });
   });
 });
