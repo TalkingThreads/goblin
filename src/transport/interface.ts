@@ -21,7 +21,7 @@ export interface Transport {
   /**
    * Type of transport
    */
-  readonly type: "stdio" | "http" | "sse";
+  readonly type: "stdio" | "http" | "sse" | "streamablehttp";
 
   /**
    * Current connection state

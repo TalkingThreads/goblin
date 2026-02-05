@@ -8,6 +8,7 @@ import { mcpActiveConnections } from "../observability/metrics.js";
 import { HttpTransport } from "./http.js";
 import type { Transport } from "./interface.js";
 import { StdioTransport } from "./stdio.js";
+import { StreamableHttpTransport } from "./streamable-http.js";
 
 const logger = createLogger("transport-pool");
 
@@ -169,6 +170,16 @@ export class TransportPool {
         return new HttpTransport({
           name: config.name,
           url: config.url,
+        });
+
+      case "streamablehttp":
+        if (!config.url) {
+          throw new Error(`Server ${config.name} configured for streamablehttp but missing url`);
+        }
+        return new StreamableHttpTransport({
+          name: config.name,
+          url: config.url,
+          headers: config.headers,
         });
 
       default:

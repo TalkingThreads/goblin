@@ -7,7 +7,7 @@ import { z } from "zod";
 /**
  * Transport type for backend MCP servers
  */
-export const TransportTypeSchema = z.enum(["stdio", "http", "sse"]);
+export const TransportTypeSchema = z.enum(["stdio", "http", "sse", "streamablehttp"]);
 
 /**
  * Configuration for a single backend MCP server
@@ -42,6 +42,11 @@ export const ServerConfigSchema = z.object({
    * URL for HTTP/SSE transports
    */
   url: z.string().url().optional(),
+
+  /**
+   * Custom headers for HTTP transports (e.g., authentication)
+   */
+  headers: z.record(z.string(), z.string()).optional(),
 
   /**
    * Environment variables to pass to the process

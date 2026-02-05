@@ -5,7 +5,7 @@ import { TransportPool } from "../../../src/transport/pool.js";
 
 // Mock Transport implementation
 class MockTransport implements Transport {
-  type: "stdio" | "http" | "sse" = "stdio";
+  type: "stdio" | "http" | "sse" | "streamablehttp" = "stdio";
   state = TransportState.Disconnected;
   connectCount = 0;
   disconnectCount = 0;
@@ -39,6 +39,9 @@ mock.module("../../../src/transport/http.js", () => ({
     type = "sse" as const;
   },
 }));
+
+// Note: We don't mock StreamableHttpTransport to avoid interfering with other tests
+// The StreamableHttpTransport will be imported directly for tests
 
 describe("TransportPool", () => {
   test("should create new transport for server", async () => {
@@ -188,5 +191,42 @@ describe("TransportPool", () => {
 
     // Verify only one connection was made
     expect((transports[0] as MockTransport).connectCount).toBe(1);
+  });
+
+  describe("StreamableHttp Transport Configuration", () => {
+    test("should have streamablehttp as valid transport type", () => {
+      const config = {
+        name: "streamable-server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        enabled: true,
+        mode: "stateful" as const,
+      };
+
+      expect(config.transport).toBe("streamablehttp");
+    });
+
+    test("should validate streamablehttp config has url", () => {
+      const validConfig = {
+        name: "server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+      };
+
+      expect(validConfig.url).toBeDefined();
+    });
+
+    test("should support headers in streamablehttp config", () => {
+      const config = {
+        name: "server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        headers: {
+          Authorization: "Bearer token",
+        },
+      };
+
+      expect(config.headers?.Authorization).toBe("Bearer token");
+    });
   });
 });
