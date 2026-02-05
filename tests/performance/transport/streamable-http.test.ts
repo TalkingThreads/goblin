@@ -1,11 +1,14 @@
 /**
- * Performance Tests - Streamable HTTP Transport
+ * Performance Tests - Streamable HTTP Transport (Load Tests)
  *
- * Measures throughput, latency, and session performance for Streamable HTTP transport.
+ * Load and stress tests for Streamable HTTP transport.
+ * Run with: bun test tests/performance/transport/streamable-http.test.ts
+ *
+ * These tests measure throughput, capacity, and concurrent performance.
+ * They take longer to run and are suitable for CI/CD nightly builds or manual testing.
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { latencyMeasurer } from "../shared/latency-measurer.js";
 import { loadConfig } from "../shared/test-config.js";
 import {
   checkServerHealth,
@@ -17,14 +20,14 @@ import { type ThroughputConfig, throughputTester } from "../shared/throughput-te
 
 const config = loadConfig();
 
-describe("Performance - Streamable HTTP Transport", () => {
+describe("Performance - Streamable HTTP Transport (Load Tests)", () => {
   beforeAll(async () => {
     const health = await checkServerHealth(config.gatewayUrl);
     if (!health.healthy) {
       try {
         await startTestServer({ gatewayUrl: config.gatewayUrl });
       } catch {
-        console.log("Skipping streamablehttp performance tests - server not available");
+        console.log("Skipping streamablehttp load performance tests - server not available");
       }
     }
   });
@@ -78,32 +81,11 @@ describe("Performance - Streamable HTTP Transport", () => {
     });
   });
 
-  describe("Latency - Streamable HTTP", () => {
-    it("should measure latency percentiles with streamablehttp transport", async () => {
-      const gatewayUrl = getServerUrl() || config.gatewayUrl;
-
-      const results = await latencyMeasurer.measureLatency(
-        async () => {
-          await fetch(`${gatewayUrl}/health`);
-        },
-        { samples: 50, warmupRequests: 10 },
-      );
-
-      console.log("Streamable HTTP latency:", {
-        p50: `${results.p50}ms`,
-        p95: `${results.p95}ms`,
-        p99: `${results.p99}ms`,
-        average: `${results.average.toFixed(2)}ms`,
-        samples: results.samples,
-      });
-
-      expect(results.p50).toBeLessThan(config.thresholds.latencyP50);
-      expect(results.p95).toBeLessThan(config.thresholds.latencyP95);
-    });
-
+  describe("Latency Under Load - Streamable HTTP", () => {
     it("should maintain latency under load with streamablehttp", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
 
+      const { latencyMeasurer } = await import("../shared/latency-measurer.js");
       const results = await latencyMeasurer.measureConcurrentLatency(
         async () => {
           await fetch(`${gatewayUrl}/health`);
@@ -160,168 +142,46 @@ describe("Performance - Streamable HTTP Transport", () => {
         console.log("Session creation test - server may not support streamablehttp:", error);
       }
     });
-
-    it("should handle requests with session header efficiently", async () => {
-      const gatewayUrl = getServerUrl() || config.gatewayUrl;
-
-      const initResponse = await fetch(`${gatewayUrl}/mcp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "initialize",
-          params: {
-            protocolVersion: "2025-11-05",
-            capabilities: {},
-            clientInfo: { name: "perf-test", version: "1.0" },
-          },
-        }),
-      });
-
-      const sessionId = initResponse.headers.get("mcp-session-id");
-
-      if (sessionId) {
-        const latencies: number[] = [];
-
-        for (let i = 0; i < 10; i++) {
-          const start = Date.now();
-          await fetch(`${gatewayUrl}/mcp`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "mcp-session-id": sessionId,
-            },
-            body: JSON.stringify({
-              jsonrpc: "2.0",
-              id: i + 2,
-              method: "ping",
-              params: {},
-            }),
-          });
-          latencies.push(Date.now() - start);
-        }
-
-        const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
-
-        console.log("Session request latency:", {
-          avg: `${avgLatency.toFixed(2)}ms`,
-          min: `${Math.min(...latencies)}ms`,
-          max: `${Math.max(...latencies)}ms`,
-        });
-
-        expect(avgLatency).toBeLessThan(100);
-      }
-    });
   });
 
-  describe("Headers Performance", () => {
-    it("should handle custom headers efficiently", async () => {
+  describe("Concurrent Sessions - Streamable HTTP", () => {
+    it("should measure concurrent session performance", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      const customHeaders = {
-        "X-Custom-Header": "test-value",
-        "X-Request-ID": "perf-test-123",
-        Authorization: "Bearer test-token",
-      };
+      const concurrentSessions = 10;
 
-      const latencies: number[] = [];
-
-      for (let i = 0; i < 20; i++) {
-        const start = Date.now();
-        await fetch(`${gatewayUrl}/health`, {
-          headers: customHeaders,
-        });
-        latencies.push(Date.now() - start);
-      }
-
-      const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
-
-      console.log("Custom headers performance:", {
-        avg: `${avgLatency.toFixed(2)}ms`,
-        p95: `${latencies.sort((a, b) => a - b)[Math.floor(latencies.length * 0.95)]}ms`,
-      });
-
-      expect(avgLatency).toBeLessThan(50);
-    });
-
-    it("should handle Bearer token authentication efficiently", async () => {
-      const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      const authHeaders = {
-        Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-token",
-      };
-
-      const latencies: number[] = [];
-
-      for (let i = 0; i < 20; i++) {
-        const start = Date.now();
-        await fetch(`${gatewayUrl}/health`, {
-          headers: authHeaders,
-        });
-        latencies.push(Date.now() - start);
-      }
-
-      const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
-
-      console.log("Bearer token auth performance:", {
-        avg: `${avgLatency.toFixed(2)}ms`,
-      });
-
-      expect(avgLatency).toBeLessThan(50);
-    });
-  });
-
-  describe("Reconnection Performance", () => {
-    it("should measure reconnection overhead", async () => {
-      const gatewayUrl = getServerUrl() || config.gatewayUrl;
-
-      const connectionTimes: number[] = [];
-
-      for (let i = 0; i < 5; i++) {
+      const sessionPromises = Array.from({ length: concurrentSessions }, async (_, i) => {
         const start = Date.now();
 
-        const initResponse = await fetch(`${gatewayUrl}/mcp`, {
+        const response = await fetch(`${gatewayUrl}/mcp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             jsonrpc: "2.0",
-            id: 1,
+            id: i + 1,
             method: "initialize",
             params: {
               protocolVersion: "2025-11-05",
               capabilities: {},
-              clientInfo: { name: "reconnect-test", version: "1.0" },
+              clientInfo: { name: "concurrent-test", version: "1.0" },
             },
           }),
         });
 
-        const sessionId = initResponse.headers.get("mcp-session-id");
-
-        if (sessionId) {
-          await fetch(`${gatewayUrl}/mcp`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "mcp-session-id": sessionId,
-            },
-            body: JSON.stringify({
-              jsonrpc: "2.0",
-              id: 2,
-              method: "ping",
-              params: {},
-            }),
-          });
-        }
-
-        connectionTimes.push(Date.now() - start);
-      }
-
-      const avgConnectionTime = connectionTimes.reduce((a, b) => a + b, 0) / connectionTimes.length;
-
-      console.log("Reconnection performance:", {
-        avgConnectionTime: `${avgConnectionTime.toFixed(2)}ms`,
+        return { sessionId: response.headers.get("mcp-session-id"), time: Date.now() - start };
       });
 
-      expect(avgConnectionTime).toBeLessThan(200);
+      const results = await Promise.all(sessionPromises);
+      const successfulSessions = results.filter((r) => r.sessionId).length;
+      const avgTime = results.reduce((a, b) => a + b.time, 0) / results.length;
+
+      console.log("Concurrent session performance:", {
+        concurrentSessions,
+        successfulSessions,
+        avgTime: `${avgTime.toFixed(2)}ms`,
+      });
+
+      expect(successfulSessions).toBeGreaterThan(0);
+      expect(avgTime).toBeLessThan(500);
     });
   });
 });
@@ -345,6 +205,7 @@ describe("Performance - Streamable HTTP Comparison", () => {
   it("should compare latency between transports", async () => {
     const gatewayUrl = getServerUrl() || config.gatewayUrl;
 
+    const { latencyMeasurer } = await import("../shared/latency-measurer.js");
     const streamableHttpLatency = await latencyMeasurer.measureLatency(
       async () => {
         await fetch(`${gatewayUrl}/health`);
