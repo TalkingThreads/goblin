@@ -1,6 +1,6 @@
 {
   "name": "@talkingthreads/goblin",
-  "version": "0.3.0-rc.3",
+  "version": "0.3.0-rc.4",
   "description": "Developer-first MCP gateway that aggregates multiple MCP servers behind a single unified endpoint",
   "type": "module",
   "main": "dist/index.js",
@@ -27,11 +27,6 @@
     "test:e2e:cli": "bun test tests/e2e/cli-tui",
     "pretest:e2e": "bun run build:cli",
     "pretest:e2e:cli": "bun run build:cli",
-    "test:smoke": "bun run tests/smoke/run-smoke-tests.ts",
-    "test:smoke:cli": "bun test tests/smoke/cli --reporter=junit --reporter-outfile=test-results/smoke/cli.xml",
-    "test:smoke:startup": "bun test tests/smoke/startup --reporter=junit --reporter-outfile=test-results/smoke/startup.xml",
-    "test:smoke:health": "bun test tests/smoke/health --reporter=junit --reporter-outfile=test-results/smoke/health.xml",
-    "test:smoke:discovery": "bun test tests/smoke/discovery --reporter=junit --reporter-outfile=test-results/smoke/discovery.xml",
     "smoke": "bun run tests/smoke/run-smoke-tests.ts",
     "perf": "bun run tests/performance/run-performance-tests.ts",
     "perf:quick": "PERFORMANCE_TEST_FAST_MODE=true bun test tests/performance/latency --reporter=dot",
@@ -53,10 +48,10 @@
     "perf:throughput": "bun test tests/performance/throughput",
     "perf:baseline": "bun test tests/performance/baseline",
     "typecheck": "tsc --noEmit",
-    "postinstall": "husky install",
+    "prepare": "husky",
     "coverage": "bun test --coverage",
     "coverage:unit": "bun test tests/unit --coverage",
-    "coverage:report": "bun test --coverage && open coverage/index.html"
+    "coverage:report": "bun test --coverage && open coverage/index.html",
   },
   "keywords": [
     "mcp",
@@ -103,6 +98,7 @@
     "@types/react": "^19.2.10",
     "autocannon": "^8.0.0",
     "bun-types": "^1.3.8",
+    "husky": "^9.1.7",
     "pino-pretty": "^11.3.0",
     "typescript": "^5.9.3"
   }
