@@ -50,7 +50,7 @@ describe("Performance - Streamable HTTP Transport", () => {
       console.log("Streamable HTTP throughput:", {
         maxStableRps: result.maxStableRps,
         saturationPoint: result.saturationPoint,
-        errorRate: (result.errorRateAtSaturation * 100).toFixed(2) + "%",
+        errorRate: `${(result.errorRateAtSaturation * 100).toFixed(2)}%`,
       });
 
       expect(result.maxStableRps).toBeGreaterThan(0);
@@ -70,7 +70,7 @@ describe("Performance - Streamable HTTP Transport", () => {
 
       console.log("Streamable HTTP capacity:", {
         recommendedMaxRps: analysis.recommendedMaxRps,
-        headroom: analysis.headroomPercent.toFixed(2) + "%",
+        headroom: `${analysis.headroomPercent.toFixed(2)}%`,
         bottleneck: analysis.bottleneckType,
       });
 
@@ -90,10 +90,10 @@ describe("Performance - Streamable HTTP Transport", () => {
       );
 
       console.log("Streamable HTTP latency:", {
-        p50: results.p50 + "ms",
-        p95: results.p95 + "ms",
-        p99: results.p99 + "ms",
-        average: results.average.toFixed(2) + "ms",
+        p50: `${results.p50}ms`,
+        p95: `${results.p95}ms`,
+        p99: `${results.p99}ms`,
+        average: `${results.average.toFixed(2)}ms`,
         samples: results.samples,
       });
 
@@ -114,9 +114,9 @@ describe("Performance - Streamable HTTP Transport", () => {
       );
 
       console.log("Streamable HTTP latency under load:", {
-        p50: results.p50 + "ms",
-        p95: results.p95 + "ms",
-        p99: results.p99 + "ms",
+        p50: `${results.p50}ms`,
+        p95: `${results.p95}ms`,
+        p99: `${results.p99}ms`,
       });
 
       expect(results.p95).toBeLessThan(config.thresholds.latencyP95);
@@ -150,7 +150,7 @@ describe("Performance - Streamable HTTP Transport", () => {
         const sessionId = response.headers.get("mcp-session-id");
 
         console.log("Session creation:", {
-          duration: duration + "ms",
+          duration: `${duration}ms`,
           hasSessionId: !!sessionId,
           status: response.status,
         });
@@ -205,9 +205,9 @@ describe("Performance - Streamable HTTP Transport", () => {
         const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
 
         console.log("Session request latency:", {
-          avg: avgLatency.toFixed(2) + "ms",
-          min: Math.min(...latencies) + "ms",
-          max: Math.max(...latencies) + "ms",
+          avg: `${avgLatency.toFixed(2)}ms`,
+          min: `${Math.min(...latencies)}ms`,
+          max: `${Math.max(...latencies)}ms`,
         });
 
         expect(avgLatency).toBeLessThan(100);
@@ -237,8 +237,8 @@ describe("Performance - Streamable HTTP Transport", () => {
       const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
 
       console.log("Custom headers performance:", {
-        avg: avgLatency.toFixed(2) + "ms",
-        p95: latencies.sort((a, b) => a - b)[Math.floor(latencies.length * 0.95)] + "ms",
+        avg: `${avgLatency.toFixed(2)}ms`,
+        p95: `${latencies.sort((a, b) => a - b)[Math.floor(latencies.length * 0.95)]}ms`,
       });
 
       expect(avgLatency).toBeLessThan(50);
@@ -263,7 +263,7 @@ describe("Performance - Streamable HTTP Transport", () => {
       const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
 
       console.log("Bearer token auth performance:", {
-        avg: avgLatency.toFixed(2) + "ms",
+        avg: `${avgLatency.toFixed(2)}ms`,
       });
 
       expect(avgLatency).toBeLessThan(50);
@@ -318,7 +318,7 @@ describe("Performance - Streamable HTTP Transport", () => {
       const avgConnectionTime = connectionTimes.reduce((a, b) => a + b, 0) / connectionTimes.length;
 
       console.log("Reconnection performance:", {
-        avgConnectionTime: avgConnectionTime.toFixed(2) + "ms",
+        avgConnectionTime: `${avgConnectionTime.toFixed(2)}ms`,
       });
 
       expect(avgConnectionTime).toBeLessThan(200);
@@ -353,8 +353,8 @@ describe("Performance - Streamable HTTP Comparison", () => {
     );
 
     console.log("Streamable HTTP vs SSE latency comparison:", {
-      streamablehttpP50: streamableHttpLatency.p50 + "ms",
-      streamablehttpP95: streamableHttpLatency.p95 + "ms",
+      streamablehttpP50: `${streamableHttpLatency.p50}ms`,
+      streamablehttpP95: `${streamableHttpLatency.p95}ms`,
     });
 
     expect(streamableHttpLatency.p50).toBeLessThan(config.thresholds.latencyP50);
@@ -392,7 +392,7 @@ describe("Performance - Streamable HTTP Comparison", () => {
     console.log("Concurrent session performance:", {
       concurrentSessions,
       successfulSessions,
-      avgTime: avgTime.toFixed(2) + "ms",
+      avgTime: `${avgTime.toFixed(2)}ms`,
     });
 
     expect(successfulSessions).toBeGreaterThan(0);

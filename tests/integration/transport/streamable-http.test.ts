@@ -135,23 +135,23 @@ describe("StreamableHttpTransport - Integration", () => {
 
     test("test server should have tools configured", async () => {
       const tools = server["config"].tools;
-      expect(tools!.length).toBe(3);
-      expect(tools!.map((t) => t.name).sort()).toEqual(["add", "echo", "get_time"]);
+      expect(tools?.length).toBe(3);
+      expect(tools?.map((t) => t.name).sort()).toEqual(["add", "echo", "get_time"]);
     });
 
     test("test server should have resources configured", async () => {
       const resources = server["config"].resources;
-      expect(resources!.length).toBe(2);
+      expect(resources?.length).toBe(2);
     });
 
     test("test server should have prompts configured", async () => {
       const prompts = server["config"].prompts;
-      expect(prompts!.length).toBe(1);
-      expect(prompts![0].name).toBe("greet");
+      expect(prompts?.length).toBe(1);
+      expect(prompts?.[0].name).toBe("greet");
     });
 
     test("server should maintain state across operations", async () => {
-      const initialTools = server["config"].tools!.length;
+      const initialTools = server["config"].tools?.length;
       expect(initialTools).toBe(3);
 
       server.addTool(
@@ -161,7 +161,7 @@ describe("StreamableHttpTransport - Integration", () => {
         async () => ({ content: [{ type: "text", text: "dynamic" }] }),
       );
 
-      expect(server["config"].tools!.length).toBe(4);
+      expect(server["config"].tools?.length).toBe(4);
     });
 
     test("server should handle latency configuration", async () => {
@@ -277,7 +277,7 @@ describe("StreamableHttpTransport - Integration", () => {
         },
       };
 
-      const headerKeys = Object.keys(config.headers!);
+      const headerKeys = Object.keys(config.headers ?? {});
       expect(headerKeys.length).toBe(3);
     });
   });
@@ -322,7 +322,7 @@ describe("StreamableHttpTransport - Integration", () => {
         headers: {},
       };
 
-      expect(Object.keys(config.headers!).length).toBe(0);
+      expect(Object.keys(config.headers ?? {}).length).toBe(0);
     });
 
     test("should handle URL parsing", () => {
