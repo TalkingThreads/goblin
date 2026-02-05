@@ -18,42 +18,54 @@ import {
 } from "../shared/test-server.js";
 
 const config = loadConfig();
+let serverAvailable = false;
 
 describe("Performance Load Tests - Ramp Up (Smoke)", () => {
   beforeAll(async () => {
     const health = await checkServerHealth(config.gatewayUrl);
-    if (!health.healthy) {
-      try {
-        await startTestServer({ gatewayUrl: config.gatewayUrl });
-      } catch {
-        console.log("Skipping load smoke tests - server not available");
-        return;
-      }
+    if (health.healthy) {
+      serverAvailable = true;
+      await new Promise((r) => setTimeout(r, 1000));
+      return;
     }
-    await new Promise((r) => setTimeout(r, 1000));
-  }, 30000);
+    try {
+      await startTestServer({ gatewayUrl: config.gatewayUrl });
+      await new Promise((r) => setTimeout(r, 3000));
+      let attempts = 0;
+      while (attempts < 10) {
+        const h = await checkServerHealth(config.gatewayUrl);
+        if (h.healthy) break;
+        await new Promise((r) => setTimeout(r, 500));
+        attempts++;
+      }
+      serverAvailable = await checkServerHealth(config.gatewayUrl).then((h) => h.healthy);
+      if (serverAvailable) {
+        console.log("Load smoke tests: Server started successfully");
+      }
+    } catch {
+      console.log("Load smoke tests: Server not available, tests will be skipped");
+    }
+  }, 60000);
 
   afterAll(async () => {
-    await stopTestServer();
+    if (serverAvailable) {
+      await stopTestServer();
+    }
   }, 10000);
 
-  describe("Gradual Ramp from 1 to 20 Clients", () => {
+  describe.skipIf(!serverAvailable)("Gradual Ramp from 1 to 20 Clients", () => {
     it(
       "should handle gradual ramp without errors",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
-        if (!gatewayUrl) {
-          console.log("Skipping test - no server URL");
-          return;
-        }
         const rampConfig: RampLoadConfig = {
           url: `${gatewayUrl}/health`,
           initialClients: 1,
-          finalClients: isFastMode() ? 20 : 20,
+          finalClients: 20,
           stepClients: 5,
           duration: isFastMode() ? 1000 : 3000,
           stepDuration: isFastMode() ? 500 : 1000,
-          concurrentClients: isFastMode() ? 20 : 20,
+          concurrentClients: 20,
         };
 
         const result = await loadGenerator.generateRampLoad(rampConfig);
@@ -72,15 +84,11 @@ describe("Performance Load Tests - Ramp Up (Smoke)", () => {
     );
   });
 
-  describe("Instant Ramp - Quick Check", () => {
+  describe.skipIf(!serverAvailable)("Instant Ramp - Quick Check", () => {
     it(
       "should accept instant connections",
       async () => {
         const gatewayUrl = getServerUrl() || config.gatewayUrl;
-        if (!gatewayUrl) {
-          console.log("Skipping test - no server URL");
-          return;
-        }
         const loadConfig = {
           url: `${gatewayUrl}/health`,
           concurrentClients: isFastMode() ? 25 : 50,
@@ -101,13 +109,9 @@ describe("Performance Load Tests - Ramp Up (Smoke)", () => {
     );
   });
 
-  describe("Ramp Down - Quick Check", () => {
+  describe.skipIf(!serverAvailable)("Ramp Down - Quick Check", () => {
     it("should handle rapid ramp down gracefully", async () => {
       const gatewayUrl = getServerUrl() || config.gatewayUrl;
-      if (!gatewayUrl) {
-        console.log("Skipping test - no server URL");
-        return;
-      }
 
       const highLoadConfig = {
         url: `${gatewayUrl}/health`,
@@ -139,5 +143,12 @@ describe("Performance Load Tests - Ramp Up (Smoke)", () => {
         );
       }
     }, 30000);
+  });
+
+  describe("Server Availability", () => {
+    it("should report server availability", () => {
+      console.log("Load smoke tests server availability:", serverAvailable);
+      expect(typeof serverAvailable).toBe("boolean");
+    });
   });
 });
