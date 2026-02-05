@@ -9,9 +9,9 @@
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target node --minify --sourcemap=external",
-    "build:cli": "bun build src/cli/index.ts --outdir dist/cli --target node --minify --sourcemap=external",
-    "build:analyze": "bun build src/index.ts --outdir dist --target node --minify --analyze",
+    "build": "bun build src/index.ts --outdir dist --target bun --minify --sourcemap=external",
+    "build:cli": "bun build src/cli/index.ts --outdir dist/cli --target bun --minify --sourcemap=external",
+    "build:analyze": "bun build src/index.ts --outdir dist --target bun --minify --analyze",
     "start": "bun dist/index.js",
     "cli": "bun dist/cli/index.js",
     "lint": "biome check .",
@@ -65,9 +65,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TalkingThreads/goblin.git"
-  },
-  "engines": {
-    "node": ">=20.0.0"
   },
   "proactive-quality": {
     "name": "proactive-quality-system",

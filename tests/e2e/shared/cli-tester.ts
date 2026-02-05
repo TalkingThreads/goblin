@@ -26,7 +26,7 @@ export interface CliTesterConfig {
 }
 
 const DEFAULT_CONFIG: Required<CliTesterConfig> = {
-  binaryPath: "node dist/cli/index.js",
+  binaryPath: "bun dist/cli/index.js",
   workingDir: "",
   env: {},
   timeout: 30000,
@@ -56,11 +56,11 @@ export class CliTester {
   constructor(config: CliTesterConfig = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     const binaryPath = this.config.binaryPath;
-    const binaryPathWithoutNode = binaryPath.replace(/^node\s+/, "");
+    const binaryPathWithoutRunner = binaryPath.replace(/^(node|bun)\s+/, "");
     const resolvedPath =
-      binaryPathWithoutNode.startsWith("/") || binaryPathWithoutNode.match(/^[A-Za-z]:/)
-        ? binaryPathWithoutNode
-        : join(process.cwd(), binaryPathWithoutNode);
+      binaryPathWithoutRunner.startsWith("/") || binaryPathWithoutRunner.match(/^[A-Za-z]:/)
+        ? binaryPathWithoutRunner
+        : join(process.cwd(), binaryPathWithoutRunner);
     if (!existsSync(resolvedPath)) {
       throw new Error(`CLI binary not found at "${binaryPath}". Run 'bun run build:cli' first.`);
     }
@@ -89,15 +89,15 @@ export class CliTester {
       const fullArgs = args;
       const command = this.config.binaryPath;
 
-      const binaryPathWithoutNode = command.replace(/^node\s+/, "");
+      const binaryPathWithoutRunner = command.replace(/^(node|bun)\s+/, "");
       const resolvedBinaryPath =
-        binaryPathWithoutNode.startsWith("/") || binaryPathWithoutNode.match(/^[A-Za-z]:/)
-          ? binaryPathWithoutNode
-          : join(process.cwd(), binaryPathWithoutNode);
+        binaryPathWithoutRunner.startsWith("/") || binaryPathWithoutRunner.match(/^[A-Za-z]:/)
+          ? binaryPathWithoutRunner
+          : join(process.cwd(), binaryPathWithoutRunner);
 
-      const isNodeCommand = command.startsWith("node");
-      const spawnCommand = isNodeCommand ? "node" : resolvedBinaryPath;
-      const spawnArgs = isNodeCommand ? [resolvedBinaryPath, ...fullArgs] : fullArgs;
+      const runner = command.startsWith("bun") ? "bun" : command.startsWith("node") ? "node" : null;
+      const spawnCommand = runner || resolvedBinaryPath;
+      const spawnArgs = runner ? [resolvedBinaryPath, ...fullArgs] : fullArgs;
 
       this.process = spawn(spawnCommand, spawnArgs, {
         cwd: this.config.workingDir || this.tempDir,
@@ -299,7 +299,7 @@ export class InteractiveSession {
   private process: ChildProcess | null = null;
   private output: string = "";
 
-  constructor(private binaryPath: string = "node dist/cli/index.js") {}
+  constructor(private binaryPath: string = "bun dist/cli/index.js") {}
 
   /**
    * Start interactive session

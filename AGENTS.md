@@ -13,7 +13,7 @@ Goblin is an MCP (Model Context Protocol) gateway that aggregates multiple MCP s
 bun run dev              # Run with hot reload (--watch)
 
 # Building
-bun build src/index.ts --outdir dist --target node
+bun build src/index.ts --outdir dist --target bun
 bun run build            # Same via npm script
 
 # Start production

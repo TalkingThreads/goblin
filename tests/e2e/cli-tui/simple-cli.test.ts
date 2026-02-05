@@ -11,7 +11,7 @@ describe("Simple CLI Test", () => {
     const binaryPath = join(process.cwd(), "dist/cli/index.js");
 
     return new Promise((resolve, reject) => {
-      const proc = spawn("node", [binaryPath, "help"], {
+      const proc = spawn("bun", [binaryPath, "help"], {
         cwd: process.cwd(),
         env: { ...process.env, NO_COLOR: "1" },
       });

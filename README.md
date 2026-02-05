@@ -48,7 +48,6 @@ Built with Bun, TypeScript, Hono, and the MCP SDK, Goblin offers blazing-fast pe
 ### Prerequisites
 
 - [Bun](https://bun.sh/) >= 1.3.8
-- [Node.js](https://nodejs.org/) >= 20.0.0 (for CLI compatibility)
 
 ### Installation
 
@@ -71,8 +70,8 @@ bun run dev
 bun run build
 bun run build:cli
 
-# Run with Node.js
-node dist/index.js
+# Run with Bun
+bun dist/index.js
 ```
 
 ### Start Gateway

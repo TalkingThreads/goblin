@@ -8,7 +8,7 @@ import { spawn } from "node:child_process";
 
 describe("CLI Stdio Command", () => {
   it("should start and respond to JSON-RPC over stdio", async () => {
-    const child = spawn("node", ["dist/cli/index.js", "stdio"], {
+    const child = spawn("bun", ["dist/cli/index.js", "stdio"], {
       env: { ...process.env, NO_COLOR: "1" },
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -84,7 +84,7 @@ describe("CLI Stdio Command", () => {
   });
 
   it("should list tools via stdio", async () => {
-    const child = spawn("node", ["dist/cli/index.js", "stdio"], {
+    const child = spawn("bun", ["dist/cli/index.js", "stdio"], {
       env: { ...process.env, NO_COLOR: "1" },
       stdio: ["pipe", "pipe", "pipe"],
     });
