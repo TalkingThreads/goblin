@@ -5,7 +5,6 @@ This guide covers setting up your development environment for contributing to Go
 ## Prerequisites
 
 - [Bun](https://bun.sh/) >= 1.3.8
-- [Node.js](https://nodejs.org/) >= 20.0.0 (for some tooling)
 - Git
 
 ## Initial Setup

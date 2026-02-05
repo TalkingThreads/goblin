@@ -11,7 +11,6 @@ By participating in this project, you agree to maintain a respectful, inclusive,
 ### Prerequisites
 
 - [Bun](https://bun.sh/) >= 1.3.8
-- Node.js >= 20.0.0
 - Git
 - A GitHub account
 
