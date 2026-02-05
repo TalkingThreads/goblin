@@ -4,7 +4,7 @@ This document provides specific information for Goblin MCP Gateway release candi
 
 ## Release Information
 
-**Version**: v0.3.0-rc.2
+**Version**: v0.3.0-rc.3
 **Release Date**: 2026-02-05
 **Status**: Release Candidate (RC)
 **Target Audience**: Testing and evaluation

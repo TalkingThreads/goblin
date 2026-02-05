@@ -15,7 +15,7 @@
 ### Version & License
 
 ![Version](https://img.shields.io/npm/v/goblin?style=flat-square&logo=npm)
-![Version](https://img.shields.io/badge/Version-0.4.0-blue?style=flat-square&logo=version)
+![Version](https://img.shields.io/badge/Version-0.3.0--rc.3-blue?style=flat-square&logo=version)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
 
 ### Roadmap

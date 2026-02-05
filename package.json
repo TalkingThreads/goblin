@@ -1,6 +1,6 @@
 {
   "name": "@talkingthreads/goblin",
-  "version": "0.3.0-rc.2",
+  "version": "0.3.0-rc.3",
   "description": "Developer-first MCP gateway that aggregates multiple MCP servers behind a single unified endpoint",
   "type": "module",
   "main": "dist/index.js",

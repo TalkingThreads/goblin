@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed ProcessManager startup detection to avoid false positives from JSON log output
   - Result: All 1083 tests passing (previously 10+ failures)
 
+## [0.3.0-rc.3] - 2026-02-05
+
 ### Features
 
 - **Streamable HTTP Client Transport**: Connect to MCP servers using Streamable HTTP protocol
@@ -379,7 +381,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Beta**: Early preview with known issues (e.g., 0.3.0-beta.1)
 - **Alpha**: Early development preview (e.g., 0.3.0-alpha.1)
 
-[Unreleased]: https://github.com/TalkingThreads/goblin/compare/v0.3.0-rc.2...HEAD
+[Unreleased]: https://github.com/TalkingThreads/goblin/compare/v0.3.0-rc.3...HEAD
+[0.3.0-rc.3]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.3
 [0.3.0-rc.2]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.2
 [0.3.0-rc.1]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.1
 [0.2.0]: https://github.com/TalkingThreads/goblin/releases/tag/v0.2.0
