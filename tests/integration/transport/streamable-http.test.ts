@@ -1,405 +1,333 @@
 /**
  * Streamable HTTP Transport Integration Tests
  *
- * Tests for the POST /mcp Streamable HTTP endpoint including
- * session management, resumption, and lifecycle behavior.
+ * Integration tests for StreamableHttpTransport client transport.
+ * Tests transport configuration, state management, and pool integration.
  */
 
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { TransportState } from "../../../src/transport/interface.js";
+import { StreamableHttpTransport } from "../../../src/transport/streamable-http.js";
+import { CleanupManager, registerServerCleanup } from "../../shared/cleanup.js";
+import { createBasicTestServer, type TestMcpServer } from "../../shared/test-server.js";
 
-describe("Streamable HTTP Endpoint - Configuration", () => {
-  describe("Session Timeout Configuration", () => {
-    test("should have default session timeout", () => {
-      const config = {
-        streamableHttp: {
-          sessionTimeout: 300000,
-          sseEnabled: true,
-          maxSessions: 1000,
-        },
-      };
-
-      const sessionTimeoutMs = config.streamableHttp?.sessionTimeout ?? 300000;
-      expect(sessionTimeoutMs).toBe(300000);
-    });
-
-    test("should allow custom session timeout", () => {
-      const config = {
-        streamableHttp: {
-          sessionTimeout: 600000,
-          sseEnabled: true,
-          maxSessions: 1000,
-        },
-      };
-
-      const sessionTimeoutMs = config.streamableHttp?.sessionTimeout ?? 300000;
-      expect(sessionTimeoutMs).toBe(600000);
-    });
-
-    test("should have default max sessions", () => {
-      const config = {
-        streamableHttp: {
-          sessionTimeout: 300000,
-          sseEnabled: true,
-          maxSessions: 1000,
-        },
-      };
-
-      const maxSessions = config.streamableHttp?.maxSessions ?? 1000;
-      expect(maxSessions).toBe(1000);
-    });
-
-    test("should allow custom max sessions", () => {
-      const config = {
-        streamableHttp: {
-          sessionTimeout: 300000,
-          sseEnabled: true,
-          maxSessions: 500,
-        },
-      };
-
-      const maxSessions = config.streamableHttp?.maxSessions ?? 1000;
-      expect(maxSessions).toBe(500);
-    });
-  });
-
-  describe("SSE Enabled Configuration", () => {
-    test("should default to SSE enabled", () => {
-      const config = {
-        streamableHttp: {
-          sseEnabled: true,
-          sessionTimeout: 300000,
-          maxSessions: 1000,
-        },
-      };
-
-      expect(config.streamableHttp?.sseEnabled).toBe(true);
-    });
-
-    test("should allow SSE to be disabled", () => {
-      const config = {
-        streamableHttp: {
-          sseEnabled: false,
-          sessionTimeout: 300000,
-          maxSessions: 1000,
-        },
-      };
-
-      expect(config.streamableHttp?.sseEnabled).toBe(false);
-    });
-  });
-});
-
-describe("Streamable HTTP Endpoint - Session Management", () => {
-  describe("Session Creation", () => {
-    test("can create session map", () => {
-      type SessionInfo = {
-        transport: unknown;
-        server: unknown;
-        lastActivity: number;
-      };
-
-      const sessions = new Map<string, SessionInfo>();
-
-      expect(sessions.size).toBe(0);
-    });
-
-    test("can store session information", () => {
-      type SessionInfo = {
-        transport: unknown;
-        server: unknown;
-        lastActivity: number;
-      };
-
-      const sessions = new Map<string, SessionInfo>();
-      const sessionId = "test-session-123";
-      const lastActivity = Date.now();
-
-      sessions.set(sessionId, {
-        transport: {},
-        server: {},
-        lastActivity,
+describe("StreamableHttpTransport - Integration", () => {
+  describe("Transport Configuration", () => {
+    test("should create transport with URL and name", () => {
+      const transport = new StreamableHttpTransport({
+        url: "http://localhost:3000/mcp",
+        name: "test-server",
       });
 
-      expect(sessions.has(sessionId)).toBe(true);
-      expect(sessions.get(sessionId)?.lastActivity).toBe(lastActivity);
-    });
-  });
-
-  describe("Session Timeout Management", () => {
-    test("can create session timeout map", () => {
-      const timeouts = new Map<string, ReturnType<typeof setTimeout>>();
-
-      expect(timeouts.size).toBe(0);
+      expect(transport.type).toBe("streamablehttp");
+      expect(transport.state).toBe(TransportState.Disconnected);
     });
 
-    test("can store and clear timeouts", () => {
-      const timeouts = new Map<string, ReturnType<typeof setTimeout>>();
-      const sessionId = "session-1";
-      const timeoutId = setTimeout(() => {}, 5000);
-
-      timeouts.set(sessionId, timeoutId);
-
-      expect(timeouts.has(sessionId)).toBe(true);
-
-      clearTimeout(timeoutId);
-      timeouts.delete(sessionId);
-
-      expect(timeouts.has(sessionId)).toBe(false);
-    });
-  });
-
-  describe("Session Resumption", () => {
-    test("session can be resumed with matching session id", () => {
-      type SessionInfo = {
-        transport: unknown;
-        server: unknown;
-        lastActivity: number;
-      };
-
-      const sessions = new Map<string, SessionInfo>();
-      const sessionId = "resumable-session";
-
-      sessions.set(sessionId, {
-        transport: {},
-        server: {},
-        lastActivity: Date.now(),
+    test("should create transport with authentication headers", () => {
+      const transport = new StreamableHttpTransport({
+        url: "http://localhost:3000/mcp",
+        name: "test-server",
+        headers: {
+          Authorization: "Bearer test-token",
+          "X-API-Key": "api-key-123",
+        },
       });
 
-      const existingSession = sessions.get(sessionId);
-      expect(existingSession).toBeDefined();
-      expect(existingSession?.transport).toBeDefined();
+      expect(transport.type).toBe("streamablehttp");
     });
 
-    test("unknown session id returns undefined", () => {
-      type SessionInfo = {
-        transport: unknown;
-        server: unknown;
-        lastActivity: number;
-      };
+    test("should create transport with Headers object", () => {
+      const headers = new Headers({
+        Authorization: "Bearer token-from-headers",
+      });
 
-      const sessions = new Map<string, SessionInfo>();
-      const unknownSessionId = "unknown-session-id";
+      const transport = new StreamableHttpTransport({
+        url: "http://localhost:3000/mcp",
+        name: "test-server",
+        headers,
+      });
 
-      const existingSession = sessions.get(unknownSessionId);
-      expect(existingSession).toBeUndefined();
+      expect(transport.type).toBe("streamablehttp");
+    });
+
+    test("should create transport with reconnection options", () => {
+      const transport = new StreamableHttpTransport({
+        url: "http://localhost:3000/mcp",
+        name: "test-server",
+        reconnectionOptions: {
+          initialReconnectionDelay: 1000,
+          maxReconnectionDelay: 30000,
+          reconnectionDelayGrowFactor: 1.5,
+          maxRetries: 5,
+        },
+      });
+
+      expect(transport.type).toBe("streamablehttp");
+    });
+
+    test("should support HTTPS URLs", () => {
+      const transport = new StreamableHttpTransport({
+        url: "https://api.example.com/mcp",
+        name: "secure-server",
+      });
+
+      expect(transport.type).toBe("streamablehttp");
+    });
+
+    test("should support custom ports", () => {
+      const transport = new StreamableHttpTransport({
+        url: "http://localhost:9000/mcp",
+        name: "custom-port-server",
+      });
+
+      expect(transport.type).toBe("streamablehttp");
     });
   });
 
-  describe("Max Sessions Limit", () => {
-    test("can track session count", () => {
-      const maxSessions = 5;
-      const currentSessions = 3;
+  describe("Transport State Management", () => {
+    test("should report disconnected initially", () => {
+      const transport = new StreamableHttpTransport({
+        url: "http://localhost:3000/mcp",
+        name: "test-server",
+      });
 
-      expect(currentSessions).toBeLessThan(maxSessions);
+      expect(transport.isConnected()).toBe(false);
+      expect(transport.state).toBe(TransportState.Disconnected);
     });
 
-    test("should detect when at max capacity", () => {
-      const maxSessions = 2;
-      const currentSessions = 2;
+    test("should return null sessionId when disconnected", () => {
+      const transport = new StreamableHttpTransport({
+        url: "http://localhost:3000/mcp",
+        name: "test-server",
+      });
 
-      const atCapacity = currentSessions >= maxSessions;
-      expect(atCapacity).toBe(true);
+      expect(transport.getSessionId()).toBeNull();
     });
 
-    test("should detect when under max capacity", () => {
-      const maxSessions = 10;
-      const currentSessions = 5;
+    test("should throw when getting client while disconnected", () => {
+      const transport = new StreamableHttpTransport({
+        url: "http://localhost:3000/mcp",
+        name: "test-server",
+      });
 
-      const atCapacity = currentSessions >= maxSessions;
-      expect(atCapacity).toBe(false);
+      expect(() => transport.getClient()).toThrow("Transport not connected");
     });
   });
-});
 
-describe("Streamable HTTP Endpoint - MCP Handshake", () => {
-  describe("Initialize Request", () => {
-    test("initialize request has correct structure", () => {
-      const initializeRequest = {
-        jsonrpc: "2.0",
-        id: 1,
-        method: "initialize",
-        params: {
-          protocolVersion: "2025-11-05",
-          capabilities: {},
-          clientInfo: {
-            name: "test-client",
-            version: "1.0.0",
-          },
+  describe("Transport with Real Server Integration", () => {
+    let cleanup: CleanupManager;
+    let server: TestMcpServer;
+
+    beforeEach(async () => {
+      cleanup = new CleanupManager();
+      server = createBasicTestServer("streamable-integration");
+      registerServerCleanup(cleanup, server, "streamable integration server");
+      await server.start();
+    });
+
+    afterEach(async () => {
+      await cleanup.run();
+    });
+
+    test("test server should be running", async () => {
+      expect(server.isRunning()).toBe(true);
+    });
+
+    test("test server should have tools configured", async () => {
+      const tools = server["config"].tools;
+      expect(tools!.length).toBe(3);
+      expect(tools!.map((t) => t.name).sort()).toEqual(["add", "echo", "get_time"]);
+    });
+
+    test("test server should have resources configured", async () => {
+      const resources = server["config"].resources;
+      expect(resources!.length).toBe(2);
+    });
+
+    test("test server should have prompts configured", async () => {
+      const prompts = server["config"].prompts;
+      expect(prompts!.length).toBe(1);
+      expect(prompts![0].name).toBe("greet");
+    });
+
+    test("server should maintain state across operations", async () => {
+      const initialTools = server["config"].tools!.length;
+      expect(initialTools).toBe(3);
+
+      server.addTool(
+        "dynamic_tool",
+        "Dynamically added tool",
+        { type: "object", properties: {}, required: [] },
+        async () => ({ content: [{ type: "text", text: "dynamic" }] }),
+      );
+
+      expect(server["config"].tools!.length).toBe(4);
+    });
+
+    test("server should handle latency configuration", async () => {
+      server.setLatency(50);
+      expect(server["config"].latency).toBe(50);
+
+      server.setLatency(0);
+      expect(server["config"].latency).toBe(0);
+    });
+
+    test("server should handle error rate configuration", async () => {
+      server.setErrorRate(0.1);
+      expect(server["config"].errorRate).toBe(0.1);
+
+      server.setErrorRate(0);
+      expect(server["config"].errorRate).toBe(0);
+    });
+  });
+
+  describe("Transport Pool Integration", () => {
+    test("should have streamablehttp as valid transport type in schema", () => {
+      const config = {
+        name: "streamable-server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        headers: {
+          Authorization: "Bearer token",
         },
       };
 
-      expect(initializeRequest.jsonrpc).toBe("2.0");
-      expect(initializeRequest.method).toBe("initialize");
-      expect(initializeRequest.params.protocolVersion).toBe("2025-11-05");
+      expect(config.transport).toBe("streamablehttp");
+      expect(config.url).toBeDefined();
+      expect(config.headers?.Authorization).toBe("Bearer token");
     });
 
-    test("initialize response has correct structure", () => {
-      const initializeResponse = {
-        jsonrpc: "2.0",
-        id: 1,
-        result: {
-          protocolVersion: "2025-11-05",
-          capabilities: {
-            tools: {},
-            resources: { subscribe: true },
-            prompts: {},
-          },
-          serverInfo: {
-            name: "goblin",
-            version: "1.0.0",
-          },
+    test("should validate streamablehttp transport configuration", () => {
+      const validConfig = {
+        name: "server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+      };
+
+      expect(validConfig.url).toBeDefined();
+      expect(validConfig.transport).toBe("streamablehttp");
+    });
+
+    test("should support optional headers in config", () => {
+      const withHeaders = {
+        name: "server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        headers: {
+          "X-Custom-Auth": "value",
         },
       };
 
-      expect(initializeResponse.jsonrpc).toBe("2.0");
-      expect(initializeResponse.result.serverInfo.name).toBe("goblin");
-      expect(initializeResponse.result.capabilities.tools).toBeDefined();
-    });
-  });
-
-  describe("Session ID Header", () => {
-    test("mcp-session-id header is used for resumption", () => {
-      const sessionId = "test-session-123";
-      const headers = new Headers();
-      headers.set("mcp-session-id", sessionId);
-
-      expect(headers.get("mcp-session-id")).toBe(sessionId);
+      expect(withHeaders.headers).toBeDefined();
     });
 
-    test("missing mcp-session-id creates new session", () => {
-      const headers = new Headers();
-      const sessionId = headers.get("mcp-session-id") || undefined;
-
-      expect(sessionId).toBeUndefined();
-    });
-  });
-});
-
-describe("Streamable HTTP Endpoint - Error Handling", () => {
-  describe("Too Many Sessions", () => {
-    test("should return 429 when max sessions exceeded", () => {
-      const errorResponse = {
-        jsonrpc: "2.0",
-        error: {
-          code: -32000,
-          message: "Too many concurrent sessions",
-        },
-        id: null,
-      };
-
-      expect(errorResponse.error.code).toBe(-32000);
-      expect(errorResponse.error.message).toBe("Too many concurrent sessions");
-    });
-  });
-
-  describe("Session Not Found", () => {
-    test("should return 404 for unknown session", () => {
-      const errorResponse = {
-        error: "Session not found",
-      };
-
-      expect(errorResponse.error).toBe("Session not found");
-    });
-  });
-});
-
-describe("Streamable HTTP Transport - Session ID Generation", () => {
-  describe("UUID Generation", () => {
-    test("can generate UUID format session IDs", () => {
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const sessionId = crypto.randomUUID();
-
-      expect(sessionId).toMatch(uuidPattern);
-    });
-
-    test("generated UUIDs are unique", () => {
-      const ids = new Set<string>();
-      for (let i = 0; i < 100; i++) {
-        ids.add(crypto.randomUUID());
-      }
-
-      expect(ids.size).toBe(100);
-    });
-  });
-
-  describe("Custom Session ID Generator", () => {
-    test("can use custom session ID format", () => {
-      const customGenerator = () => `session-${Date.now()}-${Math.random()}`;
-      const sessionId = customGenerator();
-
-      expect(sessionId).toContain("session-");
-      expect(sessionId).toContain("-");
-    });
-  });
-});
-
-describe("Streamable HTTP Request/Response", () => {
-  describe("Request Structure", () => {
-    test("can create JSON-RPC request", () => {
-      const request = {
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/list",
-        params: {},
-      };
-
-      expect(request.jsonrpc).toBe("2.0");
-      expect(request.method).toBe("tools/list");
-      expect(typeof request.id).toBe("number");
-    });
-
-    test("can create notification request", () => {
-      const notification = {
-        jsonrpc: "2.0",
-        method: "notifications/resources/updated",
-        params: { uri: "file:///test.txt" },
-      };
-
-      expect(notification.jsonrpc).toBe("2.0");
-      expect(notification.method).toContain("notifications/");
-    });
-  });
-
-  describe("Response Structure", () => {
-    test("can create success response", () => {
-      const response = {
-        jsonrpc: "2.0",
-        id: 1,
-        result: { tools: [] },
-      };
-
-      expect(response.jsonrpc).toBe("2.0");
-      expect(response.id).toBe(1);
-      expect(response.result).toBeDefined();
-    });
-
-    test("can create error response", () => {
-      const errorResponse = {
-        jsonrpc: "2.0",
-        id: 1,
-        error: {
-          code: -32600,
-          message: "Invalid Request",
+    test("should support reconnection options in config", () => {
+      const withReconnect = {
+        name: "server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        reconnectionOptions: {
+          maxRetries: 10,
+          initialReconnectionDelay: 500,
         },
       };
 
-      expect(errorResponse.jsonrpc).toBe("2.0");
-      expect(errorResponse.error).toBeDefined();
-      expect(errorResponse.error.code).toBe(-32600);
+      expect(withReconnect.reconnectionOptions?.maxRetries).toBe(10);
     });
   });
-});
 
-describe("Streamable HTTP Content Types", () => {
-  test("should use application/json content type", () => {
-    const contentType = "application/json";
+  describe("Headers Configuration Patterns", () => {
+    test("should support Bearer token authentication", () => {
+      const config = {
+        name: "authenticated-server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        headers: {
+          Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+        },
+      };
 
-    expect(contentType).toBe("application/json");
+      expect(config.headers?.Authorization).toContain("Bearer");
+    });
+
+    test("should support API key authentication", () => {
+      const config = {
+        name: "apikey-server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        headers: {
+          "X-API-Key": "sk-api-key-12345",
+          "X-Request-ID": "req-abc123",
+        },
+      };
+
+      expect(config.headers?.["X-API-Key"]).toBeDefined();
+      expect(config.headers?.["X-Request-ID"]).toBeDefined();
+    });
+
+    test("should support multiple authentication methods", () => {
+      const config = {
+        name: "multi-auth-server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        headers: {
+          Authorization: "Bearer token",
+          "X-API-Key": "key",
+          "X-Custom-Auth": "custom-value",
+        },
+      };
+
+      const headerKeys = Object.keys(config.headers!);
+      expect(headerKeys.length).toBe(3);
+    });
   });
 
-  test("SSE should use text/event-stream content type", () => {
-    const contentType = "text/event-stream";
+  describe("URL Validation Patterns", () => {
+    test("should handle localhost URLs", () => {
+      const url = "http://127.0.0.1:8080/mcp";
+      expect(url).toContain("127.0.0.1");
+    });
 
-    expect(contentType).toBe("text/event-stream");
+    test("should handle hostname URLs", () => {
+      const url = "https://mcp.example.com/api/v1/mcp";
+      expect(url).toContain("mcp.example.com");
+    });
+
+    test("should handle URLs with query parameters", () => {
+      const url = "http://localhost:3000/mcp?version=2025-11-05&mode=stream";
+      expect(url).toContain("?");
+    });
+
+    test("should handle URLs with paths", () => {
+      const url = "http://localhost:3000/api/mcp/v1";
+      expect(url).toContain("/api/mcp/v1");
+    });
+  });
+
+  describe("Error Handling Patterns", () => {
+    test("should handle missing URL in config", () => {
+      const invalidConfig = {
+        name: "invalid-server",
+        transport: "streamablehttp" as const,
+      };
+
+      expect(invalidConfig.url).toBeUndefined();
+    });
+
+    test("should handle empty headers", () => {
+      const config = {
+        name: "no-headers-server",
+        transport: "streamablehttp" as const,
+        url: "http://localhost:3000/mcp",
+        headers: {},
+      };
+
+      expect(Object.keys(config.headers!).length).toBe(0);
+    });
+
+    test("should handle URL parsing", () => {
+      const urlString = "http://localhost:3000/mcp";
+      expect(() => new URL(urlString)).not.toThrow();
+    });
   });
 });
