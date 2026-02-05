@@ -1,0 +1,90 @@
+# Bunfig.toml - Goblin MCP Gateway Configuration
+# https://bun.com/docs/runtime/bunfig
+
+[build]
+# Entry points for the main application and CLI
+entryPoints = ["src/index.ts", "src/cli/index.ts"]
+
+# Output directory for bundled files
+outdir = "dist"
+
+# Target Bun runtime for maximum performance
+target = "bun"
+
+# ESM module format for ES2022 compatibility
+format = "esm"
+
+# Minify for production builds (reduces bundle size)
+minify = true
+
+# External source maps for debugging production issues
+sourcemap = "external"
+
+# Position-Independent Executable for faster CLI startup
+pie = true
+
+# Generate declaration files (.d.ts) for TypeScript support
+declare = true
+
+# External packages - not bundled (reduces size, loaded at runtime)
+# react-devtools-core is only needed for development debugging
+external = ["react-devtools-core"]
+
+[test]
+# Enable coverage by default for test runs
+coverage = true
+
+# Coverage directory
+coverageDir = "coverage"
+
+# Test match patterns
+match = ["*.test.ts", "*.test.js"]
+
+# Exclude patterns for test runs
+exclude = ["node_modules", "dist", "build", "coverage"]
+
+# Coverage reporters to use
+coverageReporters = ["text", "lcov", "html"]
+
+# Threshold for coverage (fail if below)
+coverageThreshold = {
+  global = {
+    branches = 50,
+    functions = 50,
+    lines = 50,
+    statements = 50
+  }
+}
+
+[run]
+# Auto-install missing dependencies
+autoInstall = true
+
+# Hot reloading for development (disabled by default)
+hotswap = false
+
+[install]
+# Cache directory for Bun's package cache
+cacheDir = ".bun-cache"
+
+# Force reinstall all packages
+force = false
+
+# Frozen lockfile (prevent modifications to bun.lock)
+frozenLockfile = false
+
+[package]
+# Create a package.json entry point mapping
+# bin field mapping for CLI
+entry = "dist/index.js"
+
+[typescript]
+# Generate tsconfig.json for IDE support
+tsconfig = "tsconfig.bun.json"
+
+[debug]
+# Enable Bun's built-in debugger
+enabled = false
+
+# Port for debugger
+port = 9229
