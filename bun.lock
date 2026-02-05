@@ -6,6 +6,7 @@
       "name": "goblin",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.25.3",
+        "@types/bun": "^1.3.8",
         "commander": "^14.0.2",
         "env-paths": "^4.0.0",
         "hono": "^4.11.7",
@@ -22,11 +23,9 @@
       "devDependencies": {
         "@biomejs/biome": "^2.3.13",
         "@modelcontextprotocol/server-everything": "^2026.1.26",
-        "@types/node": "^25.1.0",
         "@types/react": "^19.2.10",
         "autocannon": "^8.0.0",
         "bun-types": "^1.3.8",
-        "husky": "^9.1.7",
         "pino-pretty": "^11.3.0",
         "typescript": "^5.9.3",
       },
@@ -66,6 +65,8 @@
     "@modelcontextprotocol/server-everything": ["@modelcontextprotocol/server-everything@2026.1.26", "", { "dependencies": { "@modelcontextprotocol/sdk": "^1.25.2", "cors": "^2.8.5", "express": "^5.2.1", "jszip": "^3.10.1", "zod": "^3.25.0", "zod-to-json-schema": "^3.23.5" }, "bin": { "mcp-server-everything": "dist/index.js" } }, "sha512-RIEXAQuKZeXZqFzJMqLDlzmMmG5sjq2uhS/VqzF4HIZ3w1V73YcWf+UXkxJueJuHMBO3Z8ceBrQ5wI6o/plZ+Q=="],
 
     "@pinojs/redact": ["@pinojs/redact@0.4.0", "", {}, "sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg=="],
+
+    "@types/bun": ["@types/bun@1.3.8", "", { "dependencies": { "bun-types": "1.3.8" } }, "sha512-3LvWJ2q5GerAXYxO2mffLTqOzEu5qnhEAlh48Vnu8WQfnmSwbgagjGZV6BoHKJztENYEDn6QmVd949W4uESRJA=="],
 
     "@types/node": ["@types/node@25.1.0", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-t7frlewr6+cbx+9Ohpl0NOTKXZNV9xHRmNOvql47BFJKcEG1CxtxlPEEe+gR9uhVWM4DwhnvTF110mIL4yP9RA=="],
 
@@ -250,8 +251,6 @@
     "http-errors": ["http-errors@2.0.1", "", { "dependencies": { "depd": "~2.0.0", "inherits": "~2.0.4", "setprototypeof": "~1.2.0", "statuses": "~2.0.2", "toidentifier": "~1.0.1" } }, "sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ=="],
 
     "http-parser-js": ["http-parser-js@0.5.10", "", {}, "sha512-Pysuw9XpUq5dVc/2SMHpuTY01RFl8fttgcyunjL7eEMhGM3cI4eOmiCycJDVCo/7O7ClfQD3SaI6ftDzqOXYMA=="],
-
-    "husky": ["husky@9.1.7", "", { "bin": { "husky": "bin.js" } }, "sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA=="],
 
     "hyperid": ["hyperid@3.3.0", "", { "dependencies": { "buffer": "^5.2.1", "uuid": "^8.3.2", "uuid-parse": "^1.1.0" } }, "sha512-7qhCVT4MJIoEsNcbhglhdmBKb09QtcmJNiIQGq7js/Khf5FtQQ9bzcAuloeqBeee7XD7JqDeve9KNlQya5tSGQ=="],
 
