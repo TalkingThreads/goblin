@@ -450,11 +450,28 @@ export class HttpGateway {
     const now = Date.now();
 
     if (sessionId && this.streamableHttpSessions.has(sessionId)) {
-      const existing = this.streamableHttpSessions.get(sessionId)!;
-      transport = existing.transport;
-      server = existing.server;
-      existing.lastActivity = now;
-      this.setSessionTimeout(sessionId);
+      const existing = this.streamableHttpSessions.get(sessionId);
+      if (existing) {
+        transport = existing.transport;
+        server = existing.server;
+        existing.lastActivity = now;
+        this.setSessionTimeout(sessionId);
+      } else {
+        transport = new StreamableHttpServerTransport({
+          sessionIdGenerator: () => crypto.randomUUID(),
+        });
+        server = new GatewayServer(this.registry, this.router, this.config);
+        server.connect(transport);
+
+        const newSessionId = crypto.randomUUID();
+        this.streamableHttpSessions.set(newSessionId, { transport, server, lastActivity: now });
+        this.setSessionTimeout(newSessionId);
+
+        logger.info(
+          { requestId, sessionId: newSessionId },
+          "Session recreated (original was missing)",
+        );
+      }
     } else {
       transport = new StreamableHttpServerTransport({
         sessionIdGenerator: () => crypto.randomUUID(),

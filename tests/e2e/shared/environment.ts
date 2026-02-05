@@ -31,7 +31,7 @@ export class TestEnvironment {
     dockerContainers: [],
   };
 
-  constructor(private _config: TestEnvironmentConfig) {}
+  constructor(_config: TestEnvironmentConfig) {}
 
   /**
    * Create a temporary directory for the test
@@ -79,7 +79,10 @@ export class TestEnvironment {
   /**
    * Create a mock MCP server config for testing
    */
-  createMockServerConfig(name: string, transport: "stdio" | "http" | "sse"): object {
+  createMockServerConfig(
+    name: string,
+    transport: "stdio" | "http" | "sse" | "streamablehttp",
+  ): object {
     return {
       name,
       transport,
@@ -93,6 +96,9 @@ export class TestEnvironment {
       }),
       ...(transport === "sse" && {
         url: "http://localhost:3002/sse",
+      }),
+      ...(transport === "streamablehttp" && {
+        url: "http://localhost:3003/mcp",
       }),
     };
   }

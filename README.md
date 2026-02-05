@@ -183,6 +183,90 @@ curl -X POST http://localhost:3000/mcp \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
 ```
 
+### Client Transport Types
+
+Goblin supports multiple transport types for connecting to backend MCP servers:
+
+#### STDIO Transport
+
+Local subprocess-based transport for running MCP servers as child processes:
+
+```json
+{
+  "name": "filesystem",
+  "transport": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+  "enabled": true
+}
+```
+
+#### HTTP Transport
+
+Simple HTTP transport for connecting to HTTP-based MCP servers:
+
+```json
+{
+  "name": "remote-server",
+  "transport": "http",
+  "url": "http://localhost:3001/mcp",
+  "enabled": true
+}
+```
+
+#### SSE Transport
+
+Server-Sent Events transport for server-push notifications:
+
+```json
+{
+  "name": "sse-server",
+  "transport": "sse",
+  "url": "http://localhost:3002/sse",
+  "enabled": true
+}
+```
+
+#### Streamable HTTP Transport
+
+Stateful HTTP transport with session management, automatic reconnection, and custom headers support:
+
+```json
+{
+  "name": "streamable-server",
+  "transport": "streamablehttp",
+  "url": "http://localhost:3003/mcp",
+  "headers": {
+    "Authorization": "Bearer your-token-here",
+    "X-Custom-Header": "custom-value"
+  },
+  "reconnect": {
+    "enabled": true,
+    "delay": 1000,
+    "maxRetries": 5,
+    "backoffMultiplier": 2
+  },
+  "enabled": true
+}
+```
+
+**Streamable HTTP Features:**
+- Session-based stateful connections via `mcp-session-id` header
+- Automatic reconnection with configurable delay and exponential backoff
+- Custom headers for authentication (Bearer tokens, API keys)
+- Configurable reconnection attempts and timing
+
+**Headers Support:**
+- Bearer tokens: `"Authorization": "Bearer token"`
+- API keys: `"X-API-Key": "your-key"`
+- Custom headers: `"X-Custom-Header": "value"`
+
+**Reconnection Configuration:**
+- `enabled`: Enable/disable automatic reconnection (default: true)
+- `delay`: Initial delay in ms before reconnecting (default: 1000)
+- `maxRetries`: Maximum reconnection attempts (default: 5)
+- `backoffMultiplier`: Exponential backoff multiplier (default: 2)
+
 See [API Reference](docs/api/overview.md) for complete Streamable HTTP documentation.
 
 See [CLI Reference](docs/cli-reference.md) for complete STDIO mode documentation.

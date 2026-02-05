@@ -671,7 +671,7 @@ goblin users delete --username olduser
 interface ServerConfig {
   name: string;
   description?: string;
-  transport: "stdio" | "http" | "sse";
+  transport: "stdio" | "http" | "sse" | "streamablehttp";
   enabled?: boolean;
 
   // STDIO transport
@@ -679,15 +679,234 @@ interface ServerConfig {
   args?: string[];
   env?: Record<string, string>;
 
-  // HTTP transport
+  // HTTP/SSE/StreamableHTTP transports
   url?: string;
   headers?: Record<string, string>;
+
+  // Reconnection settings
+  reconnect?: {
+    enabled?: boolean;
+    delay?: number;
+    maxRetries?: number;
+    backoffMultiplier?: number;
+  };
 
   // Connection settings
   connectionTimeout?: number;
   maxRetries?: number;
 }
 ```
+
+### Streamable HTTP Client Transport Configuration
+
+Goblin supports connecting to MCP servers using the Streamable HTTP protocol. This transport provides stateful connections with session management, automatic reconnection, and custom headers support.
+
+#### Configuration Options
+
+| Option | Type | Required | Default | Description |
+|--------|------|----------|---------|-------------|
+| `transport` | string | Yes | - | Must be `"streamablehttp"` |
+| `url` | string | Yes | - | MCP server URL (e.g., `http://localhost:3000/mcp`) |
+| `headers` | object | No | - | Custom HTTP headers for authentication |
+| `reconnect.enabled` | boolean | No | `true` | Enable automatic reconnection |
+| `reconnect.delay` | number | No | `1000` | Initial delay in ms before reconnecting |
+| `reconnect.maxRetries` | number | No | `5` | Maximum reconnection attempts |
+| `reconnect.backoffMultiplier` | number | No | `2` | Exponential backoff multiplier |
+| `connectionTimeout` | number | No | `30000` | Connection timeout in ms |
+
+#### Example Configuration
+
+**Basic Streamable HTTP Server:**
+
+```json
+{
+  "name": "remote-mcp-server",
+  "transport": "streamablehttp",
+  "url": "http://localhost:3000/mcp",
+  "enabled": true
+}
+```
+
+**With Authentication Headers:**
+
+```json
+{
+  "name": "authenticated-server",
+  "transport": "streamablehttp",
+  "url": "https://api.example.com/mcp",
+  "headers": {
+    "Authorization": "Bearer your-token-here",
+    "X-API-Key": "your-api-key"
+  },
+  "enabled": true
+}
+```
+
+**With Custom Headers:**
+
+```json
+{
+  "name": "custom-server",
+  "transport": "streamablehttp",
+  "url": "http://localhost:3001/mcp",
+  "headers": {
+    "X-Client-Version": "1.0.0",
+    "X-Request-ID": "request-123",
+    "X-Custom-Header": "custom-value"
+  },
+  "enabled": true
+}
+```
+
+**With Reconnection Configuration:**
+
+```json
+{
+  "name": "reliable-server",
+  "transport": "streamablehttp",
+  "url": "http://localhost:3002/mcp",
+  "reconnect": {
+    "enabled": true,
+    "delay": 2000,
+    "maxRetries": 10,
+    "backoffMultiplier": 1.5
+  },
+  "connectionTimeout": 60000,
+  "enabled": true
+}
+```
+
+**Complete Configuration:**
+
+```json
+{
+  "name": "production-server",
+  "description": "Production MCP server with full configuration",
+  "transport": "streamablehttp",
+  "url": "https://mcp.example.com/api/v1/mcp",
+  "headers": {
+    "Authorization": "Bearer ${MCP_TOKEN}",
+    "X-Client-Id": "goblin-gateway",
+    "X-Client-Version": "1.0.0"
+  },
+  "reconnect": {
+    "enabled": true,
+    "delay": 1000,
+    "maxRetries": 5,
+    "backoffMultiplier": 2
+  },
+  "connectionTimeout": 30000,
+  "enabled": true
+}
+```
+
+#### Headers Types
+
+**Bearer Token:**
+
+```json
+{
+  "headers": {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+**API Key:**
+
+```json
+{
+  "headers": {
+    "X-API-Key": "your-api-key-here"
+  }
+}
+```
+
+**Multiple Headers:**
+
+```json
+{
+  "headers": {
+    "Authorization": "Bearer token",
+    "X-API-Key": "key",
+    "X-Client-Version": "1.0.0",
+    "X-Request-ID": "req-123",
+    "X-Custom-Header": "value"
+  }
+}
+```
+
+#### Reconnection Behavior
+
+When `reconnect.enabled` is `true`, Goblin will automatically attempt to reconnect to the server if the connection is lost:
+
+1. **Initial Delay**: Waits `reconnect.delay` milliseconds before first reconnection attempt
+2. **Exponential Backoff**: Each subsequent attempt multiplies the delay by `reconnect.backoffMultiplier`
+3. **Max Retries**: Stops after `reconnect.maxRetries` failed attempts
+
+**Example reconnection progression (default settings):**
+- Attempt 1: 1000ms delay
+- Attempt 2: 2000ms delay (2x)
+- Attempt 3: 4000ms delay (2x)
+- Attempt 4: 8000ms delay (2x)
+- Attempt 5: 16000ms delay (2x)
+- Final attempt: Stops and reports error
+
+#### Session Access
+
+When using StreamableHTTPClientTransport, you can access the session ID via the SDK's built-in `sessionId` property:
+
+```typescript
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamablehttp.js";
+
+const transport = new StreamableHTTPClientTransport({
+  url: new URL("http://localhost:3000/mcp"),
+  requestInit: {
+    headers: {
+      Authorization: "Bearer token",
+    },
+  },
+});
+
+const sessionId = transport.sessionId;
+```
+
+#### Environment Variable Substitution
+
+Headers values support environment variable substitution using `${VAR_NAME}` syntax:
+
+```json
+{
+  "name": "server-with-env",
+  "transport": "streamablehttp",
+  "url": "http://localhost:3000/mcp",
+  "headers": {
+    "Authorization": "Bearer ${MCP_TOKEN}",
+    "X-Client-Id": "${CLIENT_ID}"
+  },
+  "enabled": true
+}
+```
+
+Set the environment variables before starting Goblin:
+
+```bash
+export MCP_TOKEN="your-token"
+export CLIENT_ID="goblin-client"
+goblin start
+```
+
+#### Error Handling
+
+The transport reports errors with structured error codes:
+
+| Error Code | Description |
+|------------|-------------|
+| `TRANSPORT-001` | Connection failed |
+| `TRANSPORT-002` | Connection timeout |
+| `TRANSPORT-003` | Server returned error |
+| `TRANSPORT-004` | Reconnection failed after max retries |
+| `TRANSPORT-005` | Invalid response from server |
 
 ### Gateway Configuration
 

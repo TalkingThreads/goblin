@@ -194,7 +194,7 @@ export class CliTester {
     const { stdin } = this.process;
 
     return new Promise((resolve, reject) => {
-      stdin.write(command + "\n", (error) => {
+      stdin.write(`${command}\n`, (error) => {
         if (error) reject(error);
         else resolve();
       });
@@ -359,7 +359,7 @@ export class InteractiveSession {
     const { stdin } = this.process;
 
     await new Promise<void>((resolve, reject) => {
-      stdin.write(text + "\n", (error) => {
+      stdin.write(`${text}\n`, (error) => {
         if (error) reject(error);
         else resolve();
       });

@@ -91,7 +91,7 @@ export class RealMcpServer {
           reject(error);
         });
 
-        this.process.on("exit", (code) => {
+        this.process.on("exit", () => {
           if (this.status === "running") {
             this.status = "stopped";
           }

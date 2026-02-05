@@ -105,6 +105,15 @@ describe("Real Backends - Server Configuration", () => {
     expect(config).toHaveProperty("url", "http://localhost:3002/sse");
   });
 
+  test("can create streamablehttp server config", () => {
+    const config = env.createMockServerConfig("test-streamablehttp", "streamablehttp");
+
+    expect(config).toHaveProperty("name", "test-streamablehttp");
+    expect(config).toHaveProperty("transport", "streamablehttp");
+    expect(config).toHaveProperty("enabled", true);
+    expect(config).toHaveProperty("url", "http://localhost:3003/mcp");
+  });
+
   test("can create gateway config", () => {
     const servers = [env.createMockServerConfig("server1", "stdio")];
     const config = env.createGatewayConfig(servers);

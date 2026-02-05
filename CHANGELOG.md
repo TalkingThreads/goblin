@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+- **Streamable HTTP Client Transport**: Connect to MCP servers using Streamable HTTP protocol
+  - `StreamableHttpTransport` class wrapping SDK's `StreamableHTTPClientTransport`
+  - `streamablehttp` transport type in `TransportTypeSchema`, `Transport` interface, and `TransportPool`
+  - Headers support for authentication (Bearer tokens, API keys, custom headers)
+  - Configurable reconnection with exponential backoff (delay, maxRetries, backoffMultiplier)
+  - Session ID access via SDK's built-in `sessionId` property
+  - Unit tests: 30 passing tests
+  - Integration tests: 30 passing tests
+  - E2E tests: 12 tests for configuration and infrastructure
+  - Performance tests: Throughput, latency, session performance benchmarks
+  - Documentation: `README.md` client transport types section
+
 - **Streamable HTTP Transport**: Stateful MCP connections over HTTP with session management
   - `POST /mcp` endpoint for Streamable HTTP protocol (MCP 2025-11-05)
   - `StreamableHttpServerTransport` wrapper around SDK's `WebStandardStreamableHTTPServerTransport`
