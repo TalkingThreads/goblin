@@ -106,11 +106,31 @@ Goblin MCP Gateway is a **Model Context Protocol (MCP) aggregator** that provide
 - Hot reload support
 - Environment variable overrides
 - OS-standard paths
+- First-run auto-initialization
+- Centralized ConfigManager singleton
 
 **Key Files**:
+- `src/config/manager.ts` - ConfigManager singleton (centralized config handling)
 - `src/config/loader.ts` - Config loading
+- `src/config/initializer.ts` - First-run detection
+- `src/config/writer.ts` - Config file writing
+- `src/config/defaults.ts` - Default configuration
+- `src/config/paths.ts` - Cross-platform path resolution
 - `src/config/schema.ts` - JSON Schema
 - `src/config/watcher.ts` - Hot reload
+
+**ConfigManager API**:
+```typescript
+import { initConfig, getConfigManager } from "./config/manager.js";
+
+// Initialize with optional custom path
+const config = await initConfig({ customPath: "/path/to/config.json" });
+
+// Or use singleton pattern
+const manager = getConfigManager();
+await manager.initialize({ customPath: "/path/to/config.json" });
+const config = manager.getConfig();
+```
 
 ### 6. Observability
 

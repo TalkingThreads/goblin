@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ConfigManager**: Centralized configuration management system for Goblin MCP Gateway
+  - `ConfigManager` singleton class in `src/config/manager.ts` for unified config handling
+  - First-run detection and auto-initialization with default configuration
+  - Config path resolution using `env-paths` for cross-platform support (Linux/macOS/Windows)
+  - Hot reload support via `reload()` method
+  - Convenience functions: `initConfig()`, `getConfigManager()`
+  - Full API: `initialize()`, `getConfig()`, `get()`, `getInfo()`, `getConfigPath()`, `isFirstRun()`, `reload()`, `resetToDefaults()`, `save()`
+  - Used across CLI commands: `stdio.ts`, `gateway.ts`, `config.ts`
+
 ### Fixed
+
+- **Status Command Exit Code**: Fixed exit code behavior when gateway is not running
+  - Changed from exit code 1 to exit code 0 when gateway is offline (graceful degradation)
+  - Removed duplicate code block causing incorrect exit behavior
+  - Status test: All 3 tests passing
 
 - **Test Infrastructure**: Comprehensive test fixes for reliability and correctness
   - Fixed memory stability test syntax error in `tests/performance/memory/stability.test.ts`

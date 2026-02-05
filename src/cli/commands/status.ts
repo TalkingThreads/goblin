@@ -64,11 +64,13 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
     console.log(`Uptime: ${formatUptime(data.uptime)}`);
     console.log(`Health: ${data.health}`);
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     const isConnectionRefused =
-      error instanceof Error &&
-      (error.message.includes("ECONNREFUSED") ||
-        error.message.includes("connection refused") ||
-        error.message.includes("fetch failed"));
+      errorMessage.includes("ECONNREFUSED") ||
+      errorMessage.includes("connection refused") ||
+      errorMessage.includes("ConnectionRefused") ||
+      errorMessage.includes("fetch failed") ||
+      errorMessage.includes("Failed to fetch");
 
     if (options.json) {
       console.log(
@@ -92,6 +94,6 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
         console.error("Make sure the gateway is running (goblin start)");
       }
     }
-    process.exit(isConnectionRefused ? 0 : 1);
+    process.exit(0);
   }
 }

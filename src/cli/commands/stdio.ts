@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { loadConfig } from "../../config/index.js";
+import { getConfigManager, initConfig } from "../../config/manager.js";
 import { GoblinGateway } from "../../core/gateway.js";
 import { GatewayServer } from "../../gateway/server.js";
 import { createLogger, setLogToStderr } from "../../observability/logger.js";
@@ -22,8 +22,8 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
     setLogToStderr(true);
     logger.info({ options }, "Starting Goblin in STDIO mode...");
 
-    // 2. Load config manually to apply overrides
-    const config = await loadConfig(options.config);
+    // 2. Initialize config via ConfigManager
+    const config = await initConfig(options.config ? { customPath: options.config } : undefined);
 
     // Apply environment overrides
     if (process.env["GOBLIN_PORT"]) {
@@ -85,7 +85,8 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
       process.on("SIGHUP", async () => {
         logger.info("Received SIGHUP, reloading configuration...");
         try {
-          const newConfig = await loadConfig(options.config);
+          const manager = getConfigManager();
+          const newConfig = await manager.reload();
 
           if (process.env["GOBLIN_PORT"]) {
             newConfig.gateway.port = Number.parseInt(process.env["GOBLIN_PORT"] as string, 10);

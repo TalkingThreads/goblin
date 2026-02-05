@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { getConfigManager } from "../../config/manager.js";
 import { getConfigPath } from "../../config/paths.js";
 import { ConfigSchema } from "../../config/schema.js";
 import { createLogger } from "../../observability/logger.js";
@@ -20,11 +20,12 @@ function resolveConfigPath(options: ConfigOptions): string {
  */
 export async function validateConfigCommand(options: ConfigOptions): Promise<void> {
   const configPath = resolveConfigPath(options);
+  const manager = getConfigManager();
 
   try {
-    const content = await readFile(configPath, "utf-8");
-    const raw = JSON.parse(content);
-    const result = ConfigSchema.safeParse(raw);
+    await manager.initialize({ customPath: configPath });
+    const config = manager.getConfig();
+    const result = ConfigSchema.safeParse(config);
 
     if (result.success) {
       if (options.json) {
@@ -73,16 +74,17 @@ export async function validateConfigCommand(options: ConfigOptions): Promise<voi
  */
 export async function showConfigCommand(options: ConfigOptions): Promise<void> {
   const configPath = resolveConfigPath(options);
+  const manager = getConfigManager();
 
   try {
-    const content = await readFile(configPath, "utf-8");
-    const raw = JSON.parse(content);
+    await manager.initialize({ customPath: configPath });
+    const config = manager.getConfig();
 
     if (options.json) {
-      console.log(JSON.stringify(raw, null, 2));
+      console.log(JSON.stringify(config, null, 2));
     } else {
       console.log(`Configuration from ${configPath}:`);
-      console.log(JSON.stringify(raw, null, 2));
+      console.log(JSON.stringify(config, null, 2));
     }
   } catch (error) {
     if (options.json) {

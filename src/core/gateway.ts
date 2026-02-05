@@ -1,4 +1,5 @@
-import { type Config, ConfigWatcher, generateSchema, loadConfig } from "../config/index.js";
+import { type Config, ConfigWatcher, generateSchema } from "../config/index.js";
+import { getConfigManager } from "../config/manager.js";
 import { HttpGateway, Registry, Router } from "../gateway/index.js";
 import { createLogger, flushLogs } from "../observability/logger.js";
 import { catalogList, catalogSearch } from "../tools/meta/catalog.js";
@@ -49,8 +50,15 @@ export class GoblinGateway {
       logger.warn({ error }, "Failed to generate config schema");
     }
 
-    // Load Config if not provided
-    const config = customConfig ?? (await loadConfig(configPath));
+    // Load Config if not provided - use ConfigManager
+    let config: Config;
+    if (customConfig) {
+      config = customConfig;
+    } else {
+      const manager = getConfigManager();
+      await manager.initialize(configPath ? { customPath: configPath } : undefined);
+      config = manager.getConfig();
+    }
     this.router = new Router(this.registry, this.transportPool, config);
 
     // Register Meta Tools
