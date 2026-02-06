@@ -117,6 +117,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `stop`: Examples for stopping gateway
   - Tests: 15 passing smoke tests
 
+- **Log Level Filtering**: Added `--level` filter to `goblin logs` command
+  - Filter logs by level: trace (10), debug (20), info (30), warn (40), error (50), fatal (60)
+  - Case-insensitive level names (--level error, --level ERROR, --level ErRoR)
+  - Shows all levels at or above the specified filter
+  - Useful for debugging: `goblin logs --level error` shows only errors
+  - Tests: 8 passing tests
+
 ### Fixed
 
 - **Status Command Exit Code**: Fixed exit code behavior when gateway is not running
