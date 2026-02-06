@@ -1,6 +1,15 @@
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { Command } from "commander";
+import { z } from "zod";
+import { getConfigPath } from "../../config/paths.js";
+import type { Config, ServerConfig } from "../../config/schema.js";
+import { writeConfig } from "../../config/writer.js";
 import { createLogger } from "../../observability/logger.js";
 
 const logger = createLogger("cli-servers");
+
+const TransportTypeSchema = z.enum(["stdio", "http", "sse", "streamablehttp"]);
 
 interface ServerOptions {
   json?: boolean;
@@ -14,6 +23,170 @@ interface ServerInfo {
   status: "online" | "offline";
   enabled: boolean;
   tools: number;
+}
+
+interface AddServerOptions {
+  name: string;
+  transport: string;
+  command?: string;
+  args?: string[];
+  httpUrl?: string;
+  headers?: Record<string, string>;
+  enabled?: boolean;
+  yes?: boolean;
+  config?: string;
+}
+
+function isValidTransport(
+  transport: string,
+): transport is "stdio" | "http" | "sse" | "streamablehttp" {
+  return TransportTypeSchema.safeParse(transport).success;
+}
+
+async function loadConfig(configPath?: string): Promise<Config> {
+  const path = configPath ?? getConfigPath();
+  if (!existsSync(path)) {
+    throw new Error(`Configuration file not found: ${path}`);
+  }
+  const content = await readFile(path, "utf-8");
+  return JSON.parse(content) as Config;
+}
+
+async function saveConfig(config: Config, configPath?: string): Promise<void> {
+  await writeConfig(config, { customPath: configPath, includeComments: false });
+}
+
+async function addServer(options: AddServerOptions): Promise<void> {
+  const configPath = options.config;
+  const config = await loadConfig(configPath);
+
+  if (!isValidTransport(options.transport)) {
+    throw new Error(
+      `Invalid transport type: ${options.transport}. Valid types: stdio, http, sse, streamablehttp`,
+    );
+  }
+
+  const existingServer = config.servers?.find((s) => s.name === options.name);
+  if (existingServer) {
+    throw new Error(`Server with name '${options.name}' already exists`);
+  }
+
+  const serverConfig: ServerConfig = {
+    name: options.name,
+    transport: options.transport,
+    mode: "stateful",
+    enabled: options.enabled ?? true,
+  };
+
+  if (options.transport === "stdio") {
+    if (!options.command) {
+      throw new Error("STDIO transport requires --command option");
+    }
+    serverConfig.command = options.command;
+    if (options.args) {
+      serverConfig.args = options.args;
+    }
+  } else if (
+    options.transport === "http" ||
+    options.transport === "sse" ||
+    options.transport === "streamablehttp"
+  ) {
+    if (!options.httpUrl) {
+      throw new Error(`${options.transport} transport requires --url option`);
+    }
+    serverConfig.url = options.httpUrl;
+    if (options.headers) {
+      serverConfig.headers = options.headers;
+    }
+  }
+
+  if (!config.servers) {
+    config.servers = [];
+  }
+  config.servers.push(serverConfig);
+
+  await saveConfig(config, configPath);
+
+  console.log(`Server '${options.name}' added successfully.`);
+  console.log(`  Transport: ${options.transport}`);
+  if (options.transport === "stdio") {
+    console.log(`  Command: ${serverConfig.command}`);
+    if (serverConfig.args) {
+      console.log(`  Args: ${serverConfig.args.join(" ")}`);
+    }
+  } else {
+    console.log(`  URL: ${serverConfig.url}`);
+  }
+  console.log(`  Enabled: ${serverConfig.enabled}`);
+  console.log(`\nConfiguration saved to: ${configPath ?? getConfigPath()}`);
+}
+
+/**
+ * Create the servers command with add subcommand
+ */
+export function createServersCommand(): Command {
+  const command = new Command("servers");
+
+  command.description("List and manage configured servers");
+
+  command
+    .command("add <name> <transport>")
+    .description("Add a new server to the configuration")
+    .option("--command <command>", "Command to execute (for stdio transport)")
+    .option("--args <args...>", "Arguments for the command (for stdio transport)")
+    .option("--url <url>", "URL for HTTP/SSE/streamablehttp transports")
+    .option("--header <key:value>", "Custom headers (can be used multiple times)")
+    .option("--enabled", "Enable the server (default: true)", true)
+    .option("--disabled", "Disable the server")
+    .option("--yes", "Skip confirmation prompt", false)
+    .option("--config <path>", "Path to config file")
+    .action(
+      async (
+        name: string,
+        transport: string,
+        options: {
+          command?: string;
+          args?: string[];
+          url?: string;
+          header?: string | string[];
+          enabled?: boolean;
+          disabled?: boolean;
+          yes?: boolean;
+          config?: string;
+        },
+      ) => {
+        try {
+          const headers: Record<string, string> = {};
+          if (options.header) {
+            const headerArray = Array.isArray(options.header) ? options.header : [options.header];
+            for (const h of headerArray) {
+              const [key, value] = h.split(":");
+              if (!key || !value) {
+                throw new Error(`Invalid header format: ${h}. Use --header "Key:Value"`);
+              }
+              headers[key.trim()] = value.trim();
+            }
+          }
+
+          await addServer({
+            name,
+            transport,
+            command: options.command,
+            args: options.args,
+            httpUrl: options.url,
+            headers: Object.keys(headers).length > 0 ? headers : undefined,
+            enabled: options.disabled ? false : options.enabled,
+            yes: options.yes,
+            config: options.config,
+          });
+        } catch (error) {
+          console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+          process.exit(1);
+        }
+      },
+    );
+
+  return command;
 }
 
 /**

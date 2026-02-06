@@ -70,11 +70,10 @@ describe("CLI Servers Command", () => {
     expect(duration).toBeLessThan(2000);
   });
 
-  it("should show options in help", async () => {
+  it("should show add subcommand in help", async () => {
     const result = await runCli(["servers", "--help"]);
 
-    expect(result.stdout).toContain("--json");
-    expect(result.stdout).toContain("--url");
-    expect(result.stdout).toContain("--status");
+    expect(result.stdout).toContain("add");
+    expect(result.stdout).toContain("Add a new server");
   });
 });

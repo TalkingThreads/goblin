@@ -5,7 +5,7 @@ import { Command } from "commander";
 import { showConfigCommand, validateConfigCommand } from "./commands/config.js";
 import { healthCommand } from "./commands/health.js";
 import { logsCommand } from "./commands/logs.js";
-import { serversCommand } from "./commands/servers.js";
+import { createServersCommand } from "./commands/servers.js";
 import { registerSlashCommands } from "./commands/slashes/index.js";
 import { startGateway } from "./commands/start.jsx";
 import { statusCommand } from "./commands/status.js";
@@ -121,17 +121,7 @@ async function main(): Promise<void> {
       await toolsCommand(options);
     });
 
-  program
-    .command("servers")
-    .description("List configured servers")
-    .option("--json", "Output in JSON format")
-    .option("--url <url>", "Gateway URL", "http://localhost:3000")
-    .option("--status <status>", "Filter by status (online, offline, all)", "all")
-    .action(
-      async (options: { json?: boolean; url?: string; status?: "online" | "offline" | "all" }) => {
-        await serversCommand(options);
-      },
-    );
+  program.addCommand(createServersCommand());
 
   const config = program.command("config").description("Configuration management");
 
