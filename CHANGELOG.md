@@ -49,6 +49,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Backward-compatible `writeConfig()` API
   - Unit tests: 13 passing tests
 
+- **Global Flags**: Added standardized global flags for all CLI commands
+  - `--port <number>` - Override gateway port (default: 3000)
+  - `--host <host>` - Override gateway host (default: 127.0.0.1)
+  - `--verbose` - Enable verbose logging
+  - `--json` - Output in JSON format
+  - `--config <path>` - Path to custom config file
+  - All gateway commands (status, health, tools, stop) respect global flags
+  - Servers commands respect global `--config` flag
+  - Backward compatibility maintained with existing command-specific flags
+  - Smoke tests: 13 passing tests
+
 - **Root Help Overview with STDIO Default**: Added helpful overview when running `goblin` with `--help` or `-h`
   - Displays brief description of Goblin MCP Gateway
   - Shows common commands with examples (stdio, start, servers, tools, tui)

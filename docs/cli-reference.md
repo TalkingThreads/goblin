@@ -31,13 +31,35 @@ goblin [global-options] <command> [command-options] [arguments]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--help` | Show help for command | - |
-| `--version` | Show CLI version | - |
-| `--json` | Output JSON instead of human-readable | - |
-| `--verbose` | Enable verbose logging | - |
-| `--config` | Path to config file | OS default |
-| `--port` | Override gateway port | 3000 |
-| `--host` | Override gateway host | 127.0.0.1 |
+| `-h, --help` | Show help for command | - |
+| `-v, --version` | Show CLI version | - |
+| `--verbose` | Enable verbose logging | false |
+| `--json` | Output JSON instead of human-readable | false |
+| `--port <number>` | Override gateway port | 3000 |
+| `--host <host>` | Override gateway host | 127.0.0.1 |
+| `--config <path>` | Path to config file | OS default |
+
+### Using Global Options
+
+Global options can be specified before any command and apply to all commands:
+
+```bash
+# Use custom port for all commands
+goblin --port 8080 status
+goblin --port 8080 health
+goblin --port 8080 tools list
+
+# Combine multiple global options
+goblin --port 8080 --host 0.0.0.0 --json status
+
+# Use custom config file
+goblin --config /path/to/config.json servers list
+
+# Enable verbose logging
+goblin --verbose start
+```
+
+**Note:** Global options can be combined with command-specific options. When both are provided, command-specific options take precedence.
 
 ---
 
