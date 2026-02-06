@@ -73,16 +73,13 @@ describe("CLI Help Command", () => {
       expect(result.stdout).toContain("Commands");
     });
 
-    it("should list all available commands", async () => {
+    it("should list common commands", async () => {
       const result = await runCli(["--help"]);
 
+      expect(result.stdout).toContain("stdio");
       expect(result.stdout).toContain("start");
-      expect(result.stdout).toContain("status");
       expect(result.stdout).toContain("servers");
       expect(result.stdout).toContain("tools");
-      expect(result.stdout).toContain("config");
-      expect(result.stdout).toContain("logs");
-      expect(result.stdout).toContain("health");
     });
 
     it("should include command descriptions", async () => {

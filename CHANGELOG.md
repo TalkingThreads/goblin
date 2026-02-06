@@ -9,12 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Root Help Overview**: Added helpful overview when running `goblin` with no arguments
+- **Root Help Overview with STDIO Default**: Added helpful overview when running `goblin` with `--help` or `-h`
   - Displays brief description of Goblin MCP Gateway
   - Shows common commands with examples (stdio, start, servers, tools, tui)
   - Documents global flags (-h, --help, -v, --verbose, --version)
+  - Indicates STDIO mode as the default
   - Includes link to full documentation
-  - Smoke tests: 17 passing tests
+  - Smoke tests: 21 passing tests
+
+- **Default STDIO Mode**: Running `goblin` with no arguments now starts STDIO mode immediately
+  - Safer default: no network exposure, works with Claude CLI integration
+  - Users can run `goblin --help` or `goblin -h` to see help overview
+  - Tests: 3 passing tests for STDIO default behavior
 
 - **ConfigManager**: Centralized configuration management system for Goblin MCP Gateway
   - `ConfigManager` singleton class in `src/config/manager.ts` for unified config handling

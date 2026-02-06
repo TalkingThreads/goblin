@@ -189,12 +189,17 @@ async function main(): Promise<void> {
     .command("help")
     .description("Show help information")
     .action(() => {
-      program.help();
+      displayRootHelp(VERSION);
     });
 
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
+    await startStdioGateway({});
+    return;
+  }
+
+  if (args[0] === "-h" || args[0] === "--help") {
     displayRootHelp(VERSION);
     return;
   }
