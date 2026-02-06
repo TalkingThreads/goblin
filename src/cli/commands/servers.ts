@@ -121,6 +121,76 @@ async function addServer(options: AddServerOptions): Promise<void> {
   console.log(`\nConfiguration saved to: ${configPath ?? getConfigPath()}`);
 }
 
+async function enableServer(options: {
+  name: string;
+  yes?: boolean;
+  config?: string;
+}): Promise<void> {
+  const configPath = options.config;
+  const config = await loadConfig(configPath);
+
+  const server = config.servers?.find((s) => s.name === options.name);
+  if (!server) {
+    throw new Error(`Server '${options.name}' not found`);
+  }
+
+  if (server.enabled) {
+    throw new Error(`Server '${options.name}' is already enabled`);
+  }
+
+  console.log(`Server to enable:`);
+  console.log(`  Name: ${server.name}`);
+  console.log(`  Transport: ${server.transport}`);
+  console.log(`  Current Status: disabled`);
+
+  if (!options.yes) {
+    console.log("\nThis will enable the server.");
+    console.log("Use --yes to skip this confirmation.");
+    throw new Error("Confirmation required. Run with --yes to confirm.");
+  }
+
+  server.enabled = true;
+  await saveConfig(config, configPath);
+
+  console.log(`\nServer '${options.name}' enabled successfully.`);
+  console.log(`Configuration saved to: ${configPath ?? getConfigPath()}`);
+}
+
+async function disableServer(options: {
+  name: string;
+  yes?: boolean;
+  config?: string;
+}): Promise<void> {
+  const configPath = options.config;
+  const config = await loadConfig(configPath);
+
+  const server = config.servers?.find((s) => s.name === options.name);
+  if (!server) {
+    throw new Error(`Server '${options.name}' not found`);
+  }
+
+  if (!server.enabled) {
+    throw new Error(`Server '${options.name}' is already disabled`);
+  }
+
+  console.log(`Server to disable:`);
+  console.log(`  Name: ${server.name}`);
+  console.log(`  Transport: ${server.transport}`);
+  console.log(`  Current Status: enabled`);
+
+  if (!options.yes) {
+    console.log("\nThis will disable the server.");
+    console.log("Use --yes to skip this confirmation.");
+    throw new Error("Confirmation required. Run with --yes to confirm.");
+  }
+
+  server.enabled = false;
+  await saveConfig(config, configPath);
+
+  console.log(`\nServer '${options.name}' disabled successfully.`);
+  console.log(`Configuration saved to: ${configPath ?? getConfigPath()}`);
+}
+
 /**
  * Create the servers command with add subcommand
  */
@@ -220,6 +290,34 @@ export function createServersCommand(): Command {
 
         console.log(`\nServer '${name}' removed successfully.`);
         console.log(`Configuration saved to: ${configPath ?? getConfigPath()}`);
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        process.exit(1);
+      }
+    });
+
+  command
+    .command("enable <name>")
+    .description("Enable a disabled server")
+    .option("--yes", "Skip confirmation prompt", false)
+    .option("--config <path>", "Path to config file")
+    .action(async (name: string, options: { yes?: boolean; config?: string }) => {
+      try {
+        await enableServer({ name, yes: options.yes, config: options.config });
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        process.exit(1);
+      }
+    });
+
+  command
+    .command("disable <name>")
+    .description("Disable an enabled server")
+    .option("--yes", "Skip confirmation prompt", false)
+    .option("--config <path>", "Path to config file")
+    .action(async (name: string, options: { yes?: boolean; config?: string }) => {
+      try {
+        await disableServer({ name, yes: options.yes, config: options.config });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
         process.exit(1);
