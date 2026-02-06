@@ -95,6 +95,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Scripts can now programmatically detect and handle CLI failures
   - Exit code tests: 15 passing tests
 
+- **Command Suggestions**: Added helpful error suggestions for misspelled commands
+  - Uses Levenshtein distance to find similar commands
+  - Suggests 'status' for typos like 'statuz', 'stutus'
+  - Suggests 'tools' for 'toolss', 'servers' for 'serverss'
+  - Shows multiple suggestions when applicable
+  - Gracefully handles commands with no close matches
+  - Unit tests: 43 passing tests
+  - Smoke tests: 18 passing tests
+
 ### Fixed
 
 - **Status Command Exit Code**: Fixed exit code behavior when gateway is not running
