@@ -6,27 +6,27 @@
 
 ### Build & CI
 
-![Build](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/main.yml?style=flat-square&logo=github)
-![Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/tests.yml?style=flat-square&logo=github)
-![Smoke Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/smoke-tests.yml?style=flat-square&logo=github)
-![Performance Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/performance-tests.yml?style=flat-square&logo=github)
+![Build](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/main.yml?style=for-the-badge)
+![Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/tests.yml?style=for-the-badge&label=Tests)
+![Smoke Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/smoke-tests.yml?style=for-the-badge&label=Smoke%20Tests)
+![Performance Tests](https://img.shields.io/github/actions/workflow/status/TalkingThreads/goblin/performance-tests.yml?style=for-the-badge&label=Performance%20Tests)
 ![Coverage](https://img.shields.io/codecov/c/github/TalkingThreads/goblin?style=flat-square&logo=codecov)
 
 ### Version & License
 
-![Version](https://img.shields.io/npm/v/goblin?style=flat-square&logo=npm)
-![Version](https://img.shields.io/badge/Version-0.3.0--rc.5-blue?style=flat-square&logo=version)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
+![Version](https://img.shields.io/npm/v/goblin?style=for-the-badge&logo=npm)
+![Version](https://img.shields.io/badge/Version-0.3.0--rc.5-blue?style=for-the-badge&logo=version)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)
 
 ### Roadmap
 
-![v1](https://img.shields.io/badge/Roadmap-v1%20Production--Ready-green?style=flat-square&logo=roadmap)
-![v2](https://img.shields.io/badge/Roadmap-v2%20Enterprise--Ready-blue?style=flat-square&logo=roadmap)
+![v1](https://img.shields.io/badge/Roadmap-v1%20Production--Ready-green?style=for-the-badge&logo=roadmap)
+![v2](https://img.shields.io/badge/Roadmap-v2%20Enterprise--Ready-blue?style=for-the-badge&logo=roadmap)
 
 ### Technology
 
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript)
-![Bun](https://img.shields.io/badge/Bun-1.3-black?style=flat-square&logo=bun)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=for-the-badge&logo=typescript)
+![Bun](https://img.shields.io/badge/Bun-1.3-black?style=for-the-badge&logo=bun)
 
 ## About
 
@@ -112,6 +112,7 @@ GOBLIN_AUTH_APIKEY=xxx   # API key for apikey mode
 #### Integration Examples
 
 **Claude CLI:**
+
 ```json
 {
   "mcpServers": {
@@ -124,6 +125,7 @@ GOBLIN_AUTH_APIKEY=xxx   # API key for apikey mode
 ```
 
 **Smithery:**
+
 ```json
 {
   "mcpServers": {
@@ -162,6 +164,7 @@ goblin start
 ```
 
 **Features:**
+
 - Session-based stateful connections via `mcp-session-id` header
 - Automatic session timeout and cleanup
 - Stateless mode without session header
@@ -250,17 +253,20 @@ Stateful HTTP transport with session management, automatic reconnection, and cus
 ```
 
 **Streamable HTTP Features:**
+
 - Session-based stateful connections via `mcp-session-id` header
 - Automatic reconnection with configurable delay and exponential backoff
 - Custom headers for authentication (Bearer tokens, API keys)
 - Configurable reconnection attempts and timing
 
 **Headers Support:**
+
 - Bearer tokens: `"Authorization": "Bearer token"`
 - API keys: `"X-API-Key": "your-key"`
 - Custom headers: `"X-Custom-Header": "value"`
 
 **Reconnection Configuration:**
+
 - `enabled`: Enable/disable automatic reconnection (default: true)
 - `delay`: Initial delay in ms before reconnecting (default: 1000)
 - `maxRetries`: Maximum reconnection attempts (default: 5)
