@@ -304,6 +304,10 @@ goblin servers add my-server stdio --command "npx"
 goblin servers add http-server http --url "http://localhost:3001/mcp"
 goblin servers remove <name>          # Remove a server
 goblin servers remove my-server --yes # Remove with confirmation
+goblin servers enable <name>          # Enable a disabled server
+goblin servers enable my-server --yes
+goblin servers disable <name>         # Disable an enabled server
+goblin servers disable my-server --yes
 
 # Gateway status
 goblin status                   # Human-readable

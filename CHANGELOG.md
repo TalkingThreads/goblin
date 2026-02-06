@@ -33,6 +33,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--url` flag for gateway URL
   - Smoke tests: 19 passing tests
 
+- **Servers Enable/Disable Commands**: Added `goblin servers enable` and `goblin servers disable` commands
+  - `goblin servers enable <name>` - Enable a previously disabled server
+  - `goblin servers disable <name>` - Disable an enabled server
+  - Both commands show server details before making changes
+  - Both commands require `--yes` flag to confirm the action
+  - Disabled servers remain in configuration but are skipped during gateway startup
+  - Smoke tests: 12 passing tests
+
 - **Root Help Overview with STDIO Default**: Added helpful overview when running `goblin` with `--help` or `-h`
   - Displays brief description of Goblin MCP Gateway
   - Shows common commands with examples (stdio, start, servers, tools, tui)

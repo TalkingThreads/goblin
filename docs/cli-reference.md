@@ -614,6 +614,94 @@ goblin servers remove my-server --yes
 - If server not found: "Server '<name>' not found"
 - If confirmation missing: Error requesting `--yes` flag
 
+### `goblin servers enable`
+
+Enable a previously disabled server.
+
+**Basic Usage**:
+```bash
+goblin servers enable <name>
+```
+
+**Arguments**:
+| Argument | Description |
+|----------|-------------|
+| `<name>` | Name of the server to enable |
+
+**Options**:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--yes` | Skip confirmation prompt | false |
+| `--config <path>` | Path to config file | OS default |
+
+**Examples**:
+```bash
+# Enable a disabled server
+goblin servers enable my-server
+
+# Enable with auto-confirmation
+goblin servers enable my-server --yes
+
+# Enable with custom config
+goblin servers enable my-server --config /path/to/config.json
+```
+
+**Behavior**:
+- Shows server details before enabling (name, transport, current status)
+- Requires `--yes` flag to confirm the action
+- Displays success message after enabling
+- Configuration is automatically saved
+- Server will be used during gateway startup
+
+**Error Handling**:
+- If server not found: "Server '<name>' not found"
+- If already enabled: "Server '<name>' is already enabled"
+- If confirmation missing: "Confirmation required. Run with --yes to confirm."
+
+### `goblin servers disable`
+
+Disable an enabled server without removing it.
+
+**Basic Usage**:
+```bash
+goblin servers disable <name>
+```
+
+**Arguments**:
+| Argument | Description |
+|----------|-------------|
+| `<name>` | Name of the server to disable |
+
+**Options**:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--yes` | Skip confirmation prompt | false |
+| `--config <path>` | Path to config file | OS default |
+
+**Examples**:
+```bash
+# Disable an enabled server
+goblin servers disable my-server
+
+# Disable with auto-confirmation
+goblin servers disable my-server --yes
+
+# Disable with custom config
+goblin servers disable my-server --config /path/to/config.json
+```
+
+**Behavior**:
+- Shows server details before disabling (name, transport, current status)
+- Requires `--yes` flag to confirm the action
+- Displays success message after disabling
+- Configuration is automatically saved
+- Server will be skipped during gateway startup but remains in configuration
+
+**Error Handling**:
+- If server not found: "Server '<name>' not found"
+- If already disabled: "Server '<name>' is already disabled"
+- If confirmation missing: "Confirmation required. Run with --yes to confirm."
+
 ### `goblin resources`
 
 List available resources with filtering.
