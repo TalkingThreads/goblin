@@ -41,6 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Disabled servers remain in configuration but are skipped during gateway startup
   - Smoke tests: 12 passing tests
 
+- **ConfigWriter**: Centralized configuration file writing utility with atomic operations
+  - Atomic write pattern using temp file + rename for data integrity
+  - Automatic backup creation before each write (`{configPath}.backup`)
+  - Zod schema validation before writing
+  - `ConfigWriteError` custom error class with detailed context
+  - Backward-compatible `writeConfig()` API
+  - Unit tests: 13 passing tests
+
 - **Root Help Overview with STDIO Default**: Added helpful overview when running `goblin` with `--help` or `-h`
   - Displays brief description of Goblin MCP Gateway
   - Shows common commands with examples (stdio, start, servers, tools, tui)
