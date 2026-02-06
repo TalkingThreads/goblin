@@ -1,0 +1,98 @@
+{
+  "name": "cli-exit-codes",
+  "description": "Standardize exit codes across all CLI commands",
+  "effort": "4h",
+  "priority": "P0",
+  "phase": 5,
+  "category": "CLI",
+  "status": "completed",
+  "research": "Exit codes should follow conventions. See .dev_docs/CLI_GUIDELINES.md section 'Error Handling'.",
+  "tasks": [
+    {
+      "id": "cli-exit-001",
+      "description": "Define exit code constants",
+      "status": "completed"
+    },
+    {
+      "id": "cli-exit-002",
+      "description": "Update status command for correct exit codes",
+      "status": "completed"
+    },
+    {
+      "id": "cli-exit-003",
+      "description": "Update config validate for correct exit codes",
+      "status": "completed"
+    },
+    {
+      "id": "cli-exit-004",
+      "description": "Update servers commands for correct exit codes",
+      "status": "completed"
+    },
+    {
+      "id": "cli-exit-005",
+      "description": "Update tools commands for correct exit codes",
+      "status": "completed"
+    },
+    {
+      "id": "cli-exit-006",
+      "description": "Document exit codes in help",
+      "status": "completed"
+    }
+  ],
+  "implementation": {
+    "files": [
+      {
+        "path": "src/cli/exit-codes.ts",
+        "description": "Exit code constants and helper functions"
+      },
+      {
+        "path": "src/cli/commands/status.ts",
+        "description": "Update status command exit codes"
+      },
+      {
+        "path": "src/cli/commands/health.ts",
+        "description": "Update health command exit codes"
+      },
+      {
+        "path": "src/cli/commands/tools.ts",
+        "description": "Update tools command exit codes"
+      },
+      {
+        "path": "src/cli/commands/servers.ts",
+        "description": "Update servers command exit codes"
+      },
+      {
+        "path": "src/cli/commands/stop.ts",
+        "description": "Update stop command exit codes"
+      },
+      {
+        "path": "src/cli/index.ts",
+        "description": "Update main handler exit codes"
+      }
+    ],
+    "tests": [
+      {
+        "path": "tests/smoke/cli/exit-codes.test.ts",
+        "description": "Test exit codes",
+        "status": "15 passing tests"
+      }
+    ]
+  },
+  "verification": {
+    "criteria": [
+      "0 = SUCCESS - Command completed successfully",
+      "1 = GENERAL_ERROR - Unexpected errors",
+      "2 = INVALID_ARGUMENTS - Bad command-line arguments",
+      "3 = CONFIG_ERROR - Configuration file issues",
+      "4 = CONNECTION_ERROR - Network/gateway connection failures",
+      "5 = PERMISSION_DENIED - Permission/access issues",
+      "6 = TIMEOUT - Operations that timed out",
+      "7 = NOT_FOUND - Resources not found",
+      "8 = VALIDATION_ERROR - Input validation failures",
+      "Scripts can programmatically detect and handle CLI failures",
+      "All 15 exit code tests passing"
+    ]
+  },
+  "commit": "d16ff43",
+  "completed_at": "2026-02-06"
+}
