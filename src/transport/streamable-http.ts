@@ -9,7 +9,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
   StreamableHTTPClientTransport,
   type StreamableHTTPClientTransportOptions,
-} from "@modelcontextprotocol/sdk/client/streamablehttp.js";
+} from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { SERVER_NAME, SERVER_VERSION } from "../meta.js";
 import { createLogger, isDebugEnabled } from "../observability/logger.js";
 import type { Transport } from "./interface.js";

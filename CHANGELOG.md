@@ -35,6 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed ProcessManager startup detection to avoid false positives from JSON log output
   - Result: All 1083 tests passing (previously 10+ failures)
 
+## [0.3.0-rc.5] - 2026-02-05
+
+### Fixed
+
+- **Case Sensitivity Import Error**: Fixed build failure on Linux due to case-sensitive filesystem
+  - Changed import in `src/transport/streamable-http.ts` from `streamablehttp.js` to `streamableHttp.js`
+  - This fixes the GitHub Actions build error that occurred on Linux runners
+  - No functional changes - only import path correction to match SDK filename casing
+  - All 171 unit tests passing
+
 ## [0.3.0-rc.3] - 2026-02-05
 
 ### Features
@@ -397,7 +407,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Beta**: Early preview with known issues (e.g., 0.3.0-beta.1)
 - **Alpha**: Early development preview (e.g., 0.3.0-alpha.1)
 
-[Unreleased]: https://github.com/TalkingThreads/goblin/compare/v0.3.0-rc.3...HEAD
+[Unreleased]: https://github.com/TalkingThreads/goblin/compare/v0.3.0-rc.5...HEAD
+[0.3.0-rc.5]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.5
+[0.3.0-rc.4]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.4
 [0.3.0-rc.3]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.3
 [0.3.0-rc.2]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.2
 [0.3.0-rc.1]: https://github.com/TalkingThreads/goblin/releases/tag/v0.3.0-rc.1

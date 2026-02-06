@@ -91,8 +91,8 @@ export class ConfigManager {
    * @returns ConfigInfo with path and initialization details
    */
   async initialize(options: ConfigManagerOptions = {}): Promise<ConfigInfo> {
-    if (this.initialized && !options.customPath) {
-      return this.info!;
+    if (this.initialized && !options.customPath && this.info !== null) {
+      return this.info;
     }
 
     if (this.initializing) {
@@ -151,7 +151,10 @@ export class ConfigManager {
    */
   getConfig(): Config {
     this.assertInitialized();
-    return this.config!;
+    if (this.config === null) {
+      throw new Error("Config is null after initialization check");
+    }
+    return this.config;
   }
 
   /**
@@ -186,7 +189,10 @@ export class ConfigManager {
    */
   getInfo(): ConfigInfo {
     this.assertInitialized();
-    return this.info!;
+    if (this.info === null) {
+      throw new Error("ConfigInfo is null after initialization check");
+    }
+    return this.info;
   }
 
   /**
@@ -201,7 +207,7 @@ export class ConfigManager {
    */
   isFirstRun(): boolean {
     this.assertInitialized();
-    return this.info!.isFirstRun;
+    return this.info?.isFirstRun ?? false;
   }
 
   /**
@@ -254,7 +260,10 @@ export class ConfigManager {
    */
   async save(customConfig?: Config): Promise<string> {
     this.assertInitialized();
-    const configToSave = customConfig ?? this.config!;
+    const configToSave = customConfig ?? this.config;
+    if (configToSave === null) {
+      throw new Error("No config available to save");
+    }
 
     if (this.customPath) {
       await writeConfig(configToSave, { customPath: this.customPath });

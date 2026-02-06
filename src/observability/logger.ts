@@ -44,7 +44,7 @@ class SwitchableStream extends Writable {
 
   _write(chunk: unknown, encoding: BufferEncoding, callback: (error?: Error | null) => void): void {
     const target = this.useStderr ? process.stderr : process.stdout;
-    target.write(chunk as any, encoding, callback);
+    target.write(chunk as string | Buffer, encoding, callback);
   }
 }
 
