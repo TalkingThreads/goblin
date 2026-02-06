@@ -298,6 +298,13 @@ goblin start --port 3000       # Custom port
 goblin stdio                   # Run as subprocess MCP server
 goblin stdio --config /path   # Custom config path
 
+# Server management
+goblin servers add <name> <transport>  # Add a new server
+goblin servers add my-server stdio --command "npx"
+goblin servers add http-server http --url "http://localhost:3001/mcp"
+goblin servers remove <name>          # Remove a server
+goblin servers remove my-server --yes # Remove with confirmation
+
 # Gateway status
 goblin status                   # Human-readable
 goblin status --json           # JSON output

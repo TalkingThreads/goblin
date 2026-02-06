@@ -430,6 +430,99 @@ goblin servers --json
 }
 ```
 
+### `goblin servers add`
+
+Add a new server to the configuration dynamically.
+
+**Basic Usage**:
+```bash
+goblin servers add <name> <transport>
+```
+
+**Arguments**:
+| Argument | Description |
+|----------|-------------|
+| `<name>` | Unique name for the server |
+| `<transport>` | Transport type (stdio, http, sse, streamablehttp) |
+
+**Options**:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--command <cmd>` | Command to execute (for stdio transport) | - |
+| `--args <args...>` | Arguments for the command (for stdio transport) | - |
+| `--url <url>` | URL for HTTP/SSE/streamablehttp transports | - |
+| `--header <key:value>` | Custom headers (can be used multiple times) | - |
+| `--enabled` | Enable the server (default: true) | true |
+| `--disabled` | Disable the server | false |
+| `--yes` | Skip confirmation prompt | false |
+| `--config <path>` | Path to config file | OS default |
+
+**Examples**:
+```bash
+# Add STDIO server
+goblin servers add filesystem stdio --command "npx" --args "-y,@modelcontextprotocol/server-filesystem,/tmp"
+
+# Add HTTP server
+goblin servers add remote-server http --url "http://localhost:3001/mcp"
+
+# Add HTTP server with custom headers
+goblin servers add api-server http --url "http://localhost:3002/mcp" --header "Authorization:Bearer token123"
+
+# Add SSE server
+goblin servers add sse-server sse --url "http://localhost:3003/sse"
+
+# Add Streamable HTTP server
+goblin servers add streamable-server streamablehttp --url "http://localhost:3004/mcp"
+
+# Add with confirmation
+goblin servers add my-server stdio --command "npx" --args "-y,my-server" --yes
+```
+
+**Transport Requirements**:
+- **stdio**: Requires `--command` option
+- **http**: Requires `--url` option
+- **sse**: Requires `--url` option
+- **streamablehttp**: Requires `--url` option
+
+### `goblin servers remove`
+
+Remove a server from the configuration.
+
+**Basic Usage**:
+```bash
+goblin servers remove <name>
+```
+
+**Arguments**:
+| Argument | Description |
+|----------|-------------|
+| `<name>` | Name of the server to remove |
+
+**Options**:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--yes` | Skip confirmation prompt | false |
+| `--config <path>` | Path to config file | OS default |
+
+**Examples**:
+```bash
+# Remove server (requires --yes confirmation)
+goblin servers remove my-server
+
+# Remove with auto-confirmation
+goblin servers remove my-server --yes
+```
+
+**Behavior**:
+- Shows server details before removal
+- Requires `--yes` flag to confirm the removal
+- Displays success message after removal
+- Configuration is automatically saved
+
+**Error Handling**:
+- If server not found: "Server '<name>' not found"
+- If confirmation missing: Error requesting `--yes` flag
+
 ### `goblin resources`
 
 List available resources with filtering.

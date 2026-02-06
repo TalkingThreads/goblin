@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Server Add Command**: Added `goblin servers add` command for dynamic server registration
+  - `goblin servers add <name> <transport>` for adding new servers
+  - Supports stdio, http, sse, and streamablehttp transports
+  - Transport-specific options: `--command`, `--args` for stdio; `--url`, `--header` for HTTP transports
+  - `--yes` flag to skip confirmation prompt
+  - Duplicate server name prevention
+  - Smoke tests: 14 passing tests
+
+- **Server Remove Command**: Added `goblin servers remove` command for removing registered servers
+  - `goblin servers remove <name>` to remove a server by name
+  - Shows server details before removal
+  - Requires `--yes` flag to confirm removal
+  - Success message after removal
+  - Smoke tests: 5 passing tests
+
 - **Root Help Overview with STDIO Default**: Added helpful overview when running `goblin` with `--help` or `-h`
   - Displays brief description of Goblin MCP Gateway
   - Shows common commands with examples (stdio, start, servers, tools, tui)
