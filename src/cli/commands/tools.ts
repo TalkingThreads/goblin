@@ -1,72 +1,103 @@
+import { Command } from "commander";
 import { createLogger } from "../../observability/logger.js";
 
 const logger = createLogger("cli-tools");
 
-interface ToolOptions {
-  json?: boolean;
-  url?: string;
-  server?: string;
-  search?: string;
-}
-
 interface ToolInfo {
   name: string;
-  description?: string;
-  serverId: string;
-  inputSchema: {
+  server: string;
+  description: string;
+  parameters?: {
     type: string;
-    properties?: Record<string, { type?: string }>;
+    properties?: Record<string, unknown>;
     required?: string[];
   };
 }
 
-/**
- * Summarize a JSON schema into a compact string
- */
-function summarizeSchema(schema: ToolInfo["inputSchema"]): string {
-  if (!schema || schema.type !== "object" || !schema.properties) {
-    return "()";
-  }
-
-  const props = Object.entries(schema.properties);
-  const required = new Set(schema.required || []);
-
-  const summary = props
-    .map(([name, details]) => {
-      const type = details.type || "any";
-      const isOptional = !required.has(name);
-      return `${name}${isOptional ? "?" : ""}: ${type}`;
-    })
-    .join(", ");
-
-  return `(${summary})`;
+interface ToolListOptions {
+  json?: boolean;
+  url?: string;
 }
 
-/**
- * Execute the tools command
- */
-export async function toolsCommand(options: ToolOptions): Promise<void> {
-  const url = options.url || "http://localhost:3000";
-  const toolsUrl = new URL(`${url.replace(/\/$/, "")}/tools`);
+interface ToolInvokeOptions {
+  name: string;
+  args?: string;
+  server?: string;
+  url?: string;
+}
 
-  if (options.server) {
-    toolsUrl.searchParams.append("server", options.server);
-  }
-  if (options.search) {
-    toolsUrl.searchParams.append("search", options.search);
-  }
+interface ToolDescribeOptions {
+  name: string;
+  server?: string;
+  url?: string;
+}
+
+export function createToolsCommand(): Command {
+  const command = new Command("tools");
+
+  command.description("List, invoke, and describe tools from registered servers");
+
+  command
+    .command("list")
+    .description("List all available tools")
+    .option("--json", "Output as JSON", false)
+    .option("--url <url>", "Gateway URL", "http://localhost:3000")
+    .action(async (options: ToolListOptions) => {
+      try {
+        await toolsList(options);
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        process.exit(1);
+      }
+    });
+
+  command
+    .command("invoke <name>")
+    .description("Invoke a tool with the given name")
+    .option("--args <json>", "JSON arguments for the tool")
+    .option("--server <name>", "Server to use (required if multiple servers have the tool)")
+    .option("--url <url>", "Gateway URL", "http://localhost:3000")
+    .action(async (name: string, options: ToolInvokeOptions) => {
+      try {
+        await toolsInvoke(name, options);
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        process.exit(1);
+      }
+    });
+
+  command
+    .command("describe <name>")
+    .description("Describe a tool's schema and documentation")
+    .option("--server <name>", "Server to use (required if multiple servers have the tool)")
+    .option("--url <url>", "Gateway URL", "http://localhost:3000")
+    .action(async (name: string, options: ToolDescribeOptions) => {
+      try {
+        await toolsDescribe(name, options);
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        process.exit(1);
+      }
+    });
+
+  return command;
+}
+
+export async function toolsList(options: ToolListOptions): Promise<void> {
+  const url = new URL(`${(options.url ?? "http://localhost:3000").replace(/\/$/, "")}/tools`);
 
   try {
-    const response = await fetch(toolsUrl.toString());
+    const response = await fetch(url.toString());
 
     if (!response.ok) {
       throw new Error(`Gateway returned ${response.status}: ${response.statusText}`);
     }
 
-    const { tools } = (await response.json()) as { tools: ToolInfo[] };
+    const data = (await response.json()) as { tools: ToolInfo[] };
+    const tools = data.tools;
 
     if (options.json) {
-      console.log(JSON.stringify({ tools }));
+      console.log(JSON.stringify({ tools }, null, 2));
       return;
     }
 
@@ -75,23 +106,12 @@ export async function toolsCommand(options: ToolOptions): Promise<void> {
       return;
     }
 
-    console.log(`Tools (${tools.length})`);
-    console.log("=".repeat(`Tools (${tools.length})`.length));
-
-    // Find column widths for alignment
-    const nameWidth = Math.max(...tools.map((t) => t.name.length), 10) + 2;
-    const serverWidth = Math.max(...tools.map((t) => t.serverId.length), 10) + 2;
+    console.log("Tools");
+    console.log("=====");
 
     for (const tool of tools) {
-      const name = tool.name.padEnd(nameWidth);
-      const server = tool.serverId.padEnd(serverWidth);
-      const desc = tool.description || "";
-      const schema = summarizeSchema(tool.inputSchema);
-
-      console.log(`${name}${server}${desc}`);
-      if (schema !== "()") {
-        console.log(`${" ".repeat(nameWidth + serverWidth)}Schema: ${schema}`);
-      }
+      console.log(`  ${tool.name} (${tool.server})`);
+      console.log(`    ${tool.description}`);
     }
   } catch (error) {
     if (options.json) {
@@ -102,10 +122,109 @@ export async function toolsCommand(options: ToolOptions): Promise<void> {
         }),
       );
     } else {
-      logger.error({ error, url: toolsUrl.toString() }, "Failed to fetch tools");
-      console.error(`Error: Could not connect to gateway at ${url}`);
+      logger.error({ error, url: url.toString() }, "Failed to fetch tools");
+      console.error("Error: Could not connect to gateway");
       console.error("Make sure the gateway is running (goblin start)");
+      throw error;
     }
-    process.exit(1);
   }
+}
+
+export async function toolsInvoke(name: string, options: ToolInvokeOptions): Promise<void> {
+  let args: Record<string, unknown> = {};
+
+  if (options.args) {
+    try {
+      args = JSON.parse(options.args);
+    } catch {
+      throw new Error("Invalid JSON arguments");
+    }
+  }
+
+  const url = new URL(`${(options.url ?? "http://localhost:3000").replace(/\/$/, "")}/tools/call`);
+
+  const body: { name: string; arguments: Record<string, unknown>; server?: string } = {
+    name,
+    arguments: args,
+  };
+
+  if (options.server) {
+    body.server = options.server;
+  }
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      throw new Error(
+        (errorData["message"] as string) ||
+          `Gateway returned ${response.status}: ${response.statusText}`,
+      );
+    }
+
+    const result = await response.json();
+    console.log(JSON.stringify(result, null, 2));
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function toolsDescribe(name: string, options: ToolDescribeOptions): Promise<void> {
+  const url = new URL(
+    `${(options.url ?? "http://localhost:3000").replace(/\/$/, "")}/tools/${encodeURIComponent(name)}`,
+  );
+
+  if (options.server) {
+    url.searchParams.append("server", options.server);
+  }
+
+  try {
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`Tool '${name}' not found`);
+      }
+      throw new Error(`Gateway returned ${response.status}: ${response.statusText}`);
+    }
+
+    const tool = (await response.json()) as ToolInfo;
+
+    console.log(`Tool: ${tool.name}`);
+    console.log(`Server: ${tool.server}`);
+    console.log(`Description: ${tool.description}`);
+
+    if (tool.parameters) {
+      console.log("\nParameters:");
+      console.log(`  Type: ${tool.parameters.type}`);
+
+      if (tool.parameters.properties) {
+        console.log("  Properties:");
+        for (const [key, value] of Object.entries(tool.parameters.properties)) {
+          const prop = value as { type?: string; description?: string };
+          const required = tool.parameters.required?.includes(key) ? " (required)" : "";
+          console.log(`    ${key}: ${prop.type}${required}`);
+          if (prop.description) {
+            console.log(`      ${prop.description}`);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    if ((error as Error).message.startsWith("Tool '")) {
+      throw error;
+    }
+    throw new Error(
+      `Failed to describe tool: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+export async function toolsCommand(options: ToolListOptions): Promise<void> {
+  await toolsList(options);
 }

@@ -11,7 +11,7 @@ import { startGateway } from "./commands/start.jsx";
 import { statusCommand } from "./commands/status.js";
 import { startStdioGateway } from "./commands/stdio.js";
 import { stopCommand } from "./commands/stop.js";
-import { toolsCommand } from "./commands/tools.js";
+import { createToolsCommand } from "./commands/tools.js";
 
 async function getVersion(): Promise<string> {
   try {
@@ -110,16 +110,7 @@ async function main(): Promise<void> {
       await statusCommand(options);
     });
 
-  program
-    .command("tools")
-    .description("List available tools")
-    .option("--json", "Output in JSON format")
-    .option("--url <url>", "Gateway URL", "http://localhost:3000")
-    .option("--server <name>", "Filter by server name")
-    .option("--search <query>", "Search tools by name or description")
-    .action(async (options: { json?: boolean; url?: string; server?: string; search?: string }) => {
-      await toolsCommand(options);
-    });
+  program.addCommand(createToolsCommand());
 
   program.addCommand(createServersCommand());
 
