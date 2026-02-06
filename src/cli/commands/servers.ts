@@ -186,6 +186,46 @@ export function createServersCommand(): Command {
       },
     );
 
+  command
+    .command("remove <name>")
+    .description("Remove a server from the configuration")
+    .option("--yes", "Skip confirmation prompt", false)
+    .option("--config <path>", "Path to config file")
+    .action(async (name: string, options: { yes?: boolean; config?: string }) => {
+      try {
+        const configPath = options.config;
+        const config = await loadConfig(configPath);
+
+        const serverIndex = config.servers?.findIndex((s) => s.name === name);
+        if (serverIndex === undefined || serverIndex === -1) {
+          throw new Error(`Server '${name}' not found`);
+        }
+
+        const server = config.servers[serverIndex];
+        if (!server) {
+          throw new Error(`Server '${name}' not found`);
+        }
+        console.log(`Server to remove:`);
+        console.log(`  Name: ${server.name}`);
+        console.log(`  Transport: ${server.transport}`);
+
+        if (!options.yes) {
+          console.log("\nThis action cannot be undone.");
+          console.log("Use --yes to skip this confirmation.");
+          throw new Error("Confirmation required. Run with --yes to confirm.");
+        }
+
+        config.servers.splice(serverIndex, 1);
+        await saveConfig(config, configPath);
+
+        console.log(`\nServer '${name}' removed successfully.`);
+        console.log(`Configuration saved to: ${configPath ?? getConfigPath()}`);
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        process.exit(1);
+      }
+    });
+
   return command;
 }
 
