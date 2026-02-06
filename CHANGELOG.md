@@ -24,6 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Success message after removal
   - Smoke tests: 5 passing tests
 
+- **Tools Command**: Added `goblin tools` command with list, invoke, and describe subcommands
+  - `goblin tools list` - List all available tools from registered servers
+  - `goblin tools invoke <name> --args '<json>'` - Invoke a tool with JSON arguments
+  - `goblin tools describe <name>` - Show tool schema and documentation
+  - `--server` flag for server selection when multiple servers have the tool
+  - `--json` flag for JSON output format
+  - `--url` flag for gateway URL
+  - Smoke tests: 19 passing tests
+
 - **Root Help Overview with STDIO Default**: Added helpful overview when running `goblin` with `--help` or `-h`
   - Displays brief description of Goblin MCP Gateway
   - Shows common commands with examples (stdio, start, servers, tools, tui)

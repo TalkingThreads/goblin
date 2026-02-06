@@ -327,36 +327,46 @@ goblin health --json
 
 ### `goblin tools`
 
-List available tools with filtering and search.
+List, invoke, and describe tools from registered MCP servers.
 
 **Basic Usage**:
 ```bash
-goblin tools
+goblin tools list           # List all available tools
+goblin tools invoke <name>  # Invoke a tool with arguments
+goblin tools describe <name>  # Describe tool schema
+```
+
+The tools command has three subcommands:
+
+- `list` - List all available tools
+- `invoke` - Invoke a tool with JSON arguments
+- `describe` - Show detailed tool schema and documentation
+
+#### `goblin tools list`
+
+List all available tools from registered servers.
+
+**Basic Usage**:
+```bash
+goblin tools list
 ```
 
 **Options**:
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--json` | Output JSON | - |
-| `--server` | Filter by server | all |
-| `--search` | Search tools by name/description | - |
-| `--category` | Filter by category | all |
-| `--limit` | Limit results | 50 |
-| `--page` | Page number | 1 |
+| `--url <url>` | Gateway URL | http://localhost:3000 |
 
 **Examples**:
 ```bash
 # List all tools
-goblin tools
-
-# Search tools
-goblin tools --search "file"
-
-# Filter by server
-goblin tools --server filesystem
+goblin tools list
 
 # JSON output
-goblin tools --json
+goblin tools list --json
+
+# Custom gateway URL
+goblin tools list --url http://localhost:8080
 ```
 
 **JSON Structure**:
@@ -364,22 +374,103 @@ goblin tools --json
 {
   "tools": [
     {
-      "id": "filesystem_list_files",
       "name": "list_files",
-      "description": "List files in directory",
       "server": "filesystem",
-      "category": "filesystem",
-      "parameters": [
-        { "name": "path", "type": "string", "required": true }
-      ],
-      "registered": true
+      "description": "List files in directory"
     }
-  ],
-  "total": 45,
-  "page": 1,
-  "limit": 50
+  ]
 }
 ```
+
+#### `goblin tools invoke`
+
+Invoke a tool with the given name and arguments.
+
+**Basic Usage**:
+```bash
+goblin tools invoke <name> --args '<json>'
+```
+
+**Arguments**:
+| Argument | Description |
+|----------|-------------|
+| `<name>` | Name of the tool to invoke |
+
+**Options**:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--args <json>` | JSON arguments for the tool | {} |
+| `--server <name>` | Server to use (required if multiple servers have the tool) | - |
+| `--url <url>` | Gateway URL | http://localhost:3000 |
+
+**Examples**:
+```bash
+# Invoke tool with arguments
+goblin tools invoke list_files --args '{"path": "/tmp"}'
+
+# Invoke tool on specific server
+goblin tools invoke search --server web-server --args '{"query": "test"}'
+
+# Invoke with empty arguments
+goblin tools invoke get_status
+```
+
+**Error Handling**:
+- If tool not found: "Error: Tool 'xxx' not found"
+- If server not found: "Error: Server 'xxx' not found"
+- If missing required arguments: Error from gateway
+- If invalid JSON: "Error: Invalid JSON arguments"
+
+#### `goblin tools describe`
+
+Describe a tool's schema and documentation.
+
+**Basic Usage**:
+```bash
+goblin tools describe <name>
+```
+
+**Arguments**:
+| Argument | Description |
+|----------|-------------|
+| `<name>` | Name of the tool to describe |
+
+**Options**:
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--server <name>` | Server to use (required if multiple servers have the tool) | - |
+| `--url <url>` | Gateway URL | http://localhost:3000 |
+
+**Examples**:
+```bash
+# Describe a tool
+goblin tools describe list_files
+
+# Describe tool from specific server
+goblin tools describe search --server web-server
+
+# JSON output
+goblin tools describe list_files --url http://localhost:8080
+```
+
+**Output Format**:
+```
+Tool: list_files
+Server: filesystem
+Description: List files in directory
+
+Parameters:
+  Type: object
+  Properties:
+    path: string (required)
+      Path to directory
+    recursive: boolean
+      List recursively
+```
+
+**Error Handling**:
+- If tool not found: "Error: Tool 'xxx' not found"
+- If ambiguous name: "Error: Tool 'xxx' found on multiple servers"
 
 ### `goblin servers`
 

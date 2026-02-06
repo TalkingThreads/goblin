@@ -311,6 +311,9 @@ goblin status --json           # JSON output
 
 # List resources
 goblin tools                   # All tools
+goblin tools list             # List all available tools
+goblin tools invoke <name>    # Invoke a tool with arguments
+goblin tools describe <name>  # Describe tool schema
 goblin tools --server server1 # Filter by server
 goblin servers                 # All servers
 goblin servers --status online # Filter by status
