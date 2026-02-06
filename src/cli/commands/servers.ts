@@ -220,6 +220,10 @@ export function createServersCommand(context?: CliContext): Command {
   command
     .command("add <name> <transport>")
     .description("Add a new server to the configuration")
+    .addHelpText(
+      "after",
+      '\nExamples:\n  # Add a local MCP server via stdio\n  goblin servers add my-server stdio --command "npx" --args "@modelcontextprotocol/server-filesystem" "./data"\n\n  # Add a remote HTTP server\n  goblin servers add remote-server http --url "https://api.example.com/mcp"\n\n  # Add a server with custom headers\n  goblin servers add api-server http --url "https://api.example.com/mcp" --header "Authorization: Bearer token123"',
+    )
     .option("--command <command>", "Command to execute (for stdio transport)")
     .option("--args <args...>", "Arguments for the command (for stdio transport)")
     .option("--url <url>", "URL for HTTP/SSE/streamablehttp transports")
@@ -296,6 +300,7 @@ export function createServersCommand(context?: CliContext): Command {
   command
     .command("remove <name>")
     .description("Remove a server from the configuration")
+    .addHelpText("after", "\nExamples:\n  goblin servers remove my-server  # Remove a server")
     .option("--yes", "Skip confirmation prompt", false)
     .option("--config <path>", "Path to config file")
     .action(async (name: string, options: { yes?: boolean; config?: string }) => {
@@ -336,6 +341,10 @@ export function createServersCommand(context?: CliContext): Command {
   command
     .command("enable <name>")
     .description("Enable a disabled server")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin servers enable my-server  # Enable a disabled server\n  goblin servers enable my-server --yes  # Skip confirmation",
+    )
     .option("--yes", "Skip confirmation prompt", false)
     .option("--config <path>", "Path to config file")
     .action(async (name: string, options: { yes?: boolean; config?: string }) => {
@@ -350,6 +359,10 @@ export function createServersCommand(context?: CliContext): Command {
   command
     .command("disable <name>")
     .description("Disable an enabled server")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin servers disable my-server  # Disable an enabled server\n  goblin servers disable my-server --yes  # Skip confirmation",
+    )
     .option("--yes", "Skip confirmation prompt", false)
     .option("--config <path>", "Path to config file")
     .action(async (name: string, options: { yes?: boolean; config?: string }) => {

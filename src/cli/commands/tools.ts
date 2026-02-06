@@ -45,6 +45,10 @@ export function createToolsCommand(context?: CliContext): Command {
   command
     .command("list")
     .description("List all available tools")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin tools list              # List all available tools\n  goblin tools list --json       # Output as JSON\n  goblin tools list --url http://localhost:3000  # List from remote gateway",
+    )
     .option("--json", "Output as JSON", false)
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
     .action(async (options: ToolListOptions) => {
@@ -59,6 +63,10 @@ export function createToolsCommand(context?: CliContext): Command {
   command
     .command("invoke <name>")
     .description("Invoke a tool with the given name")
+    .addHelpText(
+      "after",
+      '\nExamples:\n  # Invoke a tool with no arguments\n  goblin tools invoke get_time\n\n  # Invoke with JSON arguments\n  goblin tools invoke read_file --args \'{"path": "/etc/hosts"}\'\n\n  # Invoke a specific server\'s tool\n  goblin tools invoke search --server my-server --args \'{"query": "typescript"}\'',
+    )
     .option("--args <json>", "JSON arguments for the tool")
     .option("--server <name>", "Server to use (required if multiple servers have the tool)")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
@@ -74,6 +82,10 @@ export function createToolsCommand(context?: CliContext): Command {
   command
     .command("describe <name>")
     .description("Describe a tool's schema and documentation")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin tools describe read_file  # Show tool schema and parameters\n  goblin tools describe search --server my-server  # Describe specific server's tool",
+    )
     .option("--server <name>", "Server to use (required if multiple servers have the tool)")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
     .action(async (name: string, options: ToolDescribeOptions) => {

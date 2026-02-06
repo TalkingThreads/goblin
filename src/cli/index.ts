@@ -169,6 +169,10 @@ async function main(): Promise<void> {
     .option("--tui", "Enable TUI mode")
     .option("--port <number>", "Port to listen on")
     .option("--config <path>", "Path to config file")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin start                    # Start gateway on default port 3000\n  goblin start --port 8080       # Start on port 8080\n  goblin start --tui             # Start with interactive TUI\n  goblin start --config ~/my-config.json  # Use custom config file",
+    )
     .action(async (options: StartOptions) => {
       await startGateway(options);
     });
@@ -186,6 +190,10 @@ async function main(): Promise<void> {
     .description("Show Gateway status")
     .option("--json", "Output in JSON format")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin status                   # Check gateway status\n  goblin status --url http://localhost:3000  # Check remote gateway\n  goblin status --json           # Output as JSON",
+    )
     .action(async (options: { json?: boolean; url?: string }) => {
       await statusCommand({ ...options, context: globalContext });
     });
@@ -202,6 +210,10 @@ async function main(): Promise<void> {
     .option("--path <path>", "Path to config file")
     .option("--config <path>", "Path to config file (alias for --path)")
     .option("--json", "Output in JSON format")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin config validate          # Validate default config\n  goblin config validate --path ~/goblin.json  # Validate custom config\n  goblin config validate --json   # Output validation result as JSON",
+    )
     .action(async (options) => {
       await validateConfigCommand(options);
     });
@@ -212,6 +224,10 @@ async function main(): Promise<void> {
     .option("--path <path>", "Path to config file")
     .option("--config <path>", "Path to config file (alias for --path)")
     .option("--json", "Output in JSON format")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin config show              # Display current configuration\n  goblin config show --json       # Output as JSON\n  goblin config show --path ~/goblin.json  # Show specific config file",
+    )
     .action(async (options) => {
       await showConfigCommand(options);
     });
@@ -223,6 +239,10 @@ async function main(): Promise<void> {
     .option("-f, --follow", "Follow log output")
     .option("--level <level>", "Filter by log level (debug, info, warn, error)")
     .option("--json", "Output in JSON format")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin logs                     # Show last 50 log lines\n  goblin logs --follow           # Follow log output in real-time\n  goblin logs --level error      # Show only errors and above\n  goblin logs --json             # Output as JSON\n  goblin logs --path /var/log/goblin/app.log  # Use custom log path",
+    )
     .action(async (options) => {
       await logsCommand(options);
     });
@@ -232,6 +252,10 @@ async function main(): Promise<void> {
     .description("Show detailed health status")
     .option("--json", "Output in JSON format")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin health                   # Check gateway health\n  goblin health --url http://localhost:3000  # Check remote gateway\n  goblin health --json           # Output as JSON",
+    )
     .action(async (options: { json?: boolean; url?: string }) => {
       await healthCommand({ ...options, context: globalContext });
     });
@@ -240,6 +264,10 @@ async function main(): Promise<void> {
     .command("stop")
     .description("Stop the running Gateway")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin stop                     # Stop the gateway\n  goblin stop --url http://localhost:3000  # Stop remote gateway",
+    )
     .action(async (options: { url?: string }) => {
       await stopCommand({ ...options, context: globalContext });
     });

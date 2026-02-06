@@ -104,6 +104,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unit tests: 43 passing tests
   - Smoke tests: 18 passing tests
 
+- **Help Examples**: Added comprehensive examples to all CLI command help texts
+  - `start`: Examples for default port, custom port, TUI mode, custom config
+  - `stdio`: Examples for default and custom config
+  - `status`: Examples for default and JSON output
+  - `servers add`: Examples for stdio, HTTP transports with headers
+  - `servers remove/enable/disable`: Examples for each subcommand
+  - `tools list/invoke/describe`: Examples for tool operations
+  - `config validate/show`: Examples for config management
+  - `logs`: Examples for follow mode, level filtering, JSON output
+  - `health`: Examples for health checks
+  - `stop`: Examples for stopping gateway
+  - Tests: 15 passing smoke tests
+
 ### Fixed
 
 - **Status Command Exit Code**: Fixed exit code behavior when gateway is not running
