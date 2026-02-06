@@ -1156,6 +1156,36 @@ curl http://127.0.0.1:3000/status
 curl http://127.0.0.1:3000/metrics
 ```
 
+**Command Suggestions**:
+When you make a typo in a command, Goblin suggests the correct command:
+
+```bash
+$ goblin statuz
+error: unknown command 'statuz'
+
+Did you mean 'goblin status'?
+
+Run 'goblin --help' to see available commands.
+
+$ goblin toolss
+error: unknown command 'toolss'
+
+Did you mean 'goblin tools'?
+
+Run 'goblin --help' to see available commands.
+
+$ goblin srvers
+error: unknown command 'srvers'
+
+Did you mean one of these?
+  - goblin servers
+  - goblin status
+
+Run 'goblin --help' to see available commands.
+```
+
+The suggestion system uses Levenshtein distance to find similar commands and provides helpful suggestions for common typos.
+
 **With jq**:
 ```bash
 # Parse JSON output
