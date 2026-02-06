@@ -1,17 +1,31 @@
 import { createLogger } from "../../observability/logger.js";
+import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-stop");
 
 interface StopOptions {
   url?: string;
   timeout?: number;
+  context?: CliContext;
 }
 
 /**
  * Execute the stop command
  */
 export async function stopCommand(options: StopOptions): Promise<void> {
-  const url = options.url || "http://localhost:3000";
+  // Use global context values as defaults
+  const globalPort = options.context?.port;
+  const globalHost = options.context?.host;
+
+  // Build URL from global flags or command flag
+  let url = options.url || "http://localhost:3000";
+  if (globalHost || globalPort) {
+    const baseUrl = new URL(url);
+    if (globalHost) baseUrl.hostname = globalHost;
+    if (globalPort) baseUrl.port = globalPort.toString();
+    url = baseUrl.toString();
+  }
+
   const shutdownUrl = `${url.replace(/\/$/, "")}/shutdown`;
 
   try {

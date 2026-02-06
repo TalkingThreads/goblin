@@ -12,6 +12,7 @@ import { statusCommand } from "./commands/status.js";
 import { startStdioGateway } from "./commands/stdio.js";
 import { stopCommand } from "./commands/stop.js";
 import { createToolsCommand } from "./commands/tools.js";
+import type { CliContext } from "./types.js";
 
 async function getVersion(): Promise<string> {
   try {
@@ -42,8 +43,12 @@ Common Commands:
 
 Global Flags:
   -h, --help         Show this help message
-  -v, --verbose      Enable verbose logging
-  --version          Show version information
+  -v, --version      Show version information
+  --verbose          Enable verbose logging
+  --port <number>    Gateway port (default: 3000)
+  --host <host>      Gateway host (default: 127.0.0.1)
+  --json             Output in JSON format
+  --config <path>    Path to config file
 
 Documentation:
   https://goblin.sh/docs
@@ -58,17 +63,71 @@ interface StartOptions {
   config?: string;
 }
 
+/**
+ * Parse global flags from command line arguments
+ */
+function parseGlobalFlags(args: string[]): CliContext {
+  const context: CliContext = {
+    verbose: false,
+    json: false,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const nextArg = args[i + 1];
+
+    switch (arg) {
+      case "--verbose":
+        context.verbose = true;
+        break;
+      case "--json":
+        context.json = true;
+        break;
+      case "--port":
+        if (nextArg && !nextArg.startsWith("-")) {
+          context.port = parseInt(nextArg, 10);
+          i++;
+        }
+        break;
+      case "--host":
+        if (nextArg && !nextArg.startsWith("-")) {
+          context.host = nextArg;
+          i++;
+        }
+        break;
+      case "--config":
+        if (nextArg && !nextArg.startsWith("-")) {
+          context.configPath = nextArg;
+          i++;
+        }
+        break;
+    }
+  }
+
+  return context;
+}
+
 async function main(): Promise<void> {
   const VERSION = await getVersion();
 
   const program = new Command();
 
+  // Parse global flags before command execution
+  const globalContext = parseGlobalFlags(process.argv.slice(2));
+
   program
     .name("goblin")
     .description("Goblin MCP Gateway CLI")
     .option("-v, --version", "output version number")
-    .action(() => {
-      console.log(VERSION);
+    .option("--verbose", "Enable verbose logging")
+    .option("--json", "Output in JSON format")
+    .option("--port <number>", "Gateway port")
+    .option("--host <host>", "Gateway host")
+    .option("--config <path>", "Path to config file")
+    .action((options) => {
+      if (options.version) {
+        console.log(VERSION);
+      }
     });
 
   program
@@ -107,12 +166,12 @@ async function main(): Promise<void> {
     .option("--json", "Output in JSON format")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
     .action(async (options: { json?: boolean; url?: string }) => {
-      await statusCommand(options);
+      await statusCommand({ ...options, context: globalContext });
     });
 
-  program.addCommand(createToolsCommand());
+  program.addCommand(createToolsCommand(globalContext));
 
-  program.addCommand(createServersCommand());
+  program.addCommand(createServersCommand(globalContext));
 
   const config = program.command("config").description("Configuration management");
 
@@ -153,7 +212,7 @@ async function main(): Promise<void> {
     .option("--json", "Output in JSON format")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
     .action(async (options: { json?: boolean; url?: string }) => {
-      await healthCommand(options);
+      await healthCommand({ ...options, context: globalContext });
     });
 
   program
@@ -161,7 +220,7 @@ async function main(): Promise<void> {
     .description("Stop the running Gateway")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
     .action(async (options: { url?: string }) => {
-      await stopCommand(options);
+      await stopCommand({ ...options, context: globalContext });
     });
 
   registerSlashCommands(program);

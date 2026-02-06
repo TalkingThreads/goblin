@@ -1,10 +1,12 @@
 import { createLogger } from "../../observability/logger.js";
+import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-status");
 
 interface StatusOptions {
   json?: boolean;
   url?: string;
+  context?: CliContext;
 }
 
 interface StatusData {
@@ -38,8 +40,24 @@ function formatUptime(seconds: number): string {
  * Execute the status command
  */
 export async function statusCommand(options: StatusOptions): Promise<void> {
-  const url = options.url || "http://localhost:3000";
+  // Use global context values as defaults, command flags override
+  const globalPort = options.context?.port;
+  const globalHost = options.context?.host;
+  const globalJson = options.context?.json;
+
+  // Build URL from global flags or command flag
+  let url = options.url || "http://localhost:3000";
+  if (globalHost || globalPort) {
+    const baseUrl = new URL(url);
+    if (globalHost) baseUrl.hostname = globalHost;
+    if (globalPort) baseUrl.port = globalPort.toString();
+    url = baseUrl.toString();
+  }
+
   const statusUrl = `${url.replace(/\/$/, "")}/status`;
+
+  // Use global json flag if command flag not provided
+  const useJson = options.json ?? globalJson ?? false;
 
   try {
     const response = await fetch(statusUrl);
@@ -50,7 +68,7 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
 
     const data = (await response.json()) as StatusData;
 
-    if (options.json) {
+    if (useJson) {
       console.log(JSON.stringify(data));
       return;
     }
@@ -72,7 +90,7 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
       errorMessage.includes("fetch failed") ||
       errorMessage.includes("Failed to fetch");
 
-    if (options.json) {
+    if (useJson) {
       console.log(
         JSON.stringify({
           servers: { total: 0, online: 0, offline: 0 },

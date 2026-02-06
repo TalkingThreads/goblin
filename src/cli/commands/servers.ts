@@ -6,6 +6,7 @@ import { getConfigPath } from "../../config/paths.js";
 import type { Config, ServerConfig } from "../../config/schema.js";
 import { writeConfig } from "../../config/writer.js";
 import { createLogger } from "../../observability/logger.js";
+import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-servers");
 
@@ -194,10 +195,15 @@ async function disableServer(options: {
 /**
  * Create the servers command with add subcommand
  */
-export function createServersCommand(): Command {
+export function createServersCommand(context?: CliContext): Command {
   const command = new Command("servers");
 
   command.description("List and manage configured servers");
+
+  // Helper to get config path from command option or global context
+  const getConfigPath = (cmdConfig?: string): string | undefined => {
+    return cmdConfig ?? context?.configPath;
+  };
 
   command
     .command("add <name> <transport>")
@@ -247,7 +253,7 @@ export function createServersCommand(): Command {
             headers: Object.keys(headers).length > 0 ? headers : undefined,
             enabled: options.disabled ? false : options.enabled,
             yes: options.yes,
-            config: options.config,
+            config: getConfigPath(options.config),
           });
         } catch (error) {
           console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -263,7 +269,7 @@ export function createServersCommand(): Command {
     .option("--config <path>", "Path to config file")
     .action(async (name: string, options: { yes?: boolean; config?: string }) => {
       try {
-        const configPath = options.config;
+        const configPath = getConfigPath(options.config);
         const config = await loadConfig(configPath);
 
         const serverIndex = config.servers?.findIndex((s) => s.name === name);
@@ -303,7 +309,7 @@ export function createServersCommand(): Command {
     .option("--config <path>", "Path to config file")
     .action(async (name: string, options: { yes?: boolean; config?: string }) => {
       try {
-        await enableServer({ name, yes: options.yes, config: options.config });
+        await enableServer({ name, yes: options.yes, config: getConfigPath(options.config) });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
         process.exit(1);
@@ -317,7 +323,7 @@ export function createServersCommand(): Command {
     .option("--config <path>", "Path to config file")
     .action(async (name: string, options: { yes?: boolean; config?: string }) => {
       try {
-        await disableServer({ name, yes: options.yes, config: options.config });
+        await disableServer({ name, yes: options.yes, config: getConfigPath(options.config) });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
         process.exit(1);

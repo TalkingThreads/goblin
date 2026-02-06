@@ -1,10 +1,12 @@
 import { createLogger } from "../../observability/logger.js";
+import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-health");
 
 interface HealthOptions {
   json?: boolean;
   url?: string;
+  context?: CliContext;
 }
 
 interface MetricSummary {
@@ -38,8 +40,24 @@ interface StatusData {
  * Execute the health command
  */
 export async function healthCommand(options: HealthOptions): Promise<void> {
-  const url = options.url || "http://localhost:3000";
+  // Use global context values as defaults, command flags override
+  const globalPort = options.context?.port;
+  const globalHost = options.context?.host;
+  const globalJson = options.context?.json;
+
+  // Build URL from global flags or command flag
+  let url = options.url || "http://localhost:3000";
+  if (globalHost || globalPort) {
+    const baseUrl = new URL(url);
+    if (globalHost) baseUrl.hostname = globalHost;
+    if (globalPort) baseUrl.port = globalPort.toString();
+    url = baseUrl.toString();
+  }
+
   const baseUrl = url.replace(/\/$/, "");
+
+  // Use global json flag if command flag not provided
+  const useJson = options.json ?? globalJson ?? false;
 
   try {
     // Fetch data from multiple endpoints
@@ -60,7 +78,7 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
 
     const metrics = statusData.metrics;
 
-    if (options.json) {
+    if (useJson) {
       console.log(
         JSON.stringify({
           ...statusData,
@@ -102,7 +120,7 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
       console.log("  Metrics not available");
     }
   } catch (error) {
-    if (options.json) {
+    if (useJson) {
       console.log(
         JSON.stringify({
           error: "Could not connect to gateway",

@@ -234,7 +234,7 @@ describe("CLI Root Help", () => {
     it("should document verbose flag", async () => {
       const result = await runCli(["--help"]);
 
-      expect(result.stdout).toContain("-v, --verbose");
+      expect(result.stdout).toContain("--verbose");
       expect(result.stdout).toContain("Enable verbose logging");
     });
 
