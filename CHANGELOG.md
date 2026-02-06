@@ -82,6 +82,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Full API: `initialize()`, `getConfig()`, `get()`, `getInfo()`, `getConfigPath()`, `isFirstRun()`, `reload()`, `resetToDefaults()`, `save()`
   - Used across CLI commands: `stdio.ts`, `gateway.ts`, `config.ts`
 
+- **Standardized Exit Codes**: Added consistent exit codes for all CLI commands
+  - Exit code 0: SUCCESS - Command completed successfully
+  - Exit code 1: GENERAL_ERROR - Unexpected errors
+  - Exit code 2: INVALID_ARGUMENTS - Bad command-line arguments
+  - Exit code 3: CONFIG_ERROR - Configuration file issues
+  - Exit code 4: CONNECTION_ERROR - Network/gateway connection failures
+  - Exit code 5: PERMISSION_DENIED - Permission/access issues
+  - Exit code 6: TIMEOUT - Operations that timed out
+  - Exit code 7: NOT_FOUND - Resources not found
+  - Exit code 8: VALIDATION_ERROR - Input validation failures
+  - Scripts can now programmatically detect and handle CLI failures
+  - Exit code tests: 15 passing tests
+
 ### Fixed
 
 - **Status Command Exit Code**: Fixed exit code behavior when gateway is not running

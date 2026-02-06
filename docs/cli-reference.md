@@ -1178,31 +1178,45 @@ goblin servers --json | grep "online"
 
 ## Exit Codes
 
-The CLI returns standard exit codes for error handling:
+The CLI returns standardized exit codes following Unix conventions for error handling in scripts:
 
-| Code | Description |
-|------|-------------|
-| 0 | Success |
-| 1 | General error |
-| 2 | Invalid arguments |
-| 3 | Configuration error |
-| 4 | Connection error |
-| 5 | Permission denied |
-| 6 | Timeout |
-| 7 | Not found |
-| 8 | Invalid JSON |
-| 9 | Schema validation failed |
+| Code | Name | Description | Examples |
+|------|------|-------------|----------|
+| 0 | SUCCESS | Command completed successfully | Valid status, help, version |
+| 1 | GENERAL_ERROR | Unexpected or miscellaneous errors | Unknown commands, parsing errors |
+| 2 | INVALID_ARGUMENTS | Bad command-line arguments | Invalid transport type, missing required options |
+| 3 | CONFIG_ERROR | Configuration file issues | File not found, invalid config |
+| 4 | CONNECTION_ERROR | Network/gateway connection failures | Gateway not running, connection refused |
+| 5 | PERMISSION_DENIED | Permission/access issues | File access denied, unauthorized |
+| 6 | TIMEOUT | Operations that timed out | Long-running operations exceeded timeout |
+| 7 | NOT_FOUND | Resources not found | Server not found, tool not found |
+| 8 | VALIDATION_ERROR | Input validation failures | Invalid JSON arguments, schema validation |
 
 **Usage in Scripts**:
+
 ```bash
-# Check exit code
-goblin status
+# Check exit code for gateway status
+goblin status --url http://localhost:39999
 if [ $? -eq 0 ]; then
   echo "Gateway is running"
+elif [ $? -eq 4 ]; then
+  echo "Gateway is not running (connection error)"
 else
-  echo "Gateway is not running"
+  echo "Unexpected error"
 fi
+
+# Use in automated workflows
+goblin status || exit $?
 ```
+
+**Exit Code Behavior**:
+
+| Command | Gateway Running | Gateway Not Running |
+|---------|-----------------|---------------------|
+| `goblin status` | Exit 0 | Exit 0 (graceful degradation) |
+| `goblin health` | Exit 0 | Exit 4 (connection error) |
+| `goblin stop` | Exit 0 | Exit 0 (already stopped) |
+| `goblin tools list` | Exit 0 | Exit 4 (connection error) |
 
 ---
 
