@@ -14,6 +14,26 @@ import { stopCommand } from "./commands/stop.js";
 import { createToolsCommand } from "./commands/tools.js";
 import { ExitCode } from "./exit-codes.js";
 import type { CliContext } from "./types.js";
+import { handleUnknownCommand } from "./utils/suggestions.js";
+
+const MAIN_COMMANDS = [
+  "start",
+  "stdio",
+  "version",
+  "help",
+  "status",
+  "tools",
+  "servers",
+  "config",
+  "logs",
+  "health",
+  "stop",
+];
+
+function isKnownCommand(arg: string): boolean {
+  const normalized = arg.toLowerCase().replace(/^--/, "");
+  return MAIN_COMMANDS.includes(normalized);
+}
 
 async function getVersion(): Promise<string> {
   try {
@@ -245,7 +265,29 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (args[0] === "-v" || args[0] === "--version") {
+    console.log(VERSION);
+    return;
+  }
+
+  if (args.length === 1 && isKnownCommand(args[0]!)) {
+    program.parse(args);
+    return;
+  }
+
+  if (args.length === 1 && !args[0]!.startsWith("-")) {
+    const unknownCommand = args[0]!;
+    handleUnknownCommand(unknownCommand);
+    process.exit(ExitCode.GENERAL_ERROR);
+  }
+
   program.parse();
+
+  program.on("command:*", (args) => {
+    const unknownCommand = args[0];
+    handleUnknownCommand(unknownCommand);
+    process.exit(ExitCode.GENERAL_ERROR);
+  });
 }
 
 main().catch((error) => {
