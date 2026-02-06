@@ -1,4 +1,5 @@
 import { createLogger } from "../../observability/logger.js";
+import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-stop");
@@ -63,6 +64,6 @@ export async function stopCommand(options: StopOptions): Promise<void> {
     logger.error({ error, url: shutdownUrl }, "Failed to stop gateway");
     console.error(`Error: Could not stop gateway at ${url}`);
     console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    process.exit(ExitCode.CONNECTION_ERROR);
   }
 }

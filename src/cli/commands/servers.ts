@@ -6,6 +6,7 @@ import { getConfigPath } from "../../config/paths.js";
 import type { Config, ServerConfig } from "../../config/schema.js";
 import { writeConfig } from "../../config/writer.js";
 import { createLogger } from "../../observability/logger.js";
+import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-servers");
@@ -58,14 +59,27 @@ async function saveConfig(config: Config, configPath?: string): Promise<void> {
 }
 
 async function addServer(options: AddServerOptions): Promise<void> {
-  const configPath = options.config;
-  const config = await loadConfig(configPath);
-
   if (!isValidTransport(options.transport)) {
     throw new Error(
       `Invalid transport type: ${options.transport}. Valid types: stdio, http, sse, streamablehttp`,
     );
   }
+
+  if (options.transport === "stdio" && !options.command) {
+    throw new Error("STDIO transport requires --command option");
+  }
+
+  if (
+    (options.transport === "http" ||
+      options.transport === "sse" ||
+      options.transport === "streamablehttp") &&
+    !options.httpUrl
+  ) {
+    throw new Error(`${options.transport} transport requires --url option`);
+  }
+
+  const configPath = options.config;
+  const config = await loadConfig(configPath);
 
   const existingServer = config.servers?.find((s) => s.name === options.name);
   if (existingServer) {
@@ -80,9 +94,6 @@ async function addServer(options: AddServerOptions): Promise<void> {
   };
 
   if (options.transport === "stdio") {
-    if (!options.command) {
-      throw new Error("STDIO transport requires --command option");
-    }
     serverConfig.command = options.command;
     if (options.args) {
       serverConfig.args = options.args;
@@ -92,9 +103,6 @@ async function addServer(options: AddServerOptions): Promise<void> {
     options.transport === "sse" ||
     options.transport === "streamablehttp"
   ) {
-    if (!options.httpUrl) {
-      throw new Error(`${options.transport} transport requires --url option`);
-    }
     serverConfig.url = options.httpUrl;
     if (options.headers) {
       serverConfig.headers = options.headers;
@@ -198,7 +206,11 @@ async function disableServer(options: {
 export function createServersCommand(context?: CliContext): Command {
   const command = new Command("servers");
 
-  command.description("List and manage configured servers");
+  command
+    .description("List and manage configured servers")
+    .option("--url <url>", "Gateway URL", "http://localhost:3000")
+    .option("--json", "Output as JSON format")
+    .option("--status <status>", "Filter by status", "all");
 
   // Helper to get config path from command option or global context
   const getConfigPath = (cmdConfig?: string): string | undefined => {
@@ -257,7 +269,26 @@ export function createServersCommand(context?: CliContext): Command {
           });
         } catch (error) {
           console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
-          process.exit(1);
+          if (error instanceof Error) {
+            if (error.message.includes("not found")) {
+              process.exit(ExitCode.NOT_FOUND);
+            } else if (error.message.includes("Invalid transport")) {
+              process.exit(ExitCode.INVALID_ARGUMENTS);
+            } else if (error.message.includes("already exists")) {
+              process.exit(ExitCode.INVALID_ARGUMENTS);
+            } else if (error.message.includes("Confirmation required")) {
+              process.exit(ExitCode.INVALID_ARGUMENTS);
+            } else if (error.message.includes("Configuration file not found")) {
+              process.exit(ExitCode.CONFIG_ERROR);
+            } else if (error.message.includes("requires --command")) {
+              process.exit(ExitCode.INVALID_ARGUMENTS);
+            } else if (error.message.includes("requires --url")) {
+              process.exit(ExitCode.INVALID_ARGUMENTS);
+            } else if (error.message.includes("Invalid header format")) {
+              process.exit(ExitCode.INVALID_ARGUMENTS);
+            }
+          }
+          process.exit(ExitCode.GENERAL_ERROR);
         }
       },
     );
@@ -326,9 +357,26 @@ export function createServersCommand(context?: CliContext): Command {
         await disableServer({ name, yes: options.yes, config: getConfigPath(options.config) });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        process.exit(1);
+        if (error instanceof Error) {
+          if (error.message.includes("not found")) {
+            process.exit(ExitCode.NOT_FOUND);
+          } else if (error.message.includes("already disabled")) {
+            process.exit(ExitCode.INVALID_ARGUMENTS);
+          } else if (error.message.includes("Confirmation required")) {
+            process.exit(ExitCode.INVALID_ARGUMENTS);
+          } else if (error.message.includes("Configuration file not found")) {
+            process.exit(ExitCode.CONFIG_ERROR);
+          }
+        }
+        process.exit(ExitCode.GENERAL_ERROR);
       }
     });
+
+  command.action(
+    async (options: { json?: boolean; url?: string; status?: "online" | "offline" | "all" }) => {
+      await serversCommand(options);
+    },
+  );
 
   return command;
 }
@@ -394,6 +442,6 @@ export async function serversCommand(options: ServerOptions): Promise<void> {
       console.error(`Error: Could not connect to gateway at ${url}`);
       console.error("Make sure the gateway is running (goblin start)");
     }
-    process.exit(1);
+    process.exit(ExitCode.CONNECTION_ERROR);
   }
 }

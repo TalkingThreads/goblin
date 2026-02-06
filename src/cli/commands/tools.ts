@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { createLogger } from "../../observability/logger.js";
+import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-tools");
@@ -51,7 +52,7 @@ export function createToolsCommand(context?: CliContext): Command {
         await toolsList({ ...options, context });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        process.exit(1);
+        process.exit(ExitCode.CONNECTION_ERROR);
       }
     });
 
@@ -66,7 +67,7 @@ export function createToolsCommand(context?: CliContext): Command {
         await toolsInvoke(name, { ...options, context });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        process.exit(1);
+        process.exit(ExitCode.CONNECTION_ERROR);
       }
     });
 
@@ -80,7 +81,10 @@ export function createToolsCommand(context?: CliContext): Command {
         await toolsDescribe(name, { ...options, context });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        process.exit(1);
+        if (error instanceof Error && error.message.includes("not found")) {
+          process.exit(ExitCode.NOT_FOUND);
+        }
+        process.exit(ExitCode.CONNECTION_ERROR);
       }
     });
 
@@ -138,8 +142,8 @@ export async function toolsList(options: ToolListOptions): Promise<void> {
       logger.error({ error, url: url.toString() }, "Failed to fetch tools");
       console.error("Error: Could not connect to gateway");
       console.error("Make sure the gateway is running (goblin start)");
-      throw error;
     }
+    process.exit(ExitCode.CONNECTION_ERROR);
   }
 }
 

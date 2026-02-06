@@ -1,4 +1,5 @@
 import { createLogger } from "../../observability/logger.js";
+import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-health");
@@ -132,6 +133,6 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
       console.error(`Error: Could not connect to gateway at ${url}`);
       console.error("Make sure the gateway is running (goblin start)");
     }
-    process.exit(1);
+    process.exit(ExitCode.CONNECTION_ERROR);
   }
 }

@@ -12,6 +12,7 @@ import { statusCommand } from "./commands/status.js";
 import { startStdioGateway } from "./commands/stdio.js";
 import { stopCommand } from "./commands/stop.js";
 import { createToolsCommand } from "./commands/tools.js";
+import { ExitCode } from "./exit-codes.js";
 import type { CliContext } from "./types.js";
 
 async function getVersion(): Promise<string> {
@@ -249,5 +250,5 @@ async function main(): Promise<void> {
 
 main().catch((error) => {
   console.error("Error:", error);
-  process.exit(1);
+  process.exit(ExitCode.GENERAL_ERROR);
 });
