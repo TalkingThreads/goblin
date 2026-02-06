@@ -25,6 +25,33 @@ async function getVersion(): Promise<string> {
   }
 }
 
+function displayRootHelp(version: string): void {
+  console.log(`
+Goblin MCP Gateway ${version}
+
+A developer-first MCP gateway that aggregates multiple MCP servers behind a single unified endpoint.
+
+Usage: goblin <command> [options]
+
+Common Commands:
+  goblin stdio         Start in STDIO mode (default)
+  goblin start         Start HTTP gateway server
+  goblin servers       List and manage configured servers
+  goblin tools         List available tools
+  goblin tui           Launch interactive TUI (coming soon)
+
+Global Flags:
+  -h, --help         Show this help message
+  -v, --verbose      Enable verbose logging
+  --version          Show version information
+
+Documentation:
+  https://goblin.sh/docs
+
+For more information, run: goblin <command> --help
+`);
+}
+
 interface StartOptions {
   tui?: boolean;
   port?: string;
@@ -164,6 +191,13 @@ async function main(): Promise<void> {
     .action(() => {
       program.help();
     });
+
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    displayRootHelp(VERSION);
+    return;
+  }
 
   program.parse();
 }

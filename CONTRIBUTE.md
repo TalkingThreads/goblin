@@ -301,7 +301,6 @@ describe("Feature Name", () => {
 
 - **Questions**: [GitHub Discussions](https://github.com/TalkingThreads/goblin/discussions)
 - **Bugs**: [GitHub Issues](https://github.com/TalkingThreads/goblin/issues)
-- **OpenSpec**: See [openspec/AGENTS.md](openspec/AGENTS.md)
 
 ## Recognition
 
