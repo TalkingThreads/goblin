@@ -9,14 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Quality Safeguards**: Added foundational quality safeguards and pre-commit hooks
-  - Installed pre-commit as dev dependency (`bun add -D pre-commit`)
-  - Created `.pre-commit-config.yaml` with TypeScript typecheck, Biome lint, and unit test hooks
-  - Added "Quality Requirements for All Changes" section to AGENTS.md
-  - Documented pre-commit checklist: `bun run lint:fix`, `bun run typecheck`, unit tests, CHANGELOG updates
-  - Added quality gates: Lint, Typecheck, Tests, Changelog
-  - Documented consequences for skipping quality checks
-  - Added Git Hooks installation instructions (`npx pre-commit-install`)
+- **Quality Safeguards**: Comprehensive quality assurance system (7 phases)
+  - **Phase 1 - Foundation**: Husky pre-commit hooks with TypeScript, Biome lint, unit tests
+  - **Phase 2 - Process**: Changelog validation workflow, quality documentation in AGENTS.md and README
+  - **Phase 3 - Agent Governance**: `.agent-rules.md` with mandatory checks, compliance script, violation penalties
+  - **Phase 4 - CI Optimization**: Bun dependency caching in all workflows, smart test selection (`tools/ci/affected-tests.sh`)
+  - **Phase 5-6**: Merge queue and testing (requires manual GitHub setup)
+  - **Phase 7 - Documentation**: Comprehensive quality runbook (`docs/quality-runbook.md`) with troubleshooting
+  - Pre-commit hooks: typecheck → lint → unit tests → agent compliance
+  - CI caching: `~/.bun/install/cache` with package.json hash
+  - Smart tests: Maps changed files to relevant test suites
+  - Agent compliance: CHANGELOG check, skipped test detection, lint/typecheck verification
 
 - **Dynamic Autocomplete**: Added dynamic autocomplete for server names and tool names
   - `goblin complete servers [partial]` - Complete server names from HTTP API or config
