@@ -1,18 +1,36 @@
-# Developer Setup Guide
+# Contributing to Goblin
 
-This guide covers setting up your development environment for contributing to Goblin.
+Thank you for your interest in contributing to Goblin MCP Gateway! This document provides comprehensive guidelines for setting up your development environment and contributing to the project.
+
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Prerequisites](#prerequisites)
+- [Development Setup](#development-setup)
+- [Development Workflow](#development-workflow)
+- [Code Style Guidelines](#code-style-guidelines)
+- [Testing Guidelines](#testing-guidelines)
+- [Documentation Guidelines](#documentation-guidelines)
+- [Getting Help](#getting-help)
+- [Recognition](#recognition)
+- [License](#license)
+
+## Code of Conduct
+
+By participating in this project, you agree to maintain a respectful, inclusive, and harassment-free environment for everyone.
 
 ## Prerequisites
 
 - [Bun](https://bun.sh/) >= 1.3.8
 - Git
+- A GitHub account
 
-## Initial Setup
+## Development Setup
 
-### 1. Clone the Repository
+### 1. Fork and Clone
 
 ```bash
-git clone https://github.com/TalkingThreads/goblin.git
+git clone https://github.com/YOUR_USERNAME/goblin.git
 cd goblin
 ```
 
@@ -22,121 +40,339 @@ cd goblin
 bun install
 ```
 
-### 3. Set Up Husky (Git Hooks)
+This will automatically set up Husky git hooks via the `prepare` script.
 
-Husky provides git hooks for quality checks before commits. Run the following command once to enable them:
-
-```bash
-npx husky install
-```
-
-This will create the `.husky/` directory and configure git to use the hooks defined in `.husky/pre-commit`.
-
-**Note:** If you encounter issues with `npx husky install`, you can also install husky globally:
-
-```bash
-npm install -g husky
-husky install
-```
-
-### 4. Build the Project
+### 3. Build the Project
 
 ```bash
 bun run build
+bun run build:cli
 ```
 
-### 5. Verify Installation
+### 4. Verify Installation
 
 Run the test suite to ensure everything is working:
 
 ```bash
+bun run typecheck
+bun run lint
 bun test
 ```
+
+### 5. Set Up Husky (Git Hooks)
+
+Husky provides git hooks for quality checks before commits. If hooks weren't installed automatically:
+
+```bash
+bun run prepare
+```
+
+This configures git to use the hooks defined in `.husky/pre-commit`.
+
+**Troubleshooting Husky:**
+
+- **"bun: command not found: husky"**: Run `npm install --ignore-scripts` then `bun run prepare`
+- **Permission Errors (Linux/macOS)**: Ensure your user has write permissions to the `.husky` directory
+- **Line Ending Warnings (Windows)**: Configure git with `git config core.autocrlf false`
 
 ## Development Workflow
 
 ### Running in Development Mode
 
 ```bash
-bun run dev
+bun run dev  # Starts server with hot-reload
 ```
 
-This starts the server with hot-reload enabled.
+### Code Quality Commands
+
+```bash
+bun run lint        # Check for issues
+bun run lint:fix    # Auto-fix issues
+bun run format      # Format code
+bun run typecheck   # TypeScript type checking
+```
 
 ### Running Tests
 
 ```bash
 bun test                    # All tests
-bun test tests/unit        # Unit tests only
+bun test tests/unit         # Unit tests only
 bun test tests/integration  # Integration tests only
-bun test tests/e2e         # E2E tests only
+bun test tests/e2e          # E2E tests only
 bun test tests/smoke        # Smoke tests only
 bun test tests/performance  # Performance tests only
+bun test --watch            # Watch mode during development
 ```
 
-### Code Quality
+### 1. OpenSpec First (For Features)
+
+Goblin uses **OpenSpec** for spec-driven development. For new features or breaking changes:
+
+1. **Read the OpenSpec Guide**
+   ```bash
+   cat openspec/AGENTS.md
+   ```
+
+2. **Check Existing Work**
+   ```bash
+   openspec list          # List active changes
+   openspec list --specs  # List existing specs
+   ```
+
+3. **Create a Change Proposal**
+   ```bash
+   mkdir -p openspec/changes/add-feature-name/specs
+   # Write proposal.md, tasks.md, and spec deltas
+   # See openspec/AGENTS.md for format
+   ```
+
+4. **Validate Your Proposal**
+   ```bash
+   openspec validate add-feature-name --strict --no-interactive
+   ```
+
+5. **Wait for Approval**
+   - Submit proposal as PR or discussion
+   - Get maintainer approval before implementation
+
+### 2. Implementation
+
+1. **Create a Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   # or
+   git checkout -b fix/your-bug-fix
+   ```
+
+2. **Follow Code Style** (See [AGENTS.md](AGENTS.md))
+   - Use Biome for formatting
+   - Follow TypeScript strict mode
+   - Use `.js` extensions for local imports
+   - Add JSDoc comments for public APIs
+   - Use structured logging with Pino
+
+3. **Write Tests**
+   ```bash
+   touch tests/unit/your-feature.test.ts
+   bun test --watch  # Watch mode during development
+   ```
+
+4. **Update Documentation**
+   - Update README.md if adding user-facing features
+   - Update CHANGELOG.md with your changes
+   - Add/update JSDoc comments
+
+### 3. Quality Checks
+
+Run all checks before submitting:
 
 ```bash
-bun run lint               # Check for issues
-bun run lint:fix           # Auto-fix issues
-bun run format             # Format code
-bun run typecheck          # TypeScript type checking
+# Type checking
+bun run typecheck
+
+# Linting
+bun run lint
+
+# Auto-fix lint issues
+bun run lint:fix
+
+# Formatting
+bun run format
+
+# Tests
+bun test
+
+# Build verification
+bun run build
 ```
 
-### Building
+All checks must pass before your PR can be merged. Pre-commit hooks will run these checks automatically.
 
+### 4. Commit Guidelines
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation only
+- `style`: Code style (formatting, missing semicolons, etc.)
+- `refactor`: Code change that neither fixes a bug nor adds a feature
+- `perf`: Performance improvement
+- `test`: Adding or updating tests
+- `chore`: Build process, dependencies, tooling
+
+**Examples:**
 ```bash
-bun run build              # Build for production
-bun run build:cli          # Build CLI only
-bun run build:analyze      # Build with bundle analysis
+git commit -m "feat(registry): add tool discovery endpoint"
+git commit -m "fix(transport): handle connection timeout gracefully"
+git commit -m "docs: update README with configuration examples"
 ```
 
-## Git Hooks
-
-Goblin uses husky to run quality checks before commits:
-
-- **pre-commit**: Runs biome linting and type checking
-- **pre-commit-auto-fix**: Auto-formats code before commit
-
-To skip hooks (not recommended):
-
+**Skip hooks (not recommended):**
 ```bash
 git commit --no-verify -m "message"
 ```
 
-## CI/CD Considerations
+### 5. Submit Pull Request
 
-When running in CI/CD pipelines, hooks may not be needed. To install dependencies without running husky:
+1. **Push Your Branch**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
 
-```bash
-npm install --ignore-scripts
+2. **Create Pull Request**
+   - Use a clear, descriptive title
+   - Reference related issues
+   - Link to OpenSpec proposal (if applicable)
+   - Describe what changed and why
+   - Add screenshots/examples if relevant
+
+3. **PR Template**
+   ```markdown
+   ## Description
+   Brief description of changes
+   
+   ## Related Issues
+   Fixes #123
+   
+   ## OpenSpec
+   - [ ] Change proposal: `openspec/changes/add-feature-name/`
+   - [ ] Proposal validated and approved
+   
+   ## Type of Change
+   - [ ] Bug fix (non-breaking)
+   - [ ] New feature (non-breaking)
+   - [ ] Breaking change
+   - [ ] Documentation update
+   
+   ## Checklist
+   - [ ] Tests pass (`bun test`)
+   - [ ] Type checking passes (`bun run typecheck`)
+   - [ ] Linting passes (`bun run lint`)
+   - [ ] Build succeeds (`bun run build`)
+   - [ ] Documentation updated
+   - [ ] CHANGELOG.md updated
+   ```
+
+## What to Contribute
+
+### Good First Issues
+
+Look for issues labeled:
+- `good first issue` - Beginner-friendly
+- `help wanted` - Contributions welcome
+- `documentation` - Docs improvements
+
+### Areas of Contribution
+
+- **Bug Fixes**: Fix reported issues
+- **Features**: Implement from OpenSpec proposals
+- **Documentation**: Improve guides, examples, API docs
+- **Tests**: Add test coverage
+- **Performance**: Optimize hot paths
+- **Examples**: Add example configurations or integrations
+
+## Code Style Guidelines
+
+See [AGENTS.md](AGENTS.md) for detailed guidelines. Key points:
+
+### Formatting
+- 2 space indentation
+- 100 character line width
+- Double quotes
+- Semicolons always
+- Trailing commas
+
+### TypeScript
+- Use `strict` mode
+- Handle `undefined` from array access
+- Use bracket notation for index signatures
+- Prefer `type` imports for type-only imports
+- Use `node:` protocol for built-ins
+
+### Naming
+- Files: `kebab-case.ts`
+- Functions: `camelCase`
+- Classes: `PascalCase`
+- Types: `PascalCase`
+- Constants: `SCREAMING_SNAKE_CASE`
+
+### Error Handling
+```typescript
+// Use unknown, then narrow
+function handleError(error: unknown): void {
+  if (error instanceof Error) {
+    logger.error({ error }, "Error occurred");
+  }
+}
+
+// Top-level catch pattern
+main().catch((error: unknown) => {
+  logger.error({ error }, "Fatal error");
+  process.exit(1);
+});
 ```
 
-Then run build and tests manually in your CI configuration.
+## Testing Guidelines
 
-## Troubleshooting
+- Write tests for all new features
+- Maintain existing test coverage
+- Use descriptive test names
+- Test edge cases and error conditions
+- Run tests in watch mode during development
 
-### "bun: command not found: husky"
+```typescript
+import { test, expect, describe } from "bun:test";
 
-This happens during `npm install` if husky's `prepare` script runs before dependencies are installed. To fix:
-
-```bash
-npm install --ignore-scripts
-npx husky install
+describe("Feature Name", () => {
+  test("should handle success case", () => {
+    // Arrange
+    const input = "test";
+    
+    // Act
+    const result = yourFunction(input);
+    
+    // Assert
+    expect(result).toBe("expected");
+  });
+});
 ```
 
-### Line Ending Warnings (Windows)
+## Documentation Guidelines
 
-If you see LF/CRLF warnings, configure git to handle line endings:
+- Write clear, concise documentation
+- Include code examples
+- Update README.md for user-facing changes
+- Use JSDoc for public APIs
+- Keep AGENTS.md updated for tooling changes
 
-```bash
-git config core.autocrlf false
-```
+## Getting Help
 
-### Permission Errors with Husky (Linux/macOS)
+- **Questions**: [GitHub Discussions](https://github.com/TalkingThreads/goblin/discussions)
+- **Bugs**: [GitHub Issues](https://github.com/TalkingThreads/goblin/issues)
 
-```bash
-sudo npx husky install
-```
+## Recognition
 
-Or ensure your user has write permissions to the `.husky` directory.
+Contributors are recognized in:
+- Release notes
+- CHANGELOG.md
+- GitHub contributors page
+
+Exceptional contributors may be invited to become maintainers (see [MAINTAINERS.md](MAINTAINERS.md)).
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+
+---
+
+Thank you for contributing to Goblin! 🎉

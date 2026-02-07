@@ -288,7 +288,7 @@ const response = await fetch("http://127.0.0.1:3000/messages", {
 - **Documentation**: See [README](../README.md)
 - **Issues**: [GitHub Issues](https://github.com/TalkingThreads/goblin/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/TalkingThreads/goblin/discussions)
-- **Contributing**: See [CONTRIBUTE.md](../CONTRIBUTE.md)
+- **Contributing**: See [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ## v1 and v2 Roadmap
 

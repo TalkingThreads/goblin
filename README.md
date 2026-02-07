@@ -404,7 +404,7 @@ bun run perf
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTE.md](CONTRIBUTE.md) for guidelines.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### Development Workflow
 

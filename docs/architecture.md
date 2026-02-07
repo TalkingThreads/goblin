@@ -492,6 +492,6 @@ Designed for enterprise deployment:
 | Configuration | [example-config.json](../docs/example-config.json) |
 | CLI Commands | [CLI Reference](cli-reference.md) |
 | API Reference | [API Overview](api/overview.md) |
-| Contributing | [CONTRIBUTE.md](../CONTRIBUTE.md) |
+| Contributing | [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | Security | [Security Features](security.md) |
 | Testing | [Testing Approach](testing.md) |
