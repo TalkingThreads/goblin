@@ -9,6 +9,7 @@ import AddServerForm from "./components/AddServerForm.js";
 import ConfirmDialog from "./components/ConfirmDialog.js";
 import ServerContextMenu from "./components/ServerContextMenu.js";
 import ServerDetails from "./components/ServerDetails.js";
+import ToolInvocationPanel from "./components/ToolInvocationPanel.js";
 import { useGatewayData } from "./hooks/useGatewayData.js";
 import type { GoblinGateway } from "../core/gateway.js";
 import type { TuiServer, AddServerFormData, TuiScreen } from "./types.js";
@@ -127,7 +128,7 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
   const [activeScreen, setActiveScreen] = useState<TuiScreen>("dashboard");
   const [selectedServer, setSelectedServer] = useState<TuiServer | null>(null);
   const [contextMenuServer, setContextMenuServer] = useState<TuiServer | null>(null);
-  const { servers, logs } = useGatewayData(gateway);
+  const { servers, tools, logs } = useGatewayData(gateway);
 
   const handleSelectServer = useCallback((server: TuiServer) => {
     setSelectedServer(server);
@@ -265,6 +266,7 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
             onAddServer={handleAddServer}
             onContextMenu={handleContextMenu}
           />
+          <ToolInvocationPanel tools={tools} gateway={gateway} />
           <PromptsPanel gateway={gateway} />
           <ResourcesPanel gateway={gateway} />
           {showMetrics && <MetricsPanel />}

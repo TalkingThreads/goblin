@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TUI Tool Invocation**: Added interactive tool invocation UI to TUI dashboard
+  - `ToolInvocationPanel` component for testing tools from the dashboard
+  - Tool selector dropdown with keyboard navigation (↑/↓, j/k)
+  - JSON arguments editor with live typing support
+  - Invoke button that calls `gateway.router.callTool()` directly
+  - Result display showing success/error responses in formatted JSON
+  - Keyboard navigation: Tab (next step), Shift+Tab (prev step), Enter (select/invoke), Esc (reset)
+  - Unit tests: 14 passing tests
+
 - **TUI Server Management**: Added interactive server management to TUI dashboard
   - `ServerList` component with keyboard navigation (↑/↓, j/k) and server selection (Enter)
   - `AddServerForm` 4-step wizard for adding servers (name → transport → config → confirm)
