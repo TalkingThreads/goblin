@@ -623,18 +623,42 @@ Skipping quality checks will result in:
 
 ### Git Hooks
 
-This project uses pre-commit hooks. Install them with:
+This project uses Husky for pre-commit hooks. Install them with:
 
 ```bash
-npx pre-commit-install
+bun run prepare  # Runs automatically after npm/bun install
 ```
 
 Hooks run automatically on commit:
 - TypeScript type checking
 - Biome linting
 - Unit tests
+- Agent compliance checks
 
 To skip hooks (not recommended):
 ```bash
 git commit --no-verify  # Use only in emergencies
 ```
+
+### Enforcement Details
+
+**Pre-commit Hooks:**
+- Configured in `.husky/pre-commit`
+- Runs: typecheck → lint → unit tests → agent compliance
+- Fails fast on first error
+
+**CI Workflows:**
+- Build & Lint: Runs on every PR
+- Tests: Unit and integration tests
+- Changelog Validation: Checks CHANGELOG.md updated for source changes
+- All workflows use Bun dependency caching
+
+**Smart Test Selection:**
+- Script: `tools/ci/affected-tests.sh`
+- Maps changed files to relevant tests
+- Use `--all` flag to force full test suite
+
+**Agent Compliance:**
+- Rules defined in `.agent-rules.md`
+- Checked by `tools/agents-guard/check.sh`
+- Validates: CHANGELOG updates, no skipped tests, lint/typecheck pass
