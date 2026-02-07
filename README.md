@@ -299,7 +299,8 @@ goblin stdio                   # Run as subprocess MCP server
 goblin stdio --config /path   # Custom config path
 
 # Server management
-goblin servers add <name> <transport>  # Add a new server
+goblin servers add <name> <transport>  # Add a new server (flag-based)
+goblin servers add --interactive       # Add a server interactively (guided prompts)
 goblin servers add my-server stdio --command "npx"
 goblin servers add http-server http --url "http://localhost:3001/mcp"
 goblin servers remove <name>          # Remove a server

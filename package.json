@@ -73,6 +73,7 @@
     "main": "src/index.js"
   },
   "dependencies": {
+    "@clack/prompts": "^1.0.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "commander": "^14.0.2",
     "env-paths": "^4.0.0",

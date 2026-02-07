@@ -8,6 +8,7 @@ import { writeConfig } from "../../config/writer.js";
 import { createLogger } from "../../observability/logger.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
+import { addServerInteractive } from "./servers/add-interactive.js";
 
 const logger = createLogger("cli-servers");
 
@@ -217,12 +218,13 @@ export function createServersCommand(context?: CliContext): Command {
   };
 
   command
-    .command("add <name> <transport>")
+    .command("add [name] [transport]")
     .description("Add a new server to the configuration")
     .addHelpText(
       "after",
-      '\nExamples:\n  # Add a local MCP server via stdio\n  goblin servers add my-server stdio --command "npx" --args "@modelcontextprotocol/server-filesystem" "./data"\n\n  # Add a remote HTTP server\n  goblin servers add remote-server http --url "https://api.example.com/mcp"\n\n  # Add a server with custom headers\n  goblin servers add api-server http --url "https://api.example.com/mcp" --header "Authorization: Bearer token123"',
+      '\nExamples:\n  # Interactive mode (recommended for new users)\n  goblin servers add --interactive\n\n  # Add a local MCP server via stdio\n  goblin servers add my-server stdio --command "npx" --args "@modelcontextprotocol/server-filesystem" "./data"\n\n  # Add a remote HTTP server\n  goblin servers add remote-server http --url "https://api.example.com/mcp"\n\n  # Add a server with custom headers\n  goblin servers add api-server http --url "https://api.example.com/mcp" --header "Authorization: Bearer token123"',
     )
+    .option("--interactive", "Run in interactive mode with guided prompts")
     .option("--command <command>", "Command to execute (for stdio transport)")
     .option("--args <args...>", "Arguments for the command (for stdio transport)")
     .option("--url <url>", "URL for HTTP/SSE/streamablehttp transports")
@@ -233,9 +235,10 @@ export function createServersCommand(context?: CliContext): Command {
     .option("--config <path>", "Path to config file")
     .action(
       async (
-        name: string,
-        transport: string,
+        name: string | undefined,
+        transport: string | undefined,
         options: {
+          interactive?: boolean;
           command?: string;
           args?: string[];
           url?: string;
@@ -246,6 +249,27 @@ export function createServersCommand(context?: CliContext): Command {
           config?: string;
         },
       ) => {
+        if (options.interactive) {
+          if (name || transport) {
+            console.error("Error: Cannot use positional arguments with --interactive flag");
+            console.error("Use 'goblin servers add --interactive' for interactive mode");
+            process.exit(ExitCode.INVALID_ARGUMENTS);
+          }
+          try {
+            await addServerInteractive({ config: getConfigPath(options.config) });
+          } catch (error) {
+            console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+            process.exit(ExitCode.GENERAL_ERROR);
+          }
+          return;
+        }
+
+        if (!name || !transport) {
+          console.error("Error: Missing required arguments. Use --interactive for guided mode.");
+          console.error("Usage: goblin servers add <name> <transport> [options]");
+          process.exit(ExitCode.INVALID_ARGUMENTS);
+        }
+
         try {
           const headers: Record<string, string> = {};
           if (options.header) {

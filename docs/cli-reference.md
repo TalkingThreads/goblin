@@ -550,10 +550,14 @@ Add a new server to the configuration dynamically.
 
 **Basic Usage**:
 ```bash
+# Interactive mode (recommended for new users)
+goblin servers add --interactive
+
+# Non-interactive mode (flag-based)
 goblin servers add <name> <transport>
 ```
 
-**Arguments**:
+**Arguments** (non-interactive mode):
 | Argument | Description |
 |----------|-------------|
 | `<name>` | Unique name for the server |
@@ -562,6 +566,7 @@ goblin servers add <name> <transport>
 **Options**:
 | Option | Description | Default |
 |--------|-------------|---------|
+| `--interactive` | Run in interactive mode with guided prompts | - |
 | `--command <cmd>` | Command to execute (for stdio transport) | - |
 | `--args <args...>` | Arguments for the command (for stdio transport) | - |
 | `--url <url>` | URL for HTTP/SSE/streamablehttp transports | - |
@@ -571,7 +576,25 @@ goblin servers add <name> <transport>
 | `--yes` | Skip confirmation prompt | false |
 | `--config <path>` | Path to config file | OS default |
 
-**Examples**:
+**Interactive Mode Examples**:
+```bash
+# Start interactive mode - guided prompts for adding servers
+goblin servers add --interactive
+
+# Interactive mode with custom config
+goblin servers add --interactive --config /path/to/config.json
+```
+
+**Interactive Mode Prompts**:
+1. **Server Name** - Enter a unique name (3-64 characters, alphanumeric, dashes, underscores)
+2. **Transport Type** - Select from: stdio, http, sse, streamablehttp
+3. **Transport-Specific**:
+   - stdio: Enter command and optional arguments
+   - http/sse/streamablehttp: Enter URL with validation
+4. **Enable Server** - Choose yes (default) or no
+5. **Confirmation** - Review summary and confirm addition
+
+**Non-Interactive Mode Examples**:
 ```bash
 # Add STDIO server
 goblin servers add filesystem stdio --command "npx" --args "-y,@modelcontextprotocol/server-filesystem,/tmp"
@@ -597,6 +620,11 @@ goblin servers add my-server stdio --command "npx" --args "-y,my-server" --yes
 - **http**: Requires `--url` option
 - **sse**: Requires `--url` option
 - **streamablehttp**: Requires `--url` option
+
+**Error Handling**:
+- Interactive mode exits with code 2 if not running in a terminal
+- Press Ctrl+C at any prompt to cancel gracefully (exit code 0)
+- Duplicate server names are rejected with helpful error message
 
 ### `goblin servers remove`
 
