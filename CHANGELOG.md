@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TUI Config Validation**: Added interactive config validation UI to TUI dashboard
+  - `ConfigValidationPanel` component for validating configuration from TUI
+  - Config path input with editing support
+  - Validation results display (✓ valid / ✗ invalid with error list)
+  - Error details showing full Zod validation paths and messages
+  - Open in editor button [E] to edit config in $EDITOR (vi/vim/code/etc)
+  - Keyboard shortcuts: V (validate), R (reset), E (edit), Esc (cancel)
+  - Unit tests: 14 passing tests
+
 - **TUI Tool Invocation**: Added interactive tool invocation UI to TUI dashboard
   - `ToolInvocationPanel` component for testing tools from the dashboard
   - Tool selector dropdown with keyboard navigation (↑/↓, j/k)
