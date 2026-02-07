@@ -581,3 +581,60 @@ Before submitting code, verify:
 - [ ] Line ending handling with `crlfDelay: Infinity`
 - [ ] File permission ops are conditional
 - [ ] Tests pass on all target platforms
+
+## Quality Requirements for All Changes
+
+Agents **MUST** follow these quality requirements for every change:
+
+### Pre-Commit Checklist
+
+Before committing any changes, run these commands:
+
+```bash
+# 1. Run linter and fix any issues
+bun run lint:fix
+
+# 2. Run type checking
+bun run typecheck
+
+# 3. Run unit tests for affected code
+bun test tests/unit/
+
+# 4. Update CHANGELOG.md for source changes
+```
+
+### Quality Gates
+
+All changes must pass these gates:
+
+1. **Lint**: No lint errors (warnings allowed)
+2. **Typecheck**: TypeScript compilation succeeds
+3. **Tests**: All relevant unit tests pass
+4. **Changelog**: CHANGELOG.md updated for source changes
+
+### Consequences
+
+Skipping quality checks will result in:
+
+- Pre-commit hooks blocking the commit
+- CI/CD pipeline failures
+- PR rejection until issues are fixed
+- Reputation penalties for repeated violations
+
+### Git Hooks
+
+This project uses pre-commit hooks. Install them with:
+
+```bash
+npx pre-commit-install
+```
+
+Hooks run automatically on commit:
+- TypeScript type checking
+- Biome linting
+- Unit tests
+
+To skip hooks (not recommended):
+```bash
+git commit --no-verify  # Use only in emergencies
+```

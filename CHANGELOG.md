@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Quality Safeguards**: Added foundational quality safeguards and pre-commit hooks
+  - Installed pre-commit as dev dependency (`bun add -D pre-commit`)
+  - Created `.pre-commit-config.yaml` with TypeScript typecheck, Biome lint, and unit test hooks
+  - Added "Quality Requirements for All Changes" section to AGENTS.md
+  - Documented pre-commit checklist: `bun run lint:fix`, `bun run typecheck`, unit tests, CHANGELOG updates
+  - Added quality gates: Lint, Typecheck, Tests, Changelog
+  - Documented consequences for skipping quality checks
+  - Added Git Hooks installation instructions (`npx pre-commit-install`)
+
 - **Dynamic Autocomplete**: Added dynamic autocomplete for server names and tool names
   - `goblin complete servers [partial]` - Complete server names from HTTP API or config
   - `goblin complete tools [partial]` - Complete tool names from HTTP API
