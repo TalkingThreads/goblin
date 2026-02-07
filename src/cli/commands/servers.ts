@@ -375,7 +375,18 @@ export function createServersCommand(context?: CliContext): Command {
         await enableServer({ name, yes: options.yes, config: getConfigPath(options.config) });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        process.exit(1);
+        if (error instanceof Error) {
+          if (error.message.includes("not found")) {
+            process.exit(ExitCode.NOT_FOUND);
+          } else if (error.message.includes("already enabled")) {
+            process.exit(ExitCode.INVALID_ARGUMENTS);
+          } else if (error.message.includes("Confirmation required")) {
+            process.exit(ExitCode.INVALID_ARGUMENTS);
+          } else if (error.message.includes("Configuration file not found")) {
+            process.exit(ExitCode.CONFIG_ERROR);
+          }
+        }
+        process.exit(ExitCode.GENERAL_ERROR);
       }
     });
 

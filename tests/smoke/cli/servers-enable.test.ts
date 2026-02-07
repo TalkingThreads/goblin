@@ -129,7 +129,7 @@ describe("CLI Servers Enable Command", () => {
         configPath,
       ]);
 
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(7);
       expect(result.stderr).toContain("not found");
     });
 
@@ -143,7 +143,7 @@ describe("CLI Servers Enable Command", () => {
         configPath,
       ]);
 
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(2);
       expect(result.stderr).toContain("already enabled");
     });
 
@@ -166,7 +166,7 @@ describe("CLI Servers Enable Command", () => {
     it("should require confirmation without --yes", async () => {
       const result = await runCli(["servers", "enable", "disabled-server", "--config", configPath]);
 
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(2);
       expect(result.stderr).toContain("Confirmation required");
     });
   });
@@ -255,7 +255,7 @@ describe("CLI Servers Disable Command", () => {
         configPath,
       ]);
 
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(7);
       expect(result.stderr).toContain("not found");
     });
 
@@ -269,7 +269,7 @@ describe("CLI Servers Disable Command", () => {
         configPath,
       ]);
 
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(2);
       expect(result.stderr).toContain("already disabled");
     });
 
@@ -292,7 +292,7 @@ describe("CLI Servers Disable Command", () => {
     it("should require confirmation without --yes", async () => {
       const result = await runCli(["servers", "disable", "enabled-server", "--config", configPath]);
 
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(2);
       expect(result.stderr).toContain("Confirmation required");
     });
   });
