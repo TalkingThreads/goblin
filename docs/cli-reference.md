@@ -9,6 +9,7 @@ Comprehensive documentation for Goblin MCP Gateway CLI commands.
 - [Gateway Management](#gateway-management)
 - [Resource Management](#resource-management)
 - [Configuration Management](#configuration-management)
+- [Hot Reload](#hot-reload)
 - [Logging and Health](#logging-and-health)
 - [Slash Commands](#slash-commands)
 - [Advanced Usage](#advanced-usage)
@@ -875,6 +876,104 @@ goblin config reload
 # Force reload
 goblin config reload --force
 ```
+
+---
+
+## Hot Reload
+
+Goblin supports **hot reload** for configuration changes, allowing you to modify server configurations without restarting the gateway.
+
+### How Hot Reload Works
+
+When you modify the configuration file while the gateway is running:
+
+1. **File Change Detection** - The ConfigWatcher detects changes to the config file
+2. **Validation** - The new configuration is validated for correctness
+3. **Atomic Swap** - Valid changes are applied atomically
+4. **Registry Update** - Servers are dynamically added/removed from the registry
+5. **Graceful Drain** - Removed servers complete in-flight requests before disconnection
+
+### Server Add (Hot)
+
+When a new server is added to the configuration:
+
+```bash
+# Add a new server to config.json
+goblin servers add filesystem stdio --command "npx" --args "@modelcontextprotocol/server-filesystem,/tmp" --yes
+
+# The server is immediately available without gateway restart
+goblin tools list | grep filesystem
+```
+
+**Behavior**:
+- New servers are registered in the registry immediately
+- Connections are established automatically
+- Tools from the new server are available instantly
+
+### Server Remove (Graceful)
+
+When a server is removed from the configuration:
+
+```bash
+# Remove a server
+goblin servers remove filesystem --yes
+```
+
+**Behavior**:
+1. Server is marked as "draining"
+2. New requests to the server are rejected with a connection error
+3. In-flight requests complete normally
+4. After 30 seconds (or when all requests complete), the server is fully disconnected
+5. Server is removed from the registry
+
+### Log Output
+
+Hot reload events are logged:
+
+```
+# Adding a server
+info: Added new server via config reload server=filesystem
+
+# Removing a server
+info: Starting graceful drain of server server=filesystem
+info: Server drained successfully server=filesystem
+info: Removed server via config reload server=filesystem
+```
+
+### Disabling Hot Reload
+
+Hot reload is enabled by default. To disable:
+
+```bash
+# Start gateway with hot reload disabled
+goblin start --no-reload
+```
+
+### Configuration Requirements
+
+For hot reload to work:
+
+1. **Gateway must be running** in HTTP mode
+2. **Config file must be writable** by the gateway process
+3. **Valid JSON format** - invalid JSON will be rejected
+4. **Valid schema** - invalid configuration will be rejected (rollback to previous config)
+
+### Troubleshooting
+
+**Server not appearing after add**:
+- Check that the server is enabled in the config
+- Verify the server configuration is valid
+- Check logs: `goblin logs --level info`
+
+**Server not being removed**:
+- Wait up to 30 seconds for graceful drain to complete
+- Check if there are stuck requests: `goblin health`
+- Force restart if needed: `goblin restart --force`
+
+**Configuration rejected**:
+- Validate config first: `goblin config validate`
+- Check JSON syntax
+- Verify all required fields are present
 
 ---
 
