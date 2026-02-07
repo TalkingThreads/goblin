@@ -11,6 +11,7 @@ export interface ServerStatus {
   transport: string;
   status: "online" | "offline";
   tools: number;
+  enabled: boolean;
 }
 
 /**
@@ -86,6 +87,7 @@ export function useGatewayData(gateway: GoblinGateway | null): GatewayData {
         transport: "sse", // Could be enhanced to store transport type
         status: h.status === "connected" ? "online" : "offline",
         tools: 0, // Will be updated from registry
+        enabled: true, // Default to enabled
       }));
 
       // Get tool count per server from registry
@@ -107,6 +109,7 @@ export function useGatewayData(gateway: GoblinGateway | null): GatewayData {
             transport: "unknown",
             status: "offline",
             tools: 1,
+            enabled: true,
           });
           knownServerNames.add(tool.serverId);
         }

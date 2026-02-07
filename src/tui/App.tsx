@@ -1,11 +1,17 @@
-import { memo, useState } from "react";
+import { memo, useState, useCallback } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import PromptsPanel from "./PromptsPanel.js";
 import ResourcesPanel from "./ResourcesPanel.js";
 import MetricsPanel from "./MetricsPanel.js";
 import SlashMode from "./components/SlashMode.js";
+import ServerList from "./components/ServerList.js";
+import AddServerForm from "./components/AddServerForm.js";
+import ConfirmDialog from "./components/ConfirmDialog.js";
+import ServerContextMenu from "./components/ServerContextMenu.js";
+import ServerDetails from "./components/ServerDetails.js";
 import { useGatewayData } from "./hooks/useGatewayData.js";
 import type { GoblinGateway } from "../core/gateway.js";
+import type { TuiServer, AddServerFormData, TuiScreen } from "./types.js";
 
 const Header = memo(function Header({
   gateway,
@@ -35,74 +41,6 @@ const Header = memo(function Header({
         <Text color="green" bold>
           ● Online
         </Text>
-      </Box>
-    </Box>
-  );
-});
-
-const ServersPane = memo(function ServersPane({
-  servers,
-}: {
-  servers: Array<{
-    id: string;
-    name: string;
-    transport: string;
-    status: "online" | "offline";
-    tools: number;
-  }>;
-}) {
-  return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      paddingX={1}
-      flexGrow={1}
-      minWidth={40}
-    >
-      <Box marginBottom={1}>
-        <Text bold underline color="cyan">
-          CONNECTED SERVERS
-        </Text>
-      </Box>
-      <Box>
-        <Box width={15}>
-          <Text bold>Name</Text>
-        </Box>
-        <Box width={12}>
-          <Text bold>Transport</Text>
-        </Box>
-        <Box width={8}>
-          <Text bold>Tools</Text>
-        </Box>
-        <Box>
-          <Text bold>Status</Text>
-        </Box>
-      </Box>
-      <Box flexDirection="column" marginTop={1}>
-        {servers.map((server) => (
-          <Box key={server.id}>
-            <Box width={15}>
-              <Text>{server.name}</Text>
-            </Box>
-            <Box width={12}>
-              <Text color="gray">{server.transport}</Text>
-            </Box>
-            <Box width={8}>
-              <Text>{server.tools}</Text>
-            </Box>
-            <Box>
-              <Text color={server.status === "online" ? "green" : "red"}>
-                {server.status === "online" ? "🟢" : "🔴"}{" "}
-                {server.status.toUpperCase()}
-              </Text>
-            </Box>
-          </Box>
-        ))}
-        {servers.length === 0 && (
-          <Box>
-            <Text color="gray">No servers connected</Text>
-          </Box>
-        )}
       </Box>
     </Box>
   );
@@ -186,12 +124,91 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
   const { exit } = useApp();
   const [showMetrics, setShowMetrics] = useState(false);
   const [slashMode, setSlashMode] = useState(false);
+  const [activeScreen, setActiveScreen] = useState<TuiScreen>("dashboard");
+  const [selectedServer, setSelectedServer] = useState<TuiServer | null>(null);
+  const [contextMenuServer, setContextMenuServer] = useState<TuiServer | null>(null);
   const { servers, logs } = useGatewayData(gateway);
 
+  const handleSelectServer = useCallback((server: TuiServer) => {
+    setSelectedServer(server);
+  }, []);
+
+  const handleAddServer = useCallback(() => {
+    setActiveScreen("add-server");
+  }, []);
+
+  const handleAddServerSubmit = useCallback((data: AddServerFormData) => {
+    console.log("Adding server:", data);
+    setActiveScreen("dashboard");
+    setSelectedServer(null);
+  }, []);
+
+  const handleAddServerCancel = useCallback(() => {
+    setActiveScreen("dashboard");
+  }, []);
+
+  const handleConfirmRemove = useCallback(() => {
+    if (selectedServer) {
+      console.log("Removing server:", selectedServer.name);
+    }
+    setActiveScreen("dashboard");
+    setSelectedServer(null);
+  }, [selectedServer]);
+
+  const handleConfirmCancel = useCallback(() => {
+    setActiveScreen("dashboard");
+    setSelectedServer(null);
+  }, []);
+
+  const handleContextMenu = useCallback((server: TuiServer) => {
+    setContextMenuServer(server);
+  }, []);
+
+  const handleContextMenuAction = useCallback((action: "details" | "enable" | "disable" | "remove") => {
+    setContextMenuServer(null);
+    if (!contextMenuServer) return;
+
+    switch (action) {
+      case "details":
+        setSelectedServer(contextMenuServer);
+        setActiveScreen("server-details");
+        break;
+      case "enable":
+        console.log("Enabling server:", contextMenuServer.name);
+        break;
+      case "disable":
+        console.log("Disabling server:", contextMenuServer.name);
+        break;
+      case "remove":
+        setSelectedServer(contextMenuServer);
+        setActiveScreen("confirm-remove");
+        break;
+    }
+  }, [contextMenuServer]);
+
+  const handleContextMenuClose = useCallback(() => {
+    setContextMenuServer(null);
+  }, []);
+
+  const handleServerDetailsClose = useCallback(() => {
+    setActiveScreen("dashboard");
+    setSelectedServer(null);
+  }, []);
+
   useInput((input) => {
+    if (activeScreen !== "dashboard") {
+      if (input === "\u001b") {
+        if (activeScreen === "add-server") {
+          handleAddServerCancel();
+        } else if (activeScreen === "confirm-remove") {
+          handleConfirmCancel();
+        }
+      }
+      return;
+    }
+
     if (slashMode) {
       if (input === "/") {
-        // Already in slash mode, let the SlashMode component handle it
       }
       return;
     }
@@ -200,7 +217,6 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
       exit();
     }
     if (input === "r") {
-      // Trigger refresh - the hook will pick up changes
     }
     if (input === "m") {
       setShowMetrics((prev) => !prev);
@@ -229,14 +245,33 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
           onExit={handleSlashExit}
         />
       )}
-      <Box flexGrow={1} height={18}>
-        <ServersPane servers={servers} />
-        <PromptsPanel gateway={gateway} />
-        <ResourcesPanel gateway={gateway} />
-        {showMetrics && <MetricsPanel />}
-        <LogsPane logs={logs} />
-      </Box>
-      <Footer showMetrics={showMetrics} />
+      {activeScreen === "add-server" && (
+        <AddServerForm onSubmit={handleAddServerSubmit} onCancel={handleAddServerCancel} />
+      )}
+      {activeScreen === "confirm-remove" && selectedServer && (
+        <ConfirmDialog type="remove" server={selectedServer} onConfirm={handleConfirmRemove} onCancel={handleConfirmCancel} />
+      )}
+      {activeScreen === "server-details" && selectedServer && (
+        <ServerDetails server={selectedServer} onClose={handleServerDetailsClose} />
+      )}
+      {activeScreen === "dashboard" && contextMenuServer && (
+        <ServerContextMenu server={contextMenuServer} onSelect={handleContextMenuAction} onClose={handleContextMenuClose} />
+      )}
+      {activeScreen === "dashboard" && (
+        <Box flexGrow={1} height={18}>
+          <ServerList
+            servers={servers as import("./types.js").TuiServer[]}
+            onSelectServer={handleSelectServer}
+            onAddServer={handleAddServer}
+            onContextMenu={handleContextMenu}
+          />
+          <PromptsPanel gateway={gateway} />
+          <ResourcesPanel gateway={gateway} />
+          {showMetrics && <MetricsPanel />}
+          <LogsPane logs={logs} />
+        </Box>
+      )}
+      {activeScreen === "dashboard" && <Footer showMetrics={showMetrics} />}
     </Box>
   );
 };

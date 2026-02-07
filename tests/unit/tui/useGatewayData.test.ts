@@ -298,6 +298,7 @@ describe("ServerStatus interface", () => {
       transport: "stdio",
       status: "online",
       tools: 5,
+      enabled: true,
     };
 
     expect(server.id).toBe("test-server");
@@ -305,6 +306,7 @@ describe("ServerStatus interface", () => {
     expect(server.transport).toBe("stdio");
     expect(server.status).toBe("online");
     expect(server.tools).toBe(5);
+    expect(server.enabled).toBe(true);
   });
 
   test("should support offline status", () => {
@@ -314,6 +316,7 @@ describe("ServerStatus interface", () => {
       transport: "sse",
       status: "offline",
       tools: 0,
+      enabled: true,
     };
 
     expect(server.status).toBe("offline");
@@ -327,6 +330,7 @@ describe("ServerStatus interface", () => {
       transport: "http",
       status: "online",
       tools: 10,
+      enabled: true,
     };
 
     expect(server.transport).toBe("http");
@@ -339,6 +343,7 @@ describe("ServerStatus interface", () => {
       transport: "stdio",
       status: "online",
       tools: 0,
+      enabled: true,
     };
     const server2: ServerStatus = {
       id: "s2",
@@ -346,10 +351,24 @@ describe("ServerStatus interface", () => {
       transport: "stdio",
       status: "online",
       tools: 100,
+      enabled: true,
     };
 
     expect(server1.tools).toBe(0);
     expect(server2.tools).toBe(100);
+  });
+
+  test("should support disabled servers", () => {
+    const server: ServerStatus = {
+      id: "disabled-server",
+      name: "Disabled Server",
+      transport: "stdio",
+      status: "offline",
+      tools: 5,
+      enabled: false,
+    };
+
+    expect(server.enabled).toBe(false);
   });
 });
 

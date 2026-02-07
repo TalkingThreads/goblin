@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Tool Invoke API**: Added HTTP API endpoint for tool invocation
+- **TUI Server Management**: Added interactive server management to TUI dashboard
+  - `ServerList` component with keyboard navigation (↑/↓, j/k) and server selection (Enter)
+  - `AddServerForm` 4-step wizard for adding servers (name → transport → config → confirm)
+  - `ConfirmDialog` for remove confirmation with server details
+  - `ServerContextMenu` for server actions (View Details, Enable, Disable, Remove)
+  - `ServerDetails` component showing all server properties (name, transport, status, enabled, command/URL, args, headers, tools)
+  - `enabled` property added to `ServerStatus` interface for tracking server enable/disable state
+  - Keyboard shortcuts: A (add server), Enter (select), Space (context menu), Esc (cancel/close)
+  - Unit tests: 45 passing tests covering all TUI components
   - `POST /api/v1/tools/:name/invoke` - Invoke a tool by name
   - Request body: `{"arguments": {...}, "timeout": 30000}`
   - Response: `{"success": true, "result": {...}, "server": "name", "durationMs": 150}`
