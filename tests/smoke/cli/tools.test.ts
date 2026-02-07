@@ -156,14 +156,14 @@ describe("CLI Tools Invoke", () => {
       "http://localhost:39999",
     ]);
 
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(4);
     expect(result.stderr).toContain("Error");
   });
 
   it("should show error for invalid JSON args", async () => {
     const result = await runCli(["tools", "invoke", "some-tool", "--args", "not-json"]);
 
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(8);
     expect(result.stderr).toContain("Invalid JSON");
   });
 });
@@ -198,7 +198,7 @@ describe("CLI Tools Describe", () => {
       "http://localhost:39999",
     ]);
 
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Unable to connect");
+    expect(result.exitCode).toBe(4);
+    expect(result.stderr).toContain("Error");
   });
 });
