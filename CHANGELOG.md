@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Shell Completion**: Added shell completion support for bash, zsh, and fish
+  - `goblin completion <bash|zsh|fish>` command to generate completion scripts
+  - Bash completion with compgen for commands and subcommands
+  - Zsh completion with #compdef, descriptions, and _arguments
+  - Fish completion with descriptions and subcommand detection
+  - Static command completion for all top-level commands (stdio, start, status, servers, tools, config, etc.)
+  - Subcommand completion for servers, tools, and config
+  - Global flag completion: --help, --version, --verbose, --json, --config, --port, --host
+  - Unit tests: 20 passing tests
+
 - **TUI Config Validation**: Added interactive config validation UI to TUI dashboard
   - `ConfigValidationPanel` component for validating configuration from TUI
   - Config path input with editing support
