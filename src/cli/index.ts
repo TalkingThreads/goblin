@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
+import { createCompleteCommand } from "./commands/complete.js";
 import { createCompletionCommand } from "./commands/completion.js";
 import { showConfigCommand, validateConfigCommand } from "./commands/config.js";
 import { healthCommand } from "./commands/health.js";
@@ -206,6 +207,8 @@ async function main(): Promise<void> {
   program.addCommand(createServersCommand(globalContext));
 
   program.addCommand(createCompletionCommand());
+
+  program.addCommand(createCompleteCommand());
 
   const config = program.command("config").description("Configuration management");
 

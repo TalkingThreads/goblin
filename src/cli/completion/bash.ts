@@ -9,7 +9,7 @@ _goblin_completions() {
     prev="\${COMP_WORDS[COMP_CWORD-1]}"
 
     # Top-level commands
-    local commands="stdio start status stop health servers tools config logs help version"
+    local commands="stdio start status stop health servers tools config logs help version complete"
 
     # Subcommands for servers
     local servers_subcommands="add remove enable disable list details"
@@ -19,6 +19,9 @@ _goblin_completions() {
 
     # Subcommands for config
     local config_subcommands="validate show"
+
+    # Subcommands for complete
+    local complete_subcommands="servers tools"
 
     # Global flags
     local global_flags="--help --version --verbose --json --config --port --host"
@@ -37,16 +40,46 @@ _goblin_completions() {
                 COMPREPLY=( $(compgen -W "\${servers_subcommands}" -- "\${cur}") )
                 return 0
             fi
+            # Dynamic server name completion for certain subcommands
+            if [[ \${COMP_CWORD} -eq 3 ]]; then
+                case "\${COMP_WORDS[2]}" in
+                    remove|enable|disable|details)
+                        local servers=$(goblin complete servers 2>/dev/null)
+                        if [[ -n "$servers" ]]; then
+                            COMPREPLY=( $(compgen -W "$servers" -- "\${cur}") )
+                            return 0
+                        fi
+                        ;;
+                esac
+            fi
             ;;
         tools)
             if [[ \${COMP_CWORD} -eq 2 ]]; then
                 COMPREPLY=( $(compgen -W "\${tools_subcommands}" -- "\${cur}") )
                 return 0
             fi
+            # Dynamic tool name completion for certain subcommands
+            if [[ \${COMP_CWORD} -eq 3 ]]; then
+                case "\${COMP_WORDS[2]}" in
+                    invoke|describe)
+                        local tools=$(goblin complete tools 2>/dev/null)
+                        if [[ -n "$tools" ]]; then
+                            COMPREPLY=( $(compgen -W "$tools" -- "\${cur}") )
+                            return 0
+                        fi
+                        ;;
+                esac
+            fi
             ;;
         config)
             if [[ \${COMP_CWORD} -eq 2 ]]; then
                 COMPREPLY=( $(compgen -W "\${config_subcommands}" -- "\${cur}") )
+                return 0
+            fi
+            ;;
+        complete)
+            if [[ \${COMP_CWORD} -eq 2 ]]; then
+                COMPREPLY=( $(compgen -W "\${complete_subcommands}" -- "\${cur}") )
                 return 0
             fi
             ;;

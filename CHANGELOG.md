@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dynamic Autocomplete**: Added dynamic autocomplete for server names and tool names
+  - `goblin complete servers [partial]` - Complete server names from HTTP API or config
+  - `goblin complete tools [partial]` - Complete tool names from HTTP API
+  - Hybrid fetcher strategy: HTTP API first (fast, fresh), config file fallback (STDIO mode)
+  - HTTP fetcher with timeout (500ms) for running gateway
+  - Config fetcher for STDIO mode or when gateway is down
+  - Integrated with bash completion for `goblin servers <remove|enable|disable|details> <name>`
+  - Integrated with bash completion for `goblin tools <invoke|describe> <name>`
+  - Unit tests: 15 passing tests
+
 - **Shell Completion**: Added shell completion support for bash, zsh, and fish
   - `goblin completion <bash|zsh|fish>` command to generate completion scripts
   - Bash completion with compgen for commands and subcommands
@@ -17,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Static command completion for all top-level commands (stdio, start, status, servers, tools, config, etc.)
   - Subcommand completion for servers, tools, and config
   - Global flag completion: --help, --version, --verbose, --json, --config, --port, --host
+  - Dynamic completion integration for server and tool names
   - Unit tests: 20 passing tests
 
 - **TUI Config Validation**: Added interactive config validation UI to TUI dashboard
