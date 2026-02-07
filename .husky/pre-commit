@@ -27,4 +27,12 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Agent compliance check
+echo "🤖 Running agent compliance checks..."
+./tools/agents-guard/check.sh
+if [ $? -ne 0 ]; then
+  echo "❌ Agent compliance check failed"
+  exit 1
+fi
+
 echo "✅ All quality checks passed!"
