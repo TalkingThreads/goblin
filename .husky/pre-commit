@@ -1,21 +1,30 @@
-#!/bin/sh
-# Goblin Pre-commit Hook - Quality Gate
-# Prevents bad code from being committed
+# Pre-commit hook for Goblin
+# Runs quality checks before allowing commits
 
-echo "🔍 Running quality checks..."
+echo "🔍 Running pre-commit quality checks..."
 
-# TypeScript check - fail on any errors
-if ! bun run typecheck 2>&1; then
-  echo "❌ TypeScript errors found!"
+# TypeScript type check
+echo "📋 TypeScript type checking..."
+bun run typecheck
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript type check failed"
   exit 1
 fi
 
-# Biome check on source files only (test files can use 'any' types for mocking)
-# Only check src directory to avoid test file errors
-BIOME_OUTPUT=$(bun run biome check src/ 2>&1)
-if echo "$BIOME_OUTPUT" | grep -E "Found [0-9]+ errors"; then
-  echo "❌ Lint errors found in source files!"
+# Biome lint check
+echo "🔍 Biome linting..."
+bun run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Lint check failed. Run 'bun run lint:fix' to auto-fix issues."
   exit 1
 fi
 
-echo "✅ Quality checks passed!"
+# Unit tests
+echo "🧪 Running unit tests..."
+bun test tests/unit/
+if [ $? -ne 0 ]; then
+  echo "❌ Unit tests failed"
+  exit 1
+fi
+
+echo "✅ All quality checks passed!"

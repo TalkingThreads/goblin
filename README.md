@@ -414,6 +414,40 @@ We welcome contributions! Please see [CONTRIBUTE.md](CONTRIBUTE.md) for guidelin
 4. Ensure all tests pass: `bun test`
 5. Submit a pull request
 
+### Pre-commit Hooks
+
+This project uses [Husky](https://typicode.github.io/husky/) for pre-commit hooks to ensure code quality.
+
+**Install hooks:**
+```bash
+bun run prepare  # Runs automatically after npm/bun install
+```
+
+**What hooks check:**
+- ✅ TypeScript type checking (`bun run typecheck`)
+- ✅ Biome linting (`bun run lint`)
+- ✅ Unit tests (`bun test tests/unit/`)
+
+**Skip hooks (emergency only):**
+```bash
+git commit --no-verify  # Not recommended
+```
+
+**Quality Commands:**
+```bash
+# Fix linting issues
+bun run lint:fix
+
+# Type check only
+bun run typecheck
+
+# Run unit tests
+bun test:unit
+
+# Run all quality checks
+bun run lint && bun run typecheck && bun test tests/unit/
+```
+
 ## Environment Variables
 
 | Variable | Description | Default |
