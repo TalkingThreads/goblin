@@ -1,0 +1,58 @@
+name: Changelog Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'package.json'
+
+jobs:
+  check-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if CHANGELOG.md was updated
+        id: check
+        run: |
+          # Get list of changed files
+          changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          
+          # Check if source files were changed
+          source_changes=$(echo "$changed_files" | grep -E '^(src/|tests/|package\.json)' || true)
+          
+          if [ -z "$source_changes" ]; then
+            echo "No source changes detected, skipping CHANGELOG check"
+            exit 0
+          fi
+          
+          # Check if CHANGELOG.md was updated
+          if echo "$changed_files" | grep -q "CHANGELOG.md"; then
+            echo "✅ CHANGELOG.md was updated"
+            exit 0
+          else
+            echo "❌ CHANGELOG.md was NOT updated"
+            echo ""
+            echo "Source files changed:"
+            echo "$source_changes"
+            echo ""
+            echo "Please update CHANGELOG.md with your changes before merging."
+            exit 1
+          fi
+
+      - name: Post PR comment on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **CHANGELOG.md Validation Failed**\n\nThis PR modifies source files but does not update CHANGELOG.md.\n\nPlease update CHANGELOG.md with a description of your changes before merging.\n\nSee [Keep a Changelog](https://keepachangelog.com/) for formatting guidelines.'
+            })
