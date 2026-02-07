@@ -209,7 +209,6 @@ export function createServersCommand(context?: CliContext): Command {
   command
     .description("List and manage configured servers")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
-    .option("--json", "Output as JSON format")
     .option("--status <status>", "Filter by status", "all");
 
   // Helper to get config path from command option or global context
@@ -385,11 +384,69 @@ export function createServersCommand(context?: CliContext): Command {
       }
     });
 
-  command.action(
-    async (options: { json?: boolean; url?: string; status?: "online" | "offline" | "all" }) => {
-      await serversCommand(options);
-    },
-  );
+  command
+    .command("details <name>")
+    .description("Show detailed server information")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin servers details my-server  # Show detailed server info",
+    )
+    .action(async (name: string, options: { config?: string }) => {
+      try {
+        const configPath = getConfigPath(options.config);
+        const config = await loadConfig(configPath);
+
+        const server = config.servers?.find((s) => s.name === name);
+        if (!server) {
+          throw new Error(`Server '${name}' not found`);
+        }
+
+        console.log(`Server Details: ${server.name}`);
+        console.log("=".repeat(40));
+        console.log(`  Name: ${server.name}`);
+        console.log(`  Transport: ${server.transport}`);
+        console.log(`  Enabled: ${server.enabled ? "Yes" : "No"}`);
+        console.log(`  Mode: ${server.mode}`);
+
+        if (server.transport === "stdio") {
+          console.log(`  Command: ${server.command || "N/A"}`);
+          if (server.args && server.args.length > 0) {
+            console.log(`  Args: ${server.args.join(" ")}`);
+          }
+          if (server.env && Object.keys(server.env).length > 0) {
+            console.log(`  Environment: ${JSON.stringify(server.env)}`);
+          }
+        } else if (
+          server.transport === "http" ||
+          server.transport === "sse" ||
+          server.transport === "streamablehttp"
+        ) {
+          console.log(`  URL: ${server.url || "N/A"}`);
+          if (server.headers && Object.keys(server.headers).length > 0) {
+            console.log(`  Headers: ${JSON.stringify(server.headers)}`);
+          }
+        }
+
+        if (server.description) {
+          console.log(`  Description: ${server.description}`);
+        }
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        if (error instanceof Error && error.message.includes("not found")) {
+          process.exit(ExitCode.NOT_FOUND);
+        } else if (
+          error instanceof Error &&
+          error.message.includes("Configuration file not found")
+        ) {
+          process.exit(ExitCode.CONFIG_ERROR);
+        }
+        process.exit(ExitCode.GENERAL_ERROR);
+      }
+    });
+
+  command.action(async (options: { url?: string; status?: "online" | "offline" | "all" }) => {
+    await serversCommand({ ...options, json: false });
+  });
 
   return command;
 }

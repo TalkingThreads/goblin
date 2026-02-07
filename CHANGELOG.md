@@ -130,6 +130,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Supports `--port` and `--config` options
   - Tests: 5 passing tests
 
+- **Servers Details**: Added `goblin servers details` command
+  - Show detailed server configuration: name, transport, mode, enabled status
+  - Display transport-specific details (command/args for stdio, URL/headers for HTTP)
+  - `goblin servers details <name>` to view server info
+  - Tests: 7 passing tests
+
 ### Fixed
 
 - **Status Command Exit Code**: Fixed exit code behavior when gateway is not running
