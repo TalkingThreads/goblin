@@ -16,6 +16,8 @@ interface TransportEntry {
   transport: Transport;
   config: ServerConfig;
   lastUsed: number;
+  draining: boolean;
+  activeRequests: number;
 }
 
 export class TransportPool {
@@ -23,6 +25,7 @@ export class TransportPool {
   private pendingConnections = new Map<string, Promise<Transport>>();
   private evictionInterval: Timer | null = null;
   private readonly IDLE_TIMEOUT_MS = 60 * 1000; // 1 minute default for Smart mode
+  private readonly DRAINING_TIMEOUT_MS = 30000; // 30 seconds for graceful draining
 
   constructor() {
     // Start eviction loop
@@ -30,13 +33,92 @@ export class TransportPool {
   }
 
   /**
+   * Mark a server as draining - no new requests will be sent,
+   * but in-flight requests can complete
+   */
+  async drainServer(serverName: string): Promise<void> {
+    const entry = this.transports.get(serverName);
+    if (!entry) {
+      logger.warn({ serverName }, "Cannot drain - server not found in pool");
+      return;
+    }
+
+    entry.draining = true;
+    logger.info({ serverName }, "Server marked for draining");
+
+    // Wait for active requests to complete
+    await this.waitForDrain(serverName);
+  }
+
+  /**
+   * Wait for a server to finish draining
+   */
+  private async waitForDrain(serverName: string): Promise<void> {
+    const maxWait = Date.now() + this.DRAINING_TIMEOUT_MS;
+
+    while (Date.now() < maxWait) {
+      const entry = this.transports.get(serverName);
+      if (!entry) {
+        logger.info({ serverName }, "Server removed during draining");
+        return;
+      }
+
+      if (entry.activeRequests === 0) {
+        logger.info({ serverName }, "Server drained successfully");
+        return;
+      }
+
+      logger.debug(
+        { serverName, activeRequests: entry.activeRequests },
+        "Waiting for active requests to complete",
+      );
+      await this.sleep(100);
+    }
+
+    logger.warn({ serverName }, "Draining timeout - force removing server");
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Increment active request count for a server
+   */
+  incrementActiveRequests(serverName: string): void {
+    const entry = this.transports.get(serverName);
+    if (entry) {
+      entry.activeRequests++;
+    }
+  }
+
+  /**
+   * Decrement active request count for a server
+   */
+  decrementActiveRequests(serverName: string): void {
+    const entry = this.transports.get(serverName);
+    if (entry) {
+      entry.activeRequests--;
+    }
+  }
+
+  /**
+   * Check if a server is being drained
+   */
+  isDraining(serverName: string): boolean {
+    const entry = this.transports.get(serverName);
+    return entry?.draining ?? false;
+  }
+
+  /**
    * Get server health status
    */
-  getHealth(): Array<{ id: string; status: string; mode: string }> {
+  getHealth(): Array<{ id: string; status: string; mode: string; draining: boolean }> {
     return Array.from(this.transports.values()).map((entry) => ({
       id: entry.config.name,
       status: entry.transport.isConnected() ? "connected" : "disconnected",
       mode: entry.config.mode || "stateful",
+      draining: entry.draining,
     }));
   }
 
@@ -45,6 +127,12 @@ export class TransportPool {
    */
   async getTransport(serverConfig: ServerConfig): Promise<Transport> {
     const serverName = serverConfig.name;
+
+    // Check if transport is being drained - don't reuse
+    const drainingEntry = this.transports.get(serverName);
+    if (drainingEntry?.draining) {
+      throw new Error(`Server ${serverName} is being drained`);
+    }
 
     // Check if transport already exists in cache
     const existingEntry = this.transports.get(serverName);
@@ -81,6 +169,8 @@ export class TransportPool {
           transport,
           config: serverConfig,
           lastUsed: Date.now(),
+          draining: false,
+          activeRequests: 0,
         });
 
         return transport;
@@ -129,6 +219,11 @@ export class TransportPool {
   private runEviction(): void {
     const now = Date.now();
     for (const [name, entry] of this.transports.entries()) {
+      // Skip draining servers in eviction loop
+      if (entry.draining) {
+        continue;
+      }
+
       // Smart mode: evict if idle
       if (entry.config.mode === "smart") {
         if (now - entry.lastUsed > this.IDLE_TIMEOUT_MS) {

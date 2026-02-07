@@ -136,6 +136,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `goblin servers details <name>` to view server info
   - Tests: 7 passing tests
 
+- **Hot Reload**: Integrated dynamic server management with hot reload
+  - ConfigWatcher now triggers reloadConfig on config file changes
+  - Servers added/removed in config are dynamically updated in registry
+  - Added graceful disconnection with connection draining
+  - Servers marked as draining reject new requests
+  - In-flight requests complete before server removal
+  - 30-second drain timeout for graceful shutdown
+  - Tests: 64 passing integration tests
+
 ### Fixed
 
 - **Status Command Exit Code**: Fixed exit code behavior when gateway is not running

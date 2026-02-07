@@ -199,6 +199,11 @@ export class Router {
       // Use name from definition if available, otherwise use ID (for resources uri)
       const originalName = def?.name || id;
 
+      // Check if server is draining
+      if (this.transportPool.isDraining(serverId)) {
+        throw new ConnectionError(serverId, "Server is being drained");
+      }
+
       // 2. Get transport
       const serverConfig = this.serverMap.get(serverId);
       if (!serverConfig) {
@@ -214,6 +219,9 @@ export class Router {
       if (!transport.isConnected()) {
         throw new ConnectionError(serverId, "Transport not connected");
       }
+
+      // Track active request
+      this.transportPool.incrementActiveRequests(serverId);
 
       // 3. Execute with timeout
       logger.info({ type, id, serverId, requestId: getRequestId() }, "Request routed to backend");
@@ -246,6 +254,7 @@ export class Router {
         return result;
       } finally {
         clearTimeout(timeoutId);
+        this.transportPool.decrementActiveRequests(serverId);
       }
     } catch (error) {
       // Handle timeout errors specifically

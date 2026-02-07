@@ -87,9 +87,9 @@ export class GoblinGateway {
 
     // Watch Config
     this.configWatcher = new ConfigWatcher(config, configPath);
-    this.configWatcher.on("updated", (newConfig: Config) => {
-      logger.info({ serverCount: newConfig.servers.length }, "Configuration updated");
-      // TODO: Implement hot reload logic
+    this.configWatcher.on("updated", async (newConfig: Config) => {
+      logger.info({ serverCount: newConfig.servers.length }, "Configuration updated via watcher");
+      await this.reloadConfig(newConfig);
     });
     this.configWatcher.start();
 
@@ -128,6 +128,9 @@ export class GoblinGateway {
 
     for (const serverName of currentServers) {
       if (!newServerNames.has(serverName)) {
+        // Gracefully drain the server before removing
+        logger.info({ server: serverName }, "Starting graceful drain of server");
+        await this.transportPool.drainServer(serverName);
         await this.registry.removeServer(serverName);
         logger.info({ server: serverName }, "Removed server via config reload");
       }
