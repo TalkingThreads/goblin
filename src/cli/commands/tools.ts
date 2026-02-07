@@ -105,6 +105,25 @@ export function createToolsCommand(context?: CliContext): Command {
       }
     });
 
+  command
+    .command("search <query>")
+    .description("Search for tools by name")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin tools search file  # Search for tools with 'file' in name\n  goblin tools search list --server filesystem  # Search in specific server\n  goblin tools search --json  # Output as JSON",
+    )
+    .option("--server <name>", "Server to search in")
+    .option("--json", "Output as JSON", false)
+    .option("--url <url>", "Gateway URL", "http://localhost:3000")
+    .action(async (query: string, options: { server?: string; json?: boolean; url?: string }) => {
+      try {
+        await toolsSearch(query, { ...options, context });
+      } catch (error) {
+        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        process.exit(ExitCode.CONNECTION_ERROR);
+      }
+    });
+
   return command;
 }
 
@@ -252,6 +271,80 @@ export async function toolsDescribe(name: string, options: ToolDescribeOptions):
     throw new Error(
       `Failed to describe tool: ${error instanceof Error ? error.message : String(error)}`,
     );
+  }
+}
+
+export async function toolsSearch(
+  query: string,
+  options: { server?: string; json?: boolean; url?: string; context?: CliContext },
+): Promise<void> {
+  const useJson = options.json ?? options.context?.json ?? false;
+  const url = new URL(`${buildUrl(options.url, options.context)}/tools`);
+
+  try {
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      throw new Error(`Gateway returned ${response.status}: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as { tools: ToolInfo[] };
+    let tools = data.tools;
+
+    if (options.server) {
+      tools = tools.filter((t) => t.server === options.server);
+    }
+
+    const queryLower = query.toLowerCase();
+    const matchedTools = tools.filter(
+      (t) =>
+        t.name.toLowerCase().includes(queryLower) ||
+        t.description.toLowerCase().includes(queryLower),
+    );
+
+    if (useJson) {
+      console.log(
+        JSON.stringify(
+          {
+            query,
+            count: matchedTools.length,
+            tools: matchedTools,
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
+    if (matchedTools.length === 0) {
+      console.log(`No tools found matching '${query}'`);
+      return;
+    }
+
+    console.log(`Search Results for "${query}"`);
+    console.log("=".repeat(40));
+    console.log("");
+
+    for (const tool of matchedTools) {
+      console.log(`${tool.name} (${tool.server})`);
+      console.log(`  ${tool.description}`);
+      console.log("");
+    }
+  } catch (error) {
+    if (useJson) {
+      console.log(
+        JSON.stringify({
+          error: "Could not connect to gateway",
+          detail: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    } else {
+      logger.error({ error, url: url.toString() }, "Failed to search tools");
+      console.error("Error: Could not connect to gateway");
+      console.error("Make sure the gateway is running (goblin start)");
+    }
+    throw new Error("Search failed");
   }
 }
 
