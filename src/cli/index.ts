@@ -28,6 +28,7 @@ const MAIN_COMMANDS = [
   "logs",
   "health",
   "stop",
+  "tui",
 ];
 
 function isKnownCommand(arg: string): boolean {
@@ -145,6 +146,7 @@ async function main(): Promise<void> {
     .option("--port <number>", "Gateway port")
     .option("--host <host>", "Gateway host")
     .option("--config <path>", "Path to config file")
+    .option("--tui", "Launch TUI dashboard")
     .action((options) => {
       if (options.version) {
         console.log(VERSION);
@@ -272,6 +274,19 @@ async function main(): Promise<void> {
       await stopCommand({ ...options, context: globalContext });
     });
 
+  program
+    .command("tui")
+    .description("Launch interactive TUI dashboard")
+    .option("--port <number>", "Port to listen on")
+    .option("--config <path>", "Path to config file")
+    .addHelpText(
+      "after",
+      "\nExamples:\n  goblin tui                      # Launch TUI dashboard\n  goblin tui --port 8080        # Launch TUI on port 8080",
+    )
+    .action(async (options: { port?: string; config?: string }) => {
+      await startGateway({ ...options, tui: true });
+    });
+
   registerSlashCommands(program);
 
   program
@@ -285,6 +300,27 @@ async function main(): Promise<void> {
 
   if (args.length === 0) {
     await startStdioGateway({});
+    return;
+  }
+
+  // Check for --tui global flag early
+  if (args.includes("--tui")) {
+    const filteredArgs = args.filter((arg) => arg !== "--tui");
+    const tuiOptions: StartOptions = { tui: true };
+
+    // Extract --port from args
+    const portIndex = filteredArgs.indexOf("--port");
+    if (portIndex !== -1 && portIndex + 1 < filteredArgs.length) {
+      tuiOptions.port = filteredArgs[portIndex + 1];
+    }
+
+    // Extract --config from args
+    const configIndex = filteredArgs.indexOf("--config");
+    if (configIndex !== -1 && configIndex + 1 < filteredArgs.length) {
+      tuiOptions.config = filteredArgs[configIndex + 1];
+    }
+
+    await startGateway(tuiOptions);
     return;
   }
 

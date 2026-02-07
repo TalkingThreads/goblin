@@ -124,6 +124,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Useful for debugging: `goblin logs --level error` shows only errors
   - Tests: 8 passing tests
 
+- **TUI Flag**: Added `--tui` global flag and `tui` subcommand for TUI access
+  - `goblin --tui` - Launch TUI from anywhere with global flag
+  - `goblin tui` - Dedicated tui subcommand
+  - Supports `--port` and `--config` options
+  - Tests: 5 passing tests
+
 ### Fixed
 
 - **Status Command Exit Code**: Fixed exit code behavior when gateway is not running
