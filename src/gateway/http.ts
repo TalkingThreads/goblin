@@ -419,6 +419,103 @@ export class HttpGateway {
         return c.json({ error: "Internal server error" }, 500);
       }
     });
+
+    // Tool Invoke API Endpoint
+    this.app.post("/api/v1/tools/:name/invoke", async (c) => {
+      const requestId = getRequestId();
+      const toolName = c.req.param("name");
+      const requestTimeoutHeader = c.req.header("X-Request-Timeout");
+
+      const timeoutMs = requestTimeoutHeader
+        ? parseInt(requestTimeoutHeader, 10)
+        : this.config.policies.defaultTimeout;
+
+      if (!toolName || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(toolName)) {
+        logger.warn({ toolName, requestId }, "Invalid tool name format");
+        return c.json(
+          {
+            success: false,
+            error: "Invalid tool name format",
+            code: "INVALID_TOOL_NAME",
+          },
+          400,
+        );
+      }
+
+      const body = await c.req.json().catch(() => ({}));
+      const { arguments: args } = body;
+
+      if (
+        args !== undefined &&
+        (typeof args !== "object" || args === null || Array.isArray(args))
+      ) {
+        logger.warn({ toolName, requestId }, "Invalid arguments format");
+        return c.json(
+          {
+            success: false,
+            error: "Arguments must be an object",
+            code: "INVALID_ARGUMENTS",
+          },
+          400,
+        );
+      }
+
+      const tool = this.registry.getTool(toolName);
+      if (!tool) {
+        logger.warn({ toolName, requestId }, "Tool not found");
+        return c.json(
+          {
+            success: false,
+            error: `Tool not found: ${toolName}`,
+            code: "TOOL_NOT_FOUND",
+          },
+          404,
+        );
+      }
+
+      try {
+        const startTime = performance.now();
+        const result = await this.router.callTool(
+          toolName,
+          (args as Record<string, unknown>) || {},
+        );
+        const durationMs = performance.now() - startTime;
+
+        logger.info(
+          { toolName, serverId: tool.serverId, durationMs, requestId },
+          "Tool invoked successfully",
+        );
+
+        return c.json({
+          success: true,
+          result,
+          server: tool.serverId,
+          durationMs,
+        });
+      } catch (error) {
+        logger.error({ toolName, error, requestId }, "Tool invocation failed");
+
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return c.json(
+            {
+              success: false,
+              error: `Request timed out after ${timeoutMs}ms`,
+              code: "REQUEST_TIMEOUT",
+            },
+            504,
+          );
+        }
+
+        return c.json(
+          {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+            code: "TOOL_EXECUTION_FAILED",
+          },
+          500,
+        );
+      }
+    });
   }
 
   /**

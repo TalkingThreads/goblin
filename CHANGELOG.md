@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tool Invoke API**: Added HTTP API endpoint for tool invocation
+  - `POST /api/v1/tools/:name/invoke` - Invoke a tool by name
+  - Request body: `{"arguments": {...}, "timeout": 30000}`
+  - Response: `{"success": true, "result": {...}, "server": "name", "durationMs": 150}`
+  - Error codes: TOOL_NOT_FOUND, INVALID_TOOL_NAME, INVALID_ARGUMENTS, REQUEST_TIMEOUT
+  - X-Request-Timeout header for custom timeout
+  - Integration tests: 7 passing tests
+
 - **Server Add Command**: Added `goblin servers add` command for dynamic server registration
   - `goblin servers add <name> <transport>` for adding new servers
   - Supports stdio, http, sse, and streamablehttp transports
