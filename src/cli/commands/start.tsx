@@ -5,6 +5,7 @@ import { GoblinGateway } from "../../core/gateway.js";
 import { createLogger } from "../../observability/logger.js";
 import { setupShutdownHandlers } from "../../observability/utils.js";
 import App from "../../tui/App.js";
+import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-commands");
 
@@ -17,16 +18,30 @@ interface StartOptions {
 /**
  * Start the Goblin Gateway
  */
-export async function startGateway(options: StartOptions): Promise<void> {
+export async function startGateway(
+  options: StartOptions,
+  globalContext: CliContext,
+): Promise<void> {
   try {
-    logger.info({ options }, "Starting Goblin Gateway...");
+    logger.info({ options, globalContext }, "Starting Goblin Gateway...");
+
+    // Use config from global context (handles --config flag correctly)
+    const configPath = globalContext.configPath ?? options.config;
 
     // Load configuration
-    const config = await loadConfig(options.config);
+    const config = await loadConfig(configPath);
 
-    // Override port if specified
-    if (options.port) {
-      config.gateway.port = parseInt(options.port, 10);
+    // Override port if specified (use globalContext.port which is parsed by global flags)
+    const portValue = globalContext.port ?? options.port;
+    if (portValue !== undefined && portValue !== null) {
+      const portNum = typeof portValue === "string" ? parseInt(portValue, 10) : portValue;
+      if (Number.isNaN(portNum) || portNum < 1 || portNum > 65535) {
+        console.error(
+          `Error: Invalid port number '${portValue}'. Port must be between 1 and 65535.`,
+        );
+        process.exit(1);
+      }
+      config.gateway.port = portNum;
     }
 
     // Create gateway instance
@@ -80,7 +95,7 @@ export async function startGateway(options: StartOptions): Promise<void> {
 /**
  * Create the start command
  */
-export function createStartCommand(): Command {
+export function createStartCommand(globalContext?: CliContext): Command {
   const command = new Command("start");
 
   command
@@ -89,7 +104,7 @@ export function createStartCommand(): Command {
     .option("--port <number>", "Port to listen on")
     .option("--config <path>", "Path to config file", "~/.goblin/config.json")
     .action(async (options: StartOptions) => {
-      await startGateway(options);
+      await startGateway(options, globalContext || { verbose: false, json: false });
     });
 
   return command;

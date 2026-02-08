@@ -11,7 +11,8 @@ describe("Router", () => {
       servers: [
         { name: "server1", transport: "stdio", command: "echo", enabled: true, mode: "stateful" },
       ],
-      gateway: { port: 3000, host: "127.0.0.1" },
+      gateway: { port: 3000, host: "127.0.0.1", transport: "both" },
+      streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
       auth: { mode: "dev" },
       policies: { outputSizeLimit: 65536, defaultTimeout: 1000 },
     };
@@ -32,6 +33,9 @@ describe("Router", () => {
     // Mock Pool
     const mockPool = {
       getTransport: mock(async () => mockTransport),
+      isDraining: () => false,
+      incrementActiveRequests: () => {},
+      decrementActiveRequests: () => {},
     } as unknown as TransportPool;
 
     // Mock Registry
@@ -62,13 +66,14 @@ describe("Router", () => {
   test("should throw if tool not found", async () => {
     const config: Config = {
       servers: [],
-      gateway: { port: 3000, host: "127.0.0.1" },
+      gateway: { port: 3000, host: "127.0.0.1", transport: "both" },
+      streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
       auth: { mode: "dev" },
       policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
     };
     const router = new Router(
       { getTool: () => undefined, getLocalTool: () => undefined } as unknown as Registry,
-      {} as unknown as TransportPool,
+      { isDraining: () => false } as unknown as TransportPool,
       config,
     );
 
@@ -78,7 +83,8 @@ describe("Router", () => {
   test("should throw if server config not found", async () => {
     const config: Config = {
       servers: [],
-      gateway: { port: 3000, host: "127.0.0.1" },
+      gateway: { port: 3000, host: "127.0.0.1", transport: "both" },
+      streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
       auth: { mode: "dev" },
       policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
     };
@@ -87,7 +93,11 @@ describe("Router", () => {
       getLocalTool: () => undefined,
     } as unknown as Registry;
 
-    const router = new Router(registry, {} as unknown as TransportPool, config);
+    const router = new Router(
+      registry,
+      { isDraining: () => false } as unknown as TransportPool,
+      config,
+    );
 
     expect(router.callTool("t1", {})).rejects.toThrow("Server not found: missing");
   });

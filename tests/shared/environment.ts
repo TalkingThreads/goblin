@@ -6,6 +6,7 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import http from "node:http";
 import net from "node:net";
 import { join } from "node:path";
@@ -121,7 +122,10 @@ export function createTestEnvironment(options: {
 
     const goblinBinary = join(process.cwd(), "dist", "cli", "index.js");
 
-    const childProcess = spawn(process.execPath, [goblinBinary, "start", "--config", configPath], {
+    const bunPath = process.env.BUN_PATH || join(process.cwd(), "node_modules", ".bin", "bun");
+    const executablePath = existsSync(bunPath) ? bunPath : process.execPath;
+
+    const childProcess = spawn(executablePath, [goblinBinary, "start", "--config", configPath], {
       stdio: ["ignore", "pipe", "pipe"] as ["ignore", "pipe", "pipe"],
       env: {
         ...process.env,
@@ -131,6 +135,22 @@ export function createTestEnvironment(options: {
 
     childProcess.stderr?.on("data", (data) => {
       process.stderr.write(data.toString());
+    });
+
+    childProcess.stdout?.on("data", (data) => {
+      process.stdout.write(`[GATEWAY] ${data.toString()}`);
+    });
+
+    childProcess.stderr?.on("data", (data) => {
+      process.stderr.write(`[GATEWAY ERROR] ${data.toString()}`);
+    });
+
+    childProcess.on("error", (err) => {
+      console.error(`[TEST] Failed to spawn gateway: ${err.message}`);
+    });
+
+    childProcess.on("exit", (code) => {
+      console.log(`[TEST] Gateway exited with code ${code}`);
     });
 
     processes.push(childProcess);

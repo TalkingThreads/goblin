@@ -113,6 +113,7 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
     }
 
     logger.info("Goblin STDIO server running");
+    process.stderr.write("Goblin STDIO server running\n");
 
     // 8. Keep process alive
     await new Promise(() => {});

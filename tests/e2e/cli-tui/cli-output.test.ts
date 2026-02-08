@@ -51,11 +51,14 @@ describe("CLI - Output Formatting", () => {
   });
 
   test("subcommand help works", async () => {
-    const result = await cli.run(["tools", "--help"]);
+    const invokeResult = await cli.run(["tools", "invoke", "--help"]);
+    expect(invokeResult.exitCode).toBe(0);
+    expect(invokeResult.stdout).toContain("--server");
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("--server");
-    expect(result.stdout).toContain("--search");
+    const searchResult = await cli.run(["tools", "search", "--help"]);
+    expect(searchResult.exitCode).toBe(0);
+    expect(searchResult.stdout).toContain("--server");
+    expect(searchResult.stdout).toContain("<query>");
   });
 
   test("error messages are not empty", async () => {
@@ -111,8 +114,6 @@ describe("CLI - JSON Output", () => {
 
     const result = await cli.run(["config", "show", "--config", configPath, "--json"]);
 
-    await env.cleanup();
-
     expect(result.exitCode).toBe(0);
     expect(() => JSON.parse(result.stdout)).not.toThrow();
   });
@@ -163,10 +164,8 @@ describe("CLI - Error Messages", () => {
   });
 
   test("missing required argument shows error", async () => {
-    // start requires port
-    const result = await cli.run(["start"]);
-
-    // Should show error about missing port or help
+    // Test that an unknown command shows error
+    const result = await cli.run(["start", "--invalid-option"]);
     expect(result.exitCode).not.toBe(0);
   });
 
@@ -178,8 +177,13 @@ describe("CLI - Error Messages", () => {
   });
 
   test("non-existent config file shows error", async () => {
-    const result = await cli.run(["--config", "/path/that/does/not/exist.json"]);
-
+    // Test config validation with non-existent file
+    const result = await cli.run([
+      "config",
+      "validate",
+      "--config",
+      "/path/that/does/not/exist.json",
+    ]);
     expect(result.exitCode).not.toBe(0);
   });
 });

@@ -2,17 +2,18 @@ import { getConfigManager } from "../../config/manager.js";
 import { getConfigPath } from "../../config/paths.js";
 import { ConfigSchema } from "../../config/schema.js";
 import { createLogger } from "../../observability/logger.js";
+import type { CliContext } from "../types.js";
 
 const logger = createLogger("cli-config");
 
 interface ConfigOptions {
   path?: string;
-  config?: string;
   json?: boolean;
+  context?: CliContext;
 }
 
 function resolveConfigPath(options: ConfigOptions): string {
-  return options.config || options.path || getConfigPath();
+  return options.path || options.context?.configPath || getConfigPath();
 }
 
 /**
@@ -80,14 +81,18 @@ export async function showConfigCommand(options: ConfigOptions): Promise<void> {
     await manager.initialize({ customPath: configPath });
     const config = manager.getConfig();
 
-    if (options.json) {
+    const jsonFlag = options.json || options.context?.json;
+    if (jsonFlag) {
       console.log(JSON.stringify(config, null, 2));
+      process.exit(0);
     } else {
       console.log(`Configuration from ${configPath}:`);
       console.log(JSON.stringify(config, null, 2));
+      process.exit(0);
     }
   } catch (error) {
-    if (options.json) {
+    const jsonFlag = options.json || options.context?.json;
+    if (jsonFlag) {
       console.log(
         JSON.stringify({
           error: "Failed to read config",

@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
+import { setLogToStderr } from "../observability/logger.js";
 import { createCompleteCommand } from "./commands/complete.js";
 import { createCompletionCommand } from "./commands/completion.js";
 import { showConfigCommand, validateConfigCommand } from "./commands/config.js";
@@ -87,9 +88,6 @@ interface StartOptions {
   config?: string;
 }
 
-/**
- * Parse global flags from command line arguments
- */
 function parseGlobalFlags(args: string[]): CliContext {
   const context: CliContext = {
     verbose: false,
@@ -131,13 +129,102 @@ function parseGlobalFlags(args: string[]): CliContext {
   return context;
 }
 
+async function validateConfigPath(configPath: string): Promise<boolean> {
+  try {
+    const { stat } = await import("node:fs/promises");
+    await stat(configPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function handleEmptyArgs(globalContext: CliContext): Promise<void> {
+  if (globalContext.configPath) {
+    const configExists = await validateConfigPath(globalContext.configPath);
+    if (!configExists) {
+      console.error(`Error: Config file not found: ${globalContext.configPath}`);
+      process.exit(ExitCode.CONFIG_ERROR);
+      return;
+    }
+  }
+  await startStdioGateway({});
+}
+
+async function handleTuiFlag(args: string[], globalContext: CliContext): Promise<void> {
+  const filteredArgs = args.filter((arg) => arg !== "--tui");
+  const tuiOptions: StartOptions = { tui: true };
+
+  const portIndex = filteredArgs.indexOf("--port");
+  if (portIndex !== -1 && portIndex + 1 < filteredArgs.length) {
+    tuiOptions.port = filteredArgs[portIndex + 1];
+  }
+
+  const configIndex = filteredArgs.indexOf("--config");
+  if (configIndex !== -1 && configIndex + 1 < filteredArgs.length) {
+    tuiOptions.config = filteredArgs[configIndex + 1];
+  }
+
+  await startGateway(tuiOptions, globalContext);
+}
+
+function handleHelpFlags(args: string[], VERSION: string): boolean {
+  if (args[0] === "-h" || args[0] === "--help") {
+    displayRootHelp(VERSION);
+    process.exit(0);
+    return true;
+  }
+  return false;
+}
+
+function handleVersionFlags(args: string[], VERSION: string): boolean {
+  if (args[0] === "-v" || args[0] === "--version") {
+    console.log(VERSION);
+    process.exit(0);
+    return true;
+  }
+  return false;
+}
+
+function handleKnownSingleCommands(args: string[], VERSION: string, program: Command): boolean {
+  if (args.length === 1 && args[0] && isKnownCommand(args[0])) {
+    const command = args[0];
+    if (command === "help") {
+      displayRootHelp(VERSION);
+      process.exit(0);
+    } else if (command === "version") {
+      console.log(VERSION);
+      process.exit(0);
+    } else {
+      program.parse(args);
+    }
+    return true;
+  }
+  return false;
+}
+
+async function validateGlobalConfig(globalContext: CliContext): Promise<boolean> {
+  if (globalContext.configPath) {
+    const configExists = await validateConfigPath(globalContext.configPath);
+    if (!configExists) {
+      console.error(`Error: Config file not found: ${globalContext.configPath}`);
+      process.exit(ExitCode.CONFIG_ERROR);
+      return false;
+    }
+  }
+  return true;
+}
+
 async function main(): Promise<void> {
+  setLogToStderr(true);
+
   const VERSION = await getVersion();
 
   const program = new Command();
 
-  // Parse global flags before command execution
   const globalContext = parseGlobalFlags(process.argv.slice(2));
+
+  const args = process.argv.slice(2);
 
   program
     .name("goblin")
@@ -152,6 +239,7 @@ async function main(): Promise<void> {
     .action((options) => {
       if (options.version) {
         console.log(VERSION);
+        process.exit(0);
       }
     });
 
@@ -159,12 +247,14 @@ async function main(): Promise<void> {
     .command("version")
     .description("Show version information")
     .option("--json", "Output in JSON format")
-    .action(async (options: { json?: boolean }) => {
-      if (options.json) {
+    .action(async (options) => {
+      const jsonFlag = (options as Record<string, unknown>)["json"] as boolean | undefined;
+      if (jsonFlag || globalContext.json) {
         console.log(JSON.stringify({ version: VERSION, exitCode: 0 }));
       } else {
         console.log(VERSION);
       }
+      process.exit(0);
     });
 
   program
@@ -178,7 +268,7 @@ async function main(): Promise<void> {
       "\nExamples:\n  goblin start                    # Start gateway on default port 3000\n  goblin start --port 8080       # Start on port 8080\n  goblin start --tui             # Start with interactive TUI\n  goblin start --config ~/my-config.json  # Use custom config file",
     )
     .action(async (options: StartOptions) => {
-      await startGateway(options);
+      await startGateway(options, globalContext);
     });
 
   program
@@ -216,28 +306,26 @@ async function main(): Promise<void> {
     .command("validate")
     .description("Validate config file")
     .option("--path <path>", "Path to config file")
-    .option("--config <path>", "Path to config file (alias for --path)")
     .option("--json", "Output in JSON format")
     .addHelpText(
       "after",
       "\nExamples:\n  goblin config validate          # Validate default config\n  goblin config validate --path ~/goblin.json  # Validate custom config\n  goblin config validate --json   # Output validation result as JSON",
     )
     .action(async (options) => {
-      await validateConfigCommand(options);
+      await validateConfigCommand({ ...options, context: globalContext });
     });
 
   config
     .command("show")
     .description("Display current configuration")
     .option("--path <path>", "Path to config file")
-    .option("--config <path>", "Path to config file (alias for --path)")
     .option("--json", "Output in JSON format")
     .addHelpText(
       "after",
       "\nExamples:\n  goblin config show              # Display current configuration\n  goblin config show --json       # Output as JSON\n  goblin config show --path ~/goblin.json  # Show specific config file",
     )
     .action(async (options) => {
-      await showConfigCommand(options);
+      await showConfigCommand({ ...options, context: globalContext });
     });
 
   program
@@ -290,7 +378,7 @@ async function main(): Promise<void> {
       "\nExamples:\n  goblin tui                      # Launch TUI dashboard\n  goblin tui --port 8080        # Launch TUI on port 8080",
     )
     .action(async (options: { port?: string; config?: string }) => {
-      await startGateway({ ...options, tui: true });
+      await startGateway({ ...options, tui: true }, globalContext);
     });
 
   registerSlashCommands(program);
@@ -300,48 +388,28 @@ async function main(): Promise<void> {
     .description("Show help information")
     .action(() => {
       displayRootHelp(VERSION);
+      process.exit(0);
     });
 
-  const args = process.argv.slice(2);
-
   if (args.length === 0) {
-    await startStdioGateway({});
+    await handleEmptyArgs(globalContext);
     return;
   }
 
-  // Check for --tui global flag early
   if (args.includes("--tui")) {
-    const filteredArgs = args.filter((arg) => arg !== "--tui");
-    const tuiOptions: StartOptions = { tui: true };
-
-    // Extract --port from args
-    const portIndex = filteredArgs.indexOf("--port");
-    if (portIndex !== -1 && portIndex + 1 < filteredArgs.length) {
-      tuiOptions.port = filteredArgs[portIndex + 1];
-    }
-
-    // Extract --config from args
-    const configIndex = filteredArgs.indexOf("--config");
-    if (configIndex !== -1 && configIndex + 1 < filteredArgs.length) {
-      tuiOptions.config = filteredArgs[configIndex + 1];
-    }
-
-    await startGateway(tuiOptions);
+    await handleTuiFlag(args, globalContext);
     return;
   }
 
-  if (args[0] === "-h" || args[0] === "--help") {
-    displayRootHelp(VERSION);
+  if (handleHelpFlags(args, VERSION)) {
     return;
   }
 
-  if (args[0] === "-v" || args[0] === "--version") {
-    console.log(VERSION);
+  if (handleVersionFlags(args, VERSION)) {
     return;
   }
 
-  if (args.length === 1 && args[0] && isKnownCommand(args[0])) {
-    program.parse(args);
+  if (handleKnownSingleCommands(args, VERSION, program)) {
     return;
   }
 
@@ -351,10 +419,15 @@ async function main(): Promise<void> {
     process.exit(ExitCode.GENERAL_ERROR);
   }
 
+  const configValid = await validateGlobalConfig(globalContext);
+  if (!configValid) {
+    return;
+  }
+
   program.parse();
 
-  program.on("command:*", (args) => {
-    const unknownCommand = args[0];
+  program.on("command:*", (commandArgs) => {
+    const unknownCommand = commandArgs[0];
     handleUnknownCommand(unknownCommand);
     process.exit(ExitCode.GENERAL_ERROR);
   });
