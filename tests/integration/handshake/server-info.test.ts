@@ -43,7 +43,7 @@ describe("MCP Handshake - Server Info", () => {
   test("should return tools with names and descriptions", async () => {
     const tools = server["config"].tools;
     expect(tools).toBeDefined();
-    expect(tools!.length).toBeGreaterThan(0);
+    expect(tools?.length).toBeGreaterThan(0);
 
     for (const tool of tools!) {
       expect(tool.name).toBeDefined();
@@ -66,7 +66,7 @@ describe("MCP Handshake - Server Info", () => {
   test("should return resources with metadata", async () => {
     const resources = server["config"].resources;
     expect(resources).toBeDefined();
-    expect(resources!.length).toBeGreaterThan(0);
+    expect(resources?.length).toBeGreaterThan(0);
 
     for (const resource of resources!) {
       expect(resource.uri).toBeDefined();
@@ -82,7 +82,7 @@ describe("MCP Handshake - Server Info", () => {
   test("should return prompts with arguments", async () => {
     const prompts = server["config"].prompts;
     expect(prompts).toBeDefined();
-    expect(prompts!.length).toBeGreaterThan(0);
+    expect(prompts?.length).toBeGreaterThan(0);
 
     for (const prompt of prompts!) {
       expect(prompt.name).toBeDefined();
@@ -135,7 +135,7 @@ describe("MCP Handshake - Backend Aggregation", () => {
 
     const resources = server["config"].resources;
     expect(resources).toBeDefined();
-    expect(resources!.length).toBeGreaterThanOrEqual(2);
+    expect(resources?.length).toBeGreaterThanOrEqual(2);
 
     for (const resource of resources!) {
       expect(resource.uri).toBeDefined();
@@ -161,7 +161,7 @@ describe("MCP Handshake - Backend Aggregation", () => {
 
     const prompts = server["config"].prompts;
     expect(prompts).toBeDefined();
-    expect(prompts!.length).toBeGreaterThanOrEqual(1);
+    expect(prompts?.length).toBeGreaterThanOrEqual(1);
 
     for (const prompt of prompts!) {
       expect(prompt.name).toBeDefined();
@@ -202,7 +202,7 @@ describe("MCP Handshake - Version Handling", () => {
   test("should have configured tools after connection", async () => {
     const tools = server["config"].tools;
     expect(tools).toBeDefined();
-    expect(tools!.length).toBeGreaterThan(0);
+    expect(tools?.length).toBeGreaterThan(0);
   });
 
   test("should handle connect/disconnect cycles", async () => {
@@ -215,7 +215,7 @@ describe("MCP Handshake - Version Handling", () => {
 
       const tools = server["config"].tools;
       expect(tools).toBeDefined();
-      expect(tools!.length).toBeGreaterThan(0);
+      expect(tools?.length).toBeGreaterThan(0);
     }
   });
 });

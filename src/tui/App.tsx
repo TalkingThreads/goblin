@@ -1,24 +1,20 @@
-import { memo, useState, useCallback } from "react";
-import { Box, Text, useInput, useApp } from "ink";
-import PromptsPanel from "./PromptsPanel.js";
-import ResourcesPanel from "./ResourcesPanel.js";
-import MetricsPanel from "./MetricsPanel.js";
-import SlashMode from "./components/SlashMode.js";
-import ServerList from "./components/ServerList.js";
+import { Box, Text, useApp, useInput } from "ink";
+import { memo, useCallback, useState } from "react";
+import type { GoblinGateway } from "../core/gateway.js";
 import AddServerForm from "./components/AddServerForm.js";
 import ConfirmDialog from "./components/ConfirmDialog.js";
 import ServerContextMenu from "./components/ServerContextMenu.js";
 import ServerDetails from "./components/ServerDetails.js";
+import ServerList from "./components/ServerList.js";
+import SlashMode from "./components/SlashMode.js";
 import ToolInvocationPanel from "./components/ToolInvocationPanel.js";
 import { useGatewayData } from "./hooks/useGatewayData.js";
-import type { GoblinGateway } from "../core/gateway.js";
-import type { TuiServer, AddServerFormData, TuiScreen } from "./types.js";
+import MetricsPanel from "./MetricsPanel.js";
+import PromptsPanel from "./PromptsPanel.js";
+import ResourcesPanel from "./ResourcesPanel.js";
+import type { AddServerFormData, TuiScreen, TuiServer } from "./types.js";
 
-const Header = memo(function Header({
-  gateway,
-}: {
-  gateway: GoblinGateway | null;
-}) {
+const Header = memo(function Header({ gateway }: { gateway: GoblinGateway | null }) {
   const { metrics } = useGatewayData(gateway);
 
   return (
@@ -57,13 +53,7 @@ const LogsPane = memo(function LogsPane({
   }>;
 }) {
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      paddingX={1}
-      flexGrow={2}
-      marginLeft={1}
-    >
+    <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={2} marginLeft={1}>
       <Box marginBottom={1}>
         <Text bold underline color="yellow">
           RECENT ACTIVITY
@@ -75,15 +65,7 @@ const LogsPane = memo(function LogsPane({
             <Text color="gray" dimColor>
               [{log.timestamp.toLocaleTimeString()}]
             </Text>
-            <Text
-              color={
-                log.level === "error"
-                  ? "red"
-                  : log.level === "warn"
-                    ? "yellow"
-                    : "white"
-              }
-            >
+            <Text color={log.level === "error" ? "red" : log.level === "warn" ? "yellow" : "white"}>
               {" "}
               {log.message}
             </Text>
@@ -165,27 +147,30 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
     setContextMenuServer(server);
   }, []);
 
-  const handleContextMenuAction = useCallback((action: "details" | "enable" | "disable" | "remove") => {
-    setContextMenuServer(null);
-    if (!contextMenuServer) return;
+  const handleContextMenuAction = useCallback(
+    (action: "details" | "enable" | "disable" | "remove") => {
+      setContextMenuServer(null);
+      if (!contextMenuServer) return;
 
-    switch (action) {
-      case "details":
-        setSelectedServer(contextMenuServer);
-        setActiveScreen("server-details");
-        break;
-      case "enable":
-        console.log("Enabling server:", contextMenuServer.name);
-        break;
-      case "disable":
-        console.log("Disabling server:", contextMenuServer.name);
-        break;
-      case "remove":
-        setSelectedServer(contextMenuServer);
-        setActiveScreen("confirm-remove");
-        break;
-    }
-  }, [contextMenuServer]);
+      switch (action) {
+        case "details":
+          setSelectedServer(contextMenuServer);
+          setActiveScreen("server-details");
+          break;
+        case "enable":
+          console.log("Enabling server:", contextMenuServer.name);
+          break;
+        case "disable":
+          console.log("Disabling server:", contextMenuServer.name);
+          break;
+        case "remove":
+          setSelectedServer(contextMenuServer);
+          setActiveScreen("confirm-remove");
+          break;
+      }
+    },
+    [contextMenuServer],
+  );
 
   const handleContextMenuClose = useCallback(() => {
     setContextMenuServer(null);
@@ -250,13 +235,22 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
         <AddServerForm onSubmit={handleAddServerSubmit} onCancel={handleAddServerCancel} />
       )}
       {activeScreen === "confirm-remove" && selectedServer && (
-        <ConfirmDialog type="remove" server={selectedServer} onConfirm={handleConfirmRemove} onCancel={handleConfirmCancel} />
+        <ConfirmDialog
+          type="remove"
+          server={selectedServer}
+          onConfirm={handleConfirmRemove}
+          onCancel={handleConfirmCancel}
+        />
       )}
       {activeScreen === "server-details" && selectedServer && (
         <ServerDetails server={selectedServer} onClose={handleServerDetailsClose} />
       )}
       {activeScreen === "dashboard" && contextMenuServer && (
-        <ServerContextMenu server={contextMenuServer} onSelect={handleContextMenuAction} onClose={handleContextMenuClose} />
+        <ServerContextMenu
+          server={contextMenuServer}
+          onSelect={handleContextMenuAction}
+          onClose={handleContextMenuClose}
+        />
       )}
       {activeScreen === "dashboard" && (
         <Box flexGrow={1} height={18}>

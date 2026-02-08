@@ -1,16 +1,20 @@
-import { useState, useEffect } from "react";
 import { Box, Text } from "ink";
-import { mcpActiveConnections, mcpToolCallsTotal, httpRequestDuration } from "../observability/metrics.js";
+import { useEffect, useState } from "react";
+import {
+  httpRequestDuration,
+  mcpActiveConnections,
+  mcpToolCallsTotal,
+} from "../observability/metrics.js";
 
 /**
  * Format number with units
  */
 function formatNumber(num: number): string {
   if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + "M";
+    return `${(num / 1000000).toFixed(1)}M`;
   }
   if (num >= 1000) {
-    return (num / 1000).toFixed(1) + "K";
+    return `${(num / 1000).toFixed(1)}K`;
   }
   return num.toString();
 }
@@ -18,7 +22,10 @@ function formatNumber(num: number): string {
 /**
  * Calculate percentile from histogram values
  */
-function calculatePercentile(values: { count: number; sum: number; buckets: Record<number, number> }, percentile: number): number {
+function calculatePercentile(
+  values: { count: number; sum: number; buckets: Record<number, number> },
+  percentile: number,
+): number {
   if (values.count === 0) return 0;
   const targetCount = values.count * percentile;
   let cumulative = 0;
@@ -102,7 +109,9 @@ const MetricsPanel = () => {
   return (
     <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={2} marginLeft={1}>
       <Box marginBottom={1}>
-        <Text bold underline color="magenta">METRICS</Text>
+        <Text bold underline color="magenta">
+          METRICS
+        </Text>
       </Box>
 
       {/* Request Rate */}
@@ -110,7 +119,15 @@ const MetricsPanel = () => {
         <Box width={20}>
           <Text bold>Requests/sec:</Text>
         </Box>
-        <Text color={metrics.requestsPerSecond > 10 ? "green" : metrics.requestsPerSecond > 0 ? "yellow" : "gray"}>
+        <Text
+          color={
+            metrics.requestsPerSecond > 10
+              ? "green"
+              : metrics.requestsPerSecond > 0
+                ? "yellow"
+                : "gray"
+          }
+        >
           {metrics.requestsPerSecond.toFixed(1)}
         </Text>
       </Box>
@@ -128,21 +145,30 @@ const MetricsPanel = () => {
         <Box width={20}>
           <Text bold>Errors:</Text>
         </Box>
-        <Text color={metrics.totalErrors > 0 ? "red" : "green"}>
-          {metrics.totalErrors}
+        <Text color={metrics.totalErrors > 0 ? "red" : "green"}>{metrics.totalErrors}</Text>
+        <Text color="gray">
+          {" "}
+          (
+          {metrics.totalRequests > 0
+            ? ((metrics.totalErrors / metrics.totalRequests) * 100).toFixed(2)
+            : 0}
+          %)
         </Text>
-        <Text color="gray"> ({metrics.totalRequests > 0 ? ((metrics.totalErrors / metrics.totalRequests) * 100).toFixed(2) : 0}%)</Text>
       </Box>
 
       {/* Latency Percentiles */}
       <Box marginBottom={0} marginTop={1}>
-        <Text bold color="cyan">Latency (ms):</Text>
+        <Text bold color="cyan">
+          Latency (ms):
+        </Text>
       </Box>
       <Box marginLeft={2}>
         <Box width={15}>
           <Text dimColor>p50:</Text>
         </Box>
-        <Text color={metrics.p50Latency < 100 ? "green" : metrics.p50Latency < 500 ? "yellow" : "red"}>
+        <Text
+          color={metrics.p50Latency < 100 ? "green" : metrics.p50Latency < 500 ? "yellow" : "red"}
+        >
           {metrics.p50Latency.toFixed(0)}ms
         </Text>
       </Box>
@@ -150,7 +176,9 @@ const MetricsPanel = () => {
         <Box width={15}>
           <Text dimColor>p95:</Text>
         </Box>
-        <Text color={metrics.p95Latency < 200 ? "green" : metrics.p95Latency < 1000 ? "yellow" : "red"}>
+        <Text
+          color={metrics.p95Latency < 200 ? "green" : metrics.p95Latency < 1000 ? "yellow" : "red"}
+        >
           {metrics.p95Latency.toFixed(0)}ms
         </Text>
       </Box>
@@ -158,7 +186,9 @@ const MetricsPanel = () => {
         <Box width={15}>
           <Text dimColor>p99:</Text>
         </Box>
-        <Text color={metrics.p99Latency < 500 ? "green" : metrics.p99Latency < 2000 ? "yellow" : "red"}>
+        <Text
+          color={metrics.p99Latency < 500 ? "green" : metrics.p99Latency < 2000 ? "yellow" : "red"}
+        >
           {metrics.p99Latency.toFixed(0)}ms
         </Text>
       </Box>
@@ -173,7 +203,9 @@ const MetricsPanel = () => {
 
       {/* Connection Breakdown by Server */}
       <Box marginBottom={0} marginTop={1}>
-        <Text bold color="cyan">By Server:</Text>
+        <Text bold color="cyan">
+          By Server:
+        </Text>
       </Box>
       {mcpActiveConnections.getAll().map((gauge) => (
         <Box key={gauge.labels["server"]} marginLeft={2}>

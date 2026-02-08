@@ -31,7 +31,7 @@ class MockTransport extends EventEmitter implements AsyncIterable<unknown> {
 
     // Handle request
     if (msg.id && this.pendingRequests.has(msg.id)) {
-      const pending = this.pendingRequests.get(msg.id)!;
+      const _pending = this.pendingRequests.get(msg.id)!;
       this.pendingRequests.delete(msg.id);
       // Emit for server to handle
       this.emit("message", message);
@@ -51,7 +51,7 @@ class MockTransport extends EventEmitter implements AsyncIterable<unknown> {
       this.send(message).catch(reject);
 
       // Timeout after 30 seconds
-      const timeout = setTimeout(() => {
+      const _timeout = setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id);
           reject(new Error(`Request timeout: ${method}`));

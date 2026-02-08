@@ -340,13 +340,13 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (args.length === 1 && isKnownCommand(args[0]!)) {
+  if (args.length === 1 && args[0] && isKnownCommand(args[0])) {
     program.parse(args);
     return;
   }
 
-  if (args.length === 1 && !args[0]!.startsWith("-")) {
-    const unknownCommand = args[0]!;
+  if (args.length === 1 && args[0] && !args[0].startsWith("-")) {
+    const unknownCommand = args[0];
     handleUnknownCommand(unknownCommand);
     process.exit(ExitCode.GENERAL_ERROR);
   }

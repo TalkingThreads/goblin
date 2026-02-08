@@ -7,12 +7,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { type MemoryConfig, memoryMonitor } from "../shared/memory-monitor.js";
 import { isFastMode, loadConfig } from "../shared/test-config.js";
-import {
-  checkServerHealth,
-  getServerUrl,
-  startTestServer,
-  stopTestServer,
-} from "../shared/test-server.js";
+import { checkServerHealth, startTestServer, stopTestServer } from "../shared/test-server.js";
 
 const config = loadConfig();
 let serverAvailable = false;
@@ -56,7 +51,7 @@ describe("Performance Memory Tests - Stability", () => {
           initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-          growthPercent: result.growthPercent.toFixed(2) + "%",
+          growthPercent: `${result.growthPercent.toFixed(2)}%`,
         });
 
         expect(result.growthPercent).toBeLessThan(
@@ -88,7 +83,7 @@ describe("Performance Memory Tests - Stability", () => {
           initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-          growthPercent: result.growthPercent.toFixed(2) + "%",
+          growthPercent: `${result.growthPercent.toFixed(2)}%`,
         });
 
         expect(result.growthPercent).toBeLessThan(
@@ -120,7 +115,7 @@ describe("Performance Memory Tests - Stability", () => {
           initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-          growthPercent: result.growthPercent.toFixed(2) + "%",
+          growthPercent: `${result.growthPercent.toFixed(2)}%`,
         });
 
         expect(result.growthPercent).toBeLessThan(
@@ -152,7 +147,7 @@ describe("Performance Memory Tests - Stability", () => {
           initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-          growthPercent: result.growthPercent.toFixed(2) + "%",
+          growthPercent: `${result.growthPercent.toFixed(2)}%`,
         });
 
         expect(result.growthPercent).toBeLessThan(
@@ -184,7 +179,7 @@ describe("Performance Memory Tests - Stability", () => {
           initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-          growthPercent: result.growthPercent.toFixed(2) + "%",
+          growthPercent: `${result.growthPercent.toFixed(2)}%`,
         });
 
         expect(result.growthPercent).toBeLessThan(
@@ -216,7 +211,7 @@ describe("Performance Memory Tests - Stability", () => {
           initialMb: (result.initialSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           peakMb: (result.peakSnapshot.heapUsed / 1024 / 1024).toFixed(2),
           finalMb: (result.finalSnapshot.heapUsed / 1024 / 1024).toFixed(2),
-          growthPercent: result.growthPercent.toFixed(2) + "%",
+          growthPercent: `${result.growthPercent.toFixed(2)}%`,
         });
 
         expect(result.growthPercent).toBeLessThan(
@@ -240,7 +235,7 @@ describe("Performance Memory Tests - Stability", () => {
       console.log("Memory after idle period:", {
         beforeMb: (beforeIdle.heapUsed / 1024 / 1024).toFixed(2),
         afterMb: (afterIdle.heapUsed / 1024 / 1024).toFixed(2),
-        growth: growth.toFixed(2) + "%",
+        growth: `${growth.toFixed(2)}%`,
       });
 
       expect(growth).toBeLessThan(5, `Idle memory growth ${growth.toFixed(2)}% should be < 5%`);

@@ -30,8 +30,8 @@ describe("Multi-Server - Resource Configuration", () => {
     await server1.start();
     await server2.start();
 
-    expect(server1["config"].resources!.length).toBe(2);
-    expect(server2["config"].resources!.length).toBe(2);
+    expect(server1["config"].resources?.length).toBe(2);
+    expect(server2["config"].resources?.length).toBe(2);
   });
 
   test("resources should have valid URIs", async () => {
@@ -117,16 +117,16 @@ describe("Multi-Server - Resource Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    expect(server1["config"].resources![0].mimeType).toBe("text/plain");
-    expect(server2["config"].resources![0].mimeType).toBe("text/plain");
+    expect(server1["config"].resources?.[0].mimeType).toBe("text/plain");
+    expect(server2["config"].resources?.[0].mimeType).toBe("text/plain");
   });
 
   test("second resource should be application/json", async () => {
     await server1.start();
     await server2.start();
 
-    expect(server1["config"].resources![1].mimeType).toBe("application/json");
-    expect(server2["config"].resources![1].mimeType).toBe("application/json");
+    expect(server1["config"].resources?.[1].mimeType).toBe("application/json");
+    expect(server2["config"].resources?.[1].mimeType).toBe("application/json");
   });
 
   test("can add unique resources to each server", async () => {
@@ -149,8 +149,8 @@ describe("Multi-Server - Resource Aggregation", () => {
       "Server2 content",
     );
 
-    const uris1 = server1["config"].resources!.map((r) => r.uri);
-    const uris2 = server2["config"].resources!.map((r) => r.uri);
+    const uris1 = server1["config"].resources?.map((r) => r.uri);
+    const uris2 = server2["config"].resources?.map((r) => r.uri);
 
     expect(uris1).toContain("test://server1_unique");
     expect(uris2).toContain("test://server2_unique");
@@ -181,8 +181,8 @@ describe("Multi-Server - Resource Content", () => {
     await server1.start();
     await server2.start();
 
-    const json1 = server1["config"].resources![1].content;
-    const json2 = server2["config"].resources![1].content;
+    const json1 = server1["config"].resources?.[1].content;
+    const json2 = server2["config"].resources?.[1].content;
 
     expect(() => JSON.parse(json1)).not.toThrow();
     expect(() => JSON.parse(json2)).not.toThrow();
@@ -192,8 +192,8 @@ describe("Multi-Server - Resource Content", () => {
     await server1.start();
     await server2.start();
 
-    const parsed1 = JSON.parse(server1["config"].resources![1].content);
-    const parsed2 = JSON.parse(server2["config"].resources![1].content);
+    const parsed1 = JSON.parse(server1["config"].resources?.[1].content);
+    const parsed2 = JSON.parse(server2["config"].resources?.[1].content);
 
     expect(parsed1).toEqual({ key: "value" });
     expect(parsed2).toEqual({ key: "value" });
@@ -203,8 +203,8 @@ describe("Multi-Server - Resource Content", () => {
     await server1.start();
     await server2.start();
 
-    const text1 = server1["config"].resources![0].content;
-    const text2 = server2["config"].resources![0].content;
+    const text1 = server1["config"].resources?.[0].content;
+    const text2 = server2["config"].resources?.[0].content;
 
     expect(typeof text1).toBe("string");
     expect(typeof text2).toBe("string");
@@ -241,8 +241,8 @@ describe("Multi-Server - Dynamic Resources", () => {
       "Dynamic content 1",
     );
 
-    const uris1 = server1["config"].resources!.map((r) => r.uri);
-    const uris2 = server2["config"].resources!.map((r) => r.uri);
+    const uris1 = server1["config"].resources?.map((r) => r.uri);
+    const uris2 = server2["config"].resources?.map((r) => r.uri);
 
     expect(uris1).toContain("test://dynamic_res_1");
     expect(uris2).not.toContain("test://dynamic_res_1");
@@ -260,8 +260,8 @@ describe("Multi-Server - Dynamic Resources", () => {
       "Dynamic content 2",
     );
 
-    const uris1 = server1["config"].resources!.map((r) => r.uri);
-    const uris2 = server2["config"].resources!.map((r) => r.uri);
+    const uris1 = server1["config"].resources?.map((r) => r.uri);
+    const uris2 = server2["config"].resources?.map((r) => r.uri);
 
     expect(uris2).toContain("test://dynamic_res_2");
     expect(uris1).not.toContain("test://dynamic_res_2");
@@ -281,7 +281,7 @@ describe("Multi-Server - Dynamic Resources", () => {
       );
     }
 
-    expect(server1["config"].resources!.length).toBe(2 + 5);
-    expect(server2["config"].resources!.length).toBe(2);
+    expect(server1["config"].resources?.length).toBe(2 + 5);
+    expect(server2["config"].resources?.length).toBe(2);
   });
 });

@@ -30,8 +30,8 @@ describe("Multi-Server - Tool Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("echo");
     expect(tools2).toContain("echo");
@@ -41,8 +41,8 @@ describe("Multi-Server - Tool Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("add");
     expect(tools2).toContain("add");
@@ -52,8 +52,8 @@ describe("Multi-Server - Tool Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("get_time");
     expect(tools2).toContain("get_time");
@@ -63,7 +63,7 @@ describe("Multi-Server - Tool Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    expect(server1["config"].tools!.length).toBe(server2["config"].tools!.length);
+    expect(server1["config"].tools?.length).toBe(server2["config"].tools?.length);
   });
 
   test("can add unique tools to different servers", async () => {
@@ -84,8 +84,8 @@ describe("Multi-Server - Tool Aggregation", () => {
       async () => ({ content: [{ type: "text", text: "server2" }] }),
     );
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("server1_special");
     expect(tools2).toContain("server2_special");
@@ -116,16 +116,16 @@ describe("Multi-Server - Resource Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    expect(server1["config"].resources!.length).toBe(2);
-    expect(server2["config"].resources!.length).toBe(2);
+    expect(server1["config"].resources?.length).toBe(2);
+    expect(server2["config"].resources?.length).toBe(2);
   });
 
   test("resources should have same mime types", async () => {
     await server1.start();
     await server2.start();
 
-    const mimeTypes1 = server1["config"].resources!.map((r) => r.mimeType);
-    const mimeTypes2 = server2["config"].resources!.map((r) => r.mimeType);
+    const mimeTypes1 = server1["config"].resources?.map((r) => r.mimeType);
+    const mimeTypes2 = server2["config"].resources?.map((r) => r.mimeType);
 
     expect(mimeTypes1).toEqual(mimeTypes2);
   });
@@ -150,8 +150,8 @@ describe("Multi-Server - Resource Aggregation", () => {
       "Server2 content",
     );
 
-    const uris1 = server1["config"].resources!.map((r) => r.uri);
-    const uris2 = server2["config"].resources!.map((r) => r.uri);
+    const uris1 = server1["config"].resources?.map((r) => r.uri);
+    const uris2 = server2["config"].resources?.map((r) => r.uri);
 
     expect(uris1).toContain("test://server1-resource");
     expect(uris2).toContain("test://server2-resource");
@@ -182,8 +182,8 @@ describe("Multi-Server - Prompt Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    const prompts1 = server1["config"].prompts!.map((p) => p.name);
-    const prompts2 = server2["config"].prompts!.map((p) => p.name);
+    const prompts1 = server1["config"].prompts?.map((p) => p.name);
+    const prompts2 = server2["config"].prompts?.map((p) => p.name);
 
     expect(prompts1).toContain("greet");
     expect(prompts2).toContain("greet");
@@ -193,17 +193,17 @@ describe("Multi-Server - Prompt Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    expect(server1["config"].prompts!.length).toBe(server2["config"].prompts!.length);
+    expect(server1["config"].prompts?.length).toBe(server2["config"].prompts?.length);
   });
 
   test("prompts should have same arguments", async () => {
     await server1.start();
     await server2.start();
 
-    const prompt1 = server1["config"].prompts!.find((p) => p.name === "greet");
-    const prompt2 = server2["config"].prompts!.find((p) => p.name === "greet");
+    const prompt1 = server1["config"].prompts?.find((p) => p.name === "greet");
+    const prompt2 = server2["config"].prompts?.find((p) => p.name === "greet");
 
-    expect(prompt1!.arguments).toEqual(prompt2!.arguments);
+    expect(prompt1?.arguments).toEqual(prompt2?.arguments);
   });
 
   test("can add unique prompts to different servers", async () => {
@@ -224,8 +224,8 @@ describe("Multi-Server - Prompt Aggregation", () => {
       async (args) => `Server2: ${args.input || "default"}`,
     );
 
-    const names1 = server1["config"].prompts!.map((p) => p.name);
-    const names2 = server2["config"].prompts!.map((p) => p.name);
+    const names1 = server1["config"].prompts?.map((p) => p.name);
+    const names2 = server2["config"].prompts?.map((p) => p.name);
 
     expect(names1).toContain("server1_prompt");
     expect(names2).toContain("server2_prompt");
@@ -256,21 +256,21 @@ describe("Multi-Server - Combined Aggregation", () => {
     await server1.start();
     await server2.start();
 
-    expect(server1["config"].tools!.length).toBeGreaterThan(0);
-    expect(server1["config"].resources!.length).toBeGreaterThan(0);
-    expect(server1["config"].prompts!.length).toBeGreaterThan(0);
+    expect(server1["config"].tools?.length).toBeGreaterThan(0);
+    expect(server1["config"].resources?.length).toBeGreaterThan(0);
+    expect(server1["config"].prompts?.length).toBeGreaterThan(0);
 
-    expect(server2["config"].tools!.length).toBeGreaterThan(0);
-    expect(server2["config"].resources!.length).toBeGreaterThan(0);
-    expect(server2["config"].prompts!.length).toBeGreaterThan(0);
+    expect(server2["config"].tools?.length).toBeGreaterThan(0);
+    expect(server2["config"].resources?.length).toBeGreaterThan(0);
+    expect(server2["config"].prompts?.length).toBeGreaterThan(0);
   });
 
   test("capability counts should match between servers", async () => {
     await server1.start();
     await server2.start();
 
-    expect(server1["config"].tools!.length).toBe(server2["config"].tools!.length);
-    expect(server1["config"].resources!.length).toBe(server2["config"].resources!.length);
-    expect(server1["config"].prompts!.length).toBe(server2["config"].prompts!.length);
+    expect(server1["config"].tools?.length).toBe(server2["config"].tools?.length);
+    expect(server1["config"].resources?.length).toBe(server2["config"].resources?.length);
+    expect(server1["config"].prompts?.length).toBe(server2["config"].prompts?.length);
   });
 });

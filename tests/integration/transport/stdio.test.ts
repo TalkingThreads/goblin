@@ -53,8 +53,8 @@ describe("Transport - STDIO Behavior", () => {
     const echo = tools.find((t) => t.name === "echo");
 
     expect(echo).toBeDefined();
-    expect(echo!.inputSchema.properties.message).toBeDefined();
-    expect(echo!.inputSchema.required).toContain("message");
+    expect(echo?.inputSchema.properties.message).toBeDefined();
+    expect(echo?.inputSchema.required).toContain("message");
   });
 
   test("add tool should have a and b parameters", async () => {
@@ -62,10 +62,10 @@ describe("Transport - STDIO Behavior", () => {
     const add = tools.find((t) => t.name === "add");
 
     expect(add).toBeDefined();
-    expect(add!.inputSchema.properties.a).toBeDefined();
-    expect(add!.inputSchema.properties.b).toBeDefined();
-    expect(add!.inputSchema.required).toContain("a");
-    expect(add!.inputSchema.required).toContain("b");
+    expect(add?.inputSchema.properties.a).toBeDefined();
+    expect(add?.inputSchema.properties.b).toBeDefined();
+    expect(add?.inputSchema.required).toContain("a");
+    expect(add?.inputSchema.required).toContain("b");
   });
 
   test("get_time tool should have no required parameters", async () => {
@@ -73,7 +73,7 @@ describe("Transport - STDIO Behavior", () => {
     const getTime = tools.find((t) => t.name === "get_time");
 
     expect(getTime).toBeDefined();
-    expect(getTime!.inputSchema.required.length).toBe(0);
+    expect(getTime?.inputSchema.required.length).toBe(0);
   });
 
   test("all tools should have type: object in schema", async () => {
@@ -140,8 +140,8 @@ describe("Transport - STDIO Resource Handling", () => {
     const jsonResource = resources.find((r) => r.mimeType === "application/json");
 
     expect(jsonResource).toBeDefined();
-    expect(() => JSON.parse(jsonResource!.content)).not.toThrow();
-    expect(JSON.parse(jsonResource!.content)).toEqual({ key: "value" });
+    expect(() => JSON.parse(jsonResource?.content)).not.toThrow();
+    expect(JSON.parse(jsonResource?.content)).toEqual({ key: "value" });
   });
 });
 
@@ -197,9 +197,9 @@ describe("Transport - STDIO Prompt Handling", () => {
     const greet = prompts.find((p) => p.name === "greet");
 
     expect(greet).toBeDefined();
-    const nameArg = greet!.arguments.find((a) => a.name === "name");
+    const nameArg = greet?.arguments.find((a) => a.name === "name");
     expect(nameArg).toBeDefined();
-    expect(nameArg!.required).toBe(true);
+    expect(nameArg?.required).toBe(true);
   });
 });
 
@@ -219,7 +219,7 @@ describe("Transport - STDIO Dynamic Updates", () => {
   });
 
   test("can add tools dynamically", async () => {
-    const initialCount = server["config"].tools!.length;
+    const initialCount = server["config"].tools?.length;
 
     server.addTool(
       "dynamic_stdio_tool",
@@ -228,11 +228,11 @@ describe("Transport - STDIO Dynamic Updates", () => {
       async () => ({ content: [{ type: "text", text: "dynamic" }] }),
     );
 
-    expect(server["config"].tools!.length).toBe(initialCount + 1);
+    expect(server["config"].tools?.length).toBe(initialCount + 1);
   });
 
   test("can add resources dynamically", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     server.addResource(
       "test://stdio-dynamic-resource",
@@ -242,11 +242,11 @@ describe("Transport - STDIO Dynamic Updates", () => {
       "Dynamic content",
     );
 
-    expect(server["config"].resources!.length).toBe(initialCount + 1);
+    expect(server["config"].resources?.length).toBe(initialCount + 1);
   });
 
   test("can add prompts dynamically", async () => {
-    const initialCount = server["config"].prompts!.length;
+    const initialCount = server["config"].prompts?.length;
 
     server.addPrompt(
       "dynamic_stdio_prompt",
@@ -255,7 +255,7 @@ describe("Transport - STDIO Dynamic Updates", () => {
       async (args) => `Dynamic: ${args.input || "default"}`,
     );
 
-    expect(server["config"].prompts!.length).toBe(initialCount + 1);
+    expect(server["config"].prompts?.length).toBe(initialCount + 1);
   });
 
   test("dynamic tool should have valid schema", async () => {
@@ -273,9 +273,9 @@ describe("Transport - STDIO Dynamic Updates", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
 
-    const tool = server["config"].tools!.find((t) => t.name === "schema_test");
+    const tool = server["config"].tools?.find((t) => t.name === "schema_test");
     expect(tool).toBeDefined();
-    expect(tool!.inputSchema.properties.param1).toBeDefined();
-    expect(tool!.inputSchema.required).toContain("param1");
+    expect(tool?.inputSchema.properties.param1).toBeDefined();
+    expect(tool?.inputSchema.required).toContain("param1");
   });
 });

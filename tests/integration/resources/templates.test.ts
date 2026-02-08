@@ -93,19 +93,19 @@ describe("Resource - Template Content", () => {
   test("text content is a string", async () => {
     const resources = server["config"].resources!;
     const textResource = resources.find((r) => r.mimeType === "text/plain");
-    expect(typeof textResource!.content).toBe("string");
+    expect(typeof textResource?.content).toBe("string");
   });
 
   test("JSON content is valid JSON", async () => {
     const resources = server["config"].resources!;
     const jsonResource = resources.find((r) => r.mimeType === "application/json");
-    expect(() => JSON.parse(jsonResource!.content)).not.toThrow();
+    expect(() => JSON.parse(jsonResource?.content)).not.toThrow();
   });
 
   test("JSON content can be parsed to object", async () => {
     const resources = server["config"].resources!;
     const jsonResource = resources.find((r) => r.mimeType === "application/json");
-    const parsed = JSON.parse(jsonResource!.content);
+    const parsed = JSON.parse(jsonResource?.content);
     expect(typeof parsed).toBe("object");
   });
 
@@ -127,9 +127,9 @@ describe("Resource - Template Content", () => {
       "User: {name}, Age: {age}",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://templated");
-    expect(resource!.content).toContain("{name}");
-    expect(resource!.content).toContain("{age}");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://templated");
+    expect(resource?.content).toContain("{name}");
+    expect(resource?.content).toContain("{age}");
   });
 });
 
@@ -157,8 +157,8 @@ describe("Resource - Template MIME Types", () => {
       "<html><body>{{content}}</body></html>",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://html-template");
-    expect(resource!.mimeType).toBe("text/html");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://html-template");
+    expect(resource?.mimeType).toBe("text/html");
   });
 
   test("can add XML template", async () => {
@@ -170,8 +170,8 @@ describe("Resource - Template MIME Types", () => {
       '<?xml version="1.0"?><root>{{data}}</root>',
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://xml-template");
-    expect(resource!.mimeType).toBe("application/xml");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://xml-template");
+    expect(resource?.mimeType).toBe("application/xml");
   });
 
   test("can add CSS template", async () => {
@@ -183,8 +183,8 @@ describe("Resource - Template MIME Types", () => {
       "body { color: {{color}}; }",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://css-template");
-    expect(resource!.mimeType).toBe("text/css");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://css-template");
+    expect(resource?.mimeType).toBe("text/css");
   });
 
   test("can add JavaScript template", async () => {
@@ -196,8 +196,8 @@ describe("Resource - Template MIME Types", () => {
       "const value = {{value}};",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://js-template");
-    expect(resource!.mimeType).toBe("application/javascript");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://js-template");
+    expect(resource?.mimeType).toBe("application/javascript");
   });
 });
 
@@ -235,9 +235,9 @@ describe("Resource - Template Validation", () => {
       '{"name": "{name}", "value": {value}}',
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://json-validate");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://json-validate");
     // Replace template placeholders with valid JSON values
-    const validJson = resource!.content.replace(/{name}/g, "test").replace(/{value}/g, "123");
+    const validJson = resource?.content.replace(/{name}/g, "test").replace(/{value}/g, "123");
     expect(() => JSON.parse(validJson)).not.toThrow();
     const parsed = JSON.parse(validJson);
     expect(parsed.name).toBe("test");
@@ -253,8 +253,8 @@ describe("Resource - Template Validation", () => {
       "",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://empty-template");
-    expect(resource!.content).toBe("");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://empty-template");
+    expect(resource?.content).toBe("");
   });
 
   test("can add large template content", async () => {
@@ -267,8 +267,8 @@ describe("Resource - Template Validation", () => {
       largeContent,
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://large-template");
-    expect(resource!.content.length).toBe(10000);
+    const resource = server["config"].resources?.find((r) => r.uri === "test://large-template");
+    expect(resource?.content.length).toBe(10000);
   });
 });
 
@@ -326,8 +326,8 @@ describe("Resource - Template Variants", () => {
       "Version 2: {content} [updated]",
     );
 
-    const v1 = server["config"].resources!.find((r) => r.uri === "test://template-v1");
-    const v2 = server["config"].resources!.find((r) => r.uri === "test://template-v2");
+    const v1 = server["config"].resources?.find((r) => r.uri === "test://template-v1");
+    const v2 = server["config"].resources?.find((r) => r.uri === "test://template-v2");
     expect(v1).toBeDefined();
     expect(v2).toBeDefined();
   });

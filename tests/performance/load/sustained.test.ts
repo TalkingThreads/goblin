@@ -78,7 +78,7 @@ describe("Performance Load Tests - Sustained Load", () => {
 
         console.log("1 hour sustained load metrics:", {
           avgRps: avgRps.toFixed(2),
-          coefficientOfVariation: cv.toFixed(2) + "%",
+          coefficientOfVariation: `${cv.toFixed(2)}%`,
           samples: results.length,
         });
 
@@ -117,7 +117,7 @@ describe("Performance Load Tests - Sustained Load", () => {
         console.log("1 hour sustained error rate:", {
           totalErrors,
           totalRequests,
-          errorRate: errorRate.toFixed(2) + "%",
+          errorRate: `${errorRate.toFixed(2)}%`,
         });
 
         expect(errorRate).toBeLessThan(1, `Error rate ${errorRate.toFixed(2)}% should be < 1%`);
@@ -150,9 +150,9 @@ describe("Performance Load Tests - Sustained Load", () => {
         const growth = initialAvg > 0 ? ((finalAvg - initialAvg) / initialAvg) * 100 : 0;
 
         console.log("Memory stability during sustained load:", {
-          initialAvg: (initialAvg / 1024).toFixed(2) + " KB/s",
-          finalAvg: (finalAvg / 1024).toFixed(2) + " KB/s",
-          growth: growth.toFixed(2) + "%",
+          initialAvg: `${(initialAvg / 1024).toFixed(2)} KB/s`,
+          finalAvg: `${(finalAvg / 1024).toFixed(2)} KB/s`,
+          growth: `${growth.toFixed(2)}%`,
         });
 
         expect(Math.abs(growth)).toBeLessThan(
@@ -223,10 +223,8 @@ describe("Performance Load Tests - Sustained Load", () => {
           normalRps: normalResult.requestsPerSecond.toFixed(2),
           spikeRps: spikeResult.requestsPerSecond.toFixed(2),
           recoveryRps: recoveryResult.requestsPerSecond.toFixed(2),
-          spikeFactor:
-            (spikeResult.requestsPerSecond / normalResult.requestsPerSecond).toFixed(2) + "x",
-          recoveryRatio:
-            (recoveryResult.requestsPerSecond / normalResult.requestsPerSecond).toFixed(2) + "x",
+          spikeFactor: `${(spikeResult.requestsPerSecond / normalResult.requestsPerSecond).toFixed(2)}x`,
+          recoveryRatio: `${(recoveryResult.requestsPerSecond / normalResult.requestsPerSecond).toFixed(2)}x`,
         });
 
         expect(recoveryResult.requestsPerSecond).toBeGreaterThanOrEqual(

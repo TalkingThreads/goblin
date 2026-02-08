@@ -53,13 +53,13 @@ describe("Command Suggestions", () => {
     it("should suggest 'status' for 'statuz'", () => {
       const suggestions = getCommandSuggestions("statuz");
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0]!.command).toBe("status");
+      expect(suggestions[0]?.command).toBe("status");
     });
 
     it("should suggest 'status' for 'stutus'", () => {
       const suggestions = getCommandSuggestions("stutus");
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0]!.command).toBe("status");
+      expect(suggestions[0]?.command).toBe("status");
     });
 
     it("should suggest 'health' or 'help' for 'healp'", () => {
@@ -72,25 +72,25 @@ describe("Command Suggestions", () => {
     it("should suggest 'tools' for 'toolss'", () => {
       const suggestions = getCommandSuggestions("toolss");
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0]!.command).toBe("tools");
+      expect(suggestions[0]?.command).toBe("tools");
     });
 
     it("should suggest 'servers' for 'serverss'", () => {
       const suggestions = getCommandSuggestions("serverss");
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0]!.command).toBe("servers");
+      expect(suggestions[0]?.command).toBe("servers");
     });
 
     it("should suggest 'config' for 'confg'", () => {
       const suggestions = getCommandSuggestions("confg");
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0]!.command).toBe("config");
+      expect(suggestions[0]?.command).toBe("config");
     });
 
     it("should suggest 'logs' for 'logz'", () => {
       const suggestions = getCommandSuggestions("logz");
       expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0]!.command).toBe("logs");
+      expect(suggestions[0]?.command).toBe("logs");
     });
   });
 
@@ -183,7 +183,7 @@ describe("Command Suggestions", () => {
       const suggestions = getCommandSuggestions("statuz");
       const statusSuggestion = suggestions.find((s) => s.command === "status");
       expect(statusSuggestion).toBeDefined();
-      expect(statusSuggestion!.confidence).toBe("high");
+      expect(statusSuggestion?.confidence).toBe("high");
     });
 
     it("should have appropriate confidence levels", () => {

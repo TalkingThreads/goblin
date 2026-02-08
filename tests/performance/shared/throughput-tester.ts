@@ -202,17 +202,17 @@ export class ThroughputTester {
     if (lastStable.latencyP95 > 1000) return "cpu";
     if (
       result.rpsProgression.length > 5 &&
-      result.rpsProgression[result.rpsProgression.length - 2].stable
-    ) {
-      if (lastStable.errorRate > 0.05) return "network";
-    }
+      result.rpsProgression[result.rpsProgression.length - 2].stable &&
+      lastStable.errorRate > 0.05
+    )
+      return "network";
 
     return "unknown";
   }
 
   private generateScalingRecommendations(
     bottleneckType: "cpu" | "memory" | "network" | "unknown",
-    result: ThroughputResult,
+    _result: ThroughputResult,
     recommendedMaxRps: number,
   ): string[] {
     const recommendations: string[] = [];

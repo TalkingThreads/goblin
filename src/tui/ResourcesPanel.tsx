@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import { useGatewayData, useFilteredResources } from "./hooks/useGatewayData.js";
+import { useEffect, useState } from "react";
 import type { GoblinGateway } from "../core/gateway.js";
+import { useFilteredResources, useGatewayData } from "./hooks/useGatewayData.js";
 
 /**
  * ResourcesPanel Component
@@ -14,22 +14,25 @@ const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
   const [filterMimeType, setFilterMimeType] = useState<string | null>(null);
   const [searchQuery] = useState("");
 
-  const filteredResources = useFilteredResources(resources, filterServer, filterMimeType, searchQuery);
+  const filteredResources = useFilteredResources(
+    resources,
+    filterServer,
+    filterMimeType,
+    searchQuery,
+  );
 
   // Get unique MIME types for filter
   const mimeTypes = [...new Set(resources.map((r) => r.def.mimeType))];
 
   // Get unique server names for filter
-  const serverNames = [...new Set(resources.map((r) => r.serverId))].filter(
-    (s) => s !== "goblin",
-  );
+  const serverNames = [...new Set(resources.map((r) => r.serverId))].filter((s) => s !== "goblin");
 
   // Reset selected index when filtered results change
   useEffect(() => {
     if (selectedIndex >= filteredResources.length) {
       setSelectedIndex(Math.max(0, filteredResources.length - 1));
     }
-  }, [filteredResources.length]);
+  }, [filteredResources.length, selectedIndex]);
 
   useInput((input, key) => {
     if (key.upArrow) {
@@ -41,29 +44,23 @@ const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
     if (input === "f") {
       // Toggle server filter
       setFilterServer((prev) => {
-        const currentIdx = serverNames.findIndex((s) => s === prev);
+        const currentIdx = serverNames.indexOf(prev);
         const nextIdx = currentIdx < serverNames.length - 1 ? currentIdx + 1 : -1;
-        return nextIdx >= 0 ? serverNames[nextIdx] ?? null : null;
+        return nextIdx >= 0 ? (serverNames[nextIdx] ?? null) : null;
       });
     }
     if (input === "m") {
       // Toggle MIME type filter
       setFilterMimeType((prev) => {
-        const currentIdx = mimeTypes.findIndex((m) => m === prev);
+        const currentIdx = mimeTypes.indexOf(prev);
         const nextIdx = currentIdx < mimeTypes.length - 1 ? currentIdx + 1 : -1;
-        return nextIdx >= 0 ? mimeTypes[nextIdx] ?? null : null;
+        return nextIdx >= 0 ? (mimeTypes[nextIdx] ?? null) : null;
       });
     }
   });
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      paddingX={1}
-      flexGrow={1}
-      minWidth={40}
-    >
+    <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={1} minWidth={40}>
       <Box marginBottom={1}>
         <Text bold underline color="green">
           AVAILABLE RESOURCES
@@ -75,15 +72,11 @@ const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
         <Box>
           <Text color="gray">Server: </Text>
           <Text color={filterServer ? "cyan" : "gray"}>
-            {filterServer
-              ? serverNames.find((s) => s === filterServer) || filterServer
-              : "All"}
+            {filterServer ? serverNames.find((s) => s === filterServer) || filterServer : "All"}
           </Text>
           <Text color="gray"> | </Text>
           <Text color="gray">MIME: </Text>
-          <Text color={filterMimeType ? "yellow" : "gray"}>
-            {filterMimeType || "All"}
-          </Text>
+          <Text color={filterMimeType ? "yellow" : "gray"}>{filterMimeType || "All"}</Text>
         </Box>
       </Box>
 
@@ -116,7 +109,9 @@ const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
               <Box width={15}>
                 <Text color={index === selectedIndex ? "cyan" : "white"}>
                   {(resource.def.name || resource.def.uri.split("/").pop() || "Unknown").length > 14
-                    ? (resource.def.name || resource.def.uri.split("/").pop() || "Unknown").slice(0, 11) + "..."
+                    ? `${(
+                        resource.def.name || resource.def.uri.split("/").pop() || "Unknown"
+                      ).slice(0, 11)}...`
                     : resource.def.name || resource.def.uri.split("/").pop() || "Unknown"}
                 </Text>
               </Box>
@@ -129,7 +124,7 @@ const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
               <Box flexGrow={1}>
                 <Text color="gray" dimColor>
                   {resource.def.description && resource.def.description.length > 35
-                    ? resource.def.description.slice(0, 32) + "..."
+                    ? `${resource.def.description.slice(0, 32)}...`
                     : resource.def.description || "No description"}
                 </Text>
               </Box>
@@ -145,9 +140,9 @@ const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
             URI:{" "}
           </Text>
           <Text color="white">
-            {filteredResources[selectedIndex]!.def.uri.length > 60
-              ? "..." + filteredResources[selectedIndex]!.def.uri.slice(-60)
-              : filteredResources[selectedIndex]!.def.uri}
+            {filteredResources[selectedIndex]?.def.uri.length > 60
+              ? `...${filteredResources[selectedIndex]?.def.uri.slice(-60)}`
+              : filteredResources[selectedIndex]?.def.uri}
           </Text>
         </Box>
       )}

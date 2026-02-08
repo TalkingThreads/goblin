@@ -5,11 +5,10 @@
  */
 
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 
 function runQualityChecks() {
   console.log("🔍 Running quality checks...");
-  
+
   // TypeScript check - fail on any errors
   try {
     execSync("bun run typecheck", { stdio: "inherit" });
@@ -18,7 +17,7 @@ function runQualityChecks() {
     console.log("❌ TypeScript errors found!");
     process.exit(1);
   }
-  
+
   // Biome lint check on source files only
   try {
     execSync("bun run biome check src/", { stdio: "inherit" });
@@ -27,7 +26,7 @@ function runQualityChecks() {
     console.log("❌ Lint errors found in source files!");
     process.exit(1);
   }
-  
+
   console.log("\n✅ All quality checks passed!");
 }
 
@@ -39,7 +38,7 @@ switch (command) {
   case undefined:
     runQualityChecks();
     break;
-  
+
   default:
     console.log(`
 🚀 Proactive Quality System v1.0.0

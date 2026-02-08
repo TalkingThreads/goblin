@@ -7,7 +7,6 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { performance } from "node:perf_hooks";
 
 export interface PerformanceMetrics {
   latency: {
@@ -136,7 +135,7 @@ export class BaselineManager {
   async compareWithBaseline(
     name: string,
     current: PerformanceMetrics,
-    commitHash?: string,
+    _commitHash?: string,
   ): Promise<ComparisonResult> {
     const baseline = await this.loadBaseline(name);
 
@@ -313,7 +312,7 @@ export class BaselineManager {
 
     const updated: PerformanceBaseline = {
       ...existing!,
-      version: this.incrementVersion(existing!.version),
+      version: this.incrementVersion(existing?.version),
       createdAt: new Date().toISOString(),
       metrics: newMetrics,
     };

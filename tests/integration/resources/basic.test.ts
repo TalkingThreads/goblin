@@ -150,7 +150,7 @@ describe("Resource - Dynamic Addition", () => {
   });
 
   test("can add resource dynamically", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     server.addResource(
       "test://dynamic-resource",
@@ -160,7 +160,7 @@ describe("Resource - Dynamic Addition", () => {
       "Dynamic content",
     );
 
-    expect(server["config"].resources!.length).toBe(initialCount + 1);
+    expect(server["config"].resources?.length).toBe(initialCount + 1);
   });
 
   test("dynamic resource has valid structure", async () => {
@@ -172,15 +172,15 @@ describe("Resource - Dynamic Addition", () => {
       "content",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://structured");
-    expect(resource!.uri).toBe("test://structured");
-    expect(resource!.name).toBe("Structured Resource");
-    expect(resource!.mimeType).toBe("text/plain");
-    expect(resource!.content).toBe("content");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://structured");
+    expect(resource?.uri).toBe("test://structured");
+    expect(resource?.name).toBe("Structured Resource");
+    expect(resource?.mimeType).toBe("text/plain");
+    expect(resource?.content).toBe("content");
   });
 
   test("can add multiple resources", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     for (let i = 0; i < 3; i++) {
       server.addResource(
@@ -192,7 +192,7 @@ describe("Resource - Dynamic Addition", () => {
       );
     }
 
-    expect(server["config"].resources!.length).toBe(initialCount + 3);
+    expect(server["config"].resources?.length).toBe(initialCount + 3);
   });
 
   test("all dynamic resources are accessible", async () => {
@@ -235,12 +235,12 @@ describe("Resource - Multi-Server", () => {
   });
 
   test("both servers have resources", async () => {
-    expect(server1["config"].resources!.length).toBeGreaterThan(0);
-    expect(server2["config"].resources!.length).toBeGreaterThan(0);
+    expect(server1["config"].resources?.length).toBeGreaterThan(0);
+    expect(server2["config"].resources?.length).toBeGreaterThan(0);
   });
 
   test("both servers have same resource count", async () => {
-    expect(server1["config"].resources!.length).toBe(server2["config"].resources!.length);
+    expect(server1["config"].resources?.length).toBe(server2["config"].resources?.length);
   });
 
   test("servers have independent resources", async () => {
@@ -252,7 +252,7 @@ describe("Resource - Multi-Server", () => {
       "S1 content",
     );
 
-    const resources2 = server2["config"].resources!.map((r) => r.uri);
+    const resources2 = server2["config"].resources?.map((r) => r.uri);
     expect(resources2).not.toContain("test://s1_unique");
   });
 
@@ -260,8 +260,8 @@ describe("Resource - Multi-Server", () => {
     server1.addResource("test://u1", "U1", "U1", "text/plain", "1");
     server2.addResource("test://u2", "U2", "U2", "text/plain", "2");
 
-    const uris1 = server1["config"].resources!.map((r) => r.uri);
-    const uris2 = server2["config"].resources!.map((r) => r.uri);
+    const uris1 = server1["config"].resources?.map((r) => r.uri);
+    const uris2 = server2["config"].resources?.map((r) => r.uri);
 
     expect(uris1).toContain("test://u1");
     expect(uris2).toContain("test://u2");
@@ -308,7 +308,7 @@ describe("Resource - URI Format", () => {
       "content",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "custom://my-resource");
+    const resource = server["config"].resources?.find((r) => r.uri === "custom://my-resource");
     expect(resource).toBeDefined();
   });
 
@@ -321,7 +321,7 @@ describe("Resource - URI Format", () => {
       "content",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri.includes("?"));
+    const resource = server["config"].resources?.find((r) => r.uri.includes("?"));
     expect(resource).toBeDefined();
   });
 });

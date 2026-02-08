@@ -4,8 +4,7 @@
  * Tests for /health, /ready, and /metrics endpoints
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { spawn } from "node:child_process";
+import { describe, expect, it } from "bun:test";
 import { request } from "node:http";
 
 interface HttpResponse {
@@ -14,7 +13,7 @@ interface HttpResponse {
   headers: Record<string, string>;
 }
 
-async function makeRequest(
+async function _makeRequest(
   port: number,
   path: string,
   timeout: number = 5000,

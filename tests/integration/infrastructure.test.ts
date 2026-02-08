@@ -5,9 +5,9 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { CleanupManager, createCleanupManager } from "../shared/cleanup.js";
-import { createNetworkSimulator, NetworkSimulator } from "../shared/network-simulator.js";
-import { createTestClient, TestMcpClient } from "../shared/test-client.js";
+import { createCleanupManager } from "../shared/cleanup.js";
+import { createNetworkSimulator } from "../shared/network-simulator.js";
+import { createTestClient } from "../shared/test-client.js";
 import { createBasicTestServer, TestMcpServer } from "../shared/test-server.js";
 
 describe("Test Infrastructure", () => {

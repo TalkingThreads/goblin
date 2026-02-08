@@ -72,7 +72,7 @@ describe("Performance Load Tests - Concurrent Clients (Smoke)", () => {
 
         console.log("50 concurrent clients smoke:", {
           rps: result.requestsPerSecond.toFixed(2),
-          p95: result.latency.p95.toFixed(2) + "ms",
+          p95: `${result.latency.p95.toFixed(2)}ms`,
           errors: result.errors,
           errorRate: `${errorRate.toFixed(2)}%`,
         });

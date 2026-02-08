@@ -1,4 +1,4 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 
 interface ValidationError {
   path: string;
@@ -153,11 +153,7 @@ describe("Config path handling", () => {
   });
 
   test("custom config paths are supported", () => {
-    const paths = [
-      "/etc/goblin.json",
-      "~/config/goblin.json",
-      "./local-config.json",
-    ];
+    const paths = ["/etc/goblin.json", "~/config/goblin.json", "./local-config.json"];
 
     for (const path of paths) {
       expect(path.length).toBeGreaterThan(0);

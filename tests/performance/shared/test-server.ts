@@ -158,14 +158,14 @@ export async function stopTestServer(): Promise<void> {
       console.log("Test server stopped");
     };
 
-    serverProcess!.on("exit", cleanup);
-    serverProcess!.on("error", cleanup);
+    serverProcess?.on("exit", cleanup);
+    serverProcess?.on("error", cleanup);
 
-    serverProcess!.kill("SIGTERM");
+    serverProcess?.kill("SIGTERM");
 
     setTimeout(() => {
       if (serverProcess) {
-        serverProcess!.kill("SIGKILL");
+        serverProcess?.kill("SIGKILL");
         cleanup();
       }
       resolve();

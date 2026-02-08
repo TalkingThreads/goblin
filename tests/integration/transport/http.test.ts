@@ -37,7 +37,7 @@ describe("Transport - HTTP Configuration", () => {
 
   test("server should be configured for HTTP transport", async () => {
     expect(server.isRunning()).toBe(true);
-    expect(server["config"].tools!.length).toBeGreaterThan(0);
+    expect(server["config"].tools?.length).toBeGreaterThan(0);
   });
 
   test("client should be connected", async () => {
@@ -80,26 +80,26 @@ describe("Transport - HTTP Request Handling", () => {
     const tools = server["config"].tools!;
     const echo = tools.find((t) => t.name === "echo");
 
-    expect(echo!.inputSchema.properties.message.type).toBe("string");
-    expect(echo!.inputSchema.required).toContain("message");
+    expect(echo?.inputSchema.properties.message.type).toBe("string");
+    expect(echo?.inputSchema.required).toContain("message");
   });
 
   test("add tool should accept number parameters", async () => {
     const tools = server["config"].tools!;
     const add = tools.find((t) => t.name === "add");
 
-    expect(add!.inputSchema.properties.a.type).toBe("number");
-    expect(add!.inputSchema.properties.b.type).toBe("number");
-    expect(add!.inputSchema.required).toContain("a");
-    expect(add!.inputSchema.required).toContain("b");
+    expect(add?.inputSchema.properties.a.type).toBe("number");
+    expect(add?.inputSchema.properties.b.type).toBe("number");
+    expect(add?.inputSchema.required).toContain("a");
+    expect(add?.inputSchema.required).toContain("b");
   });
 
   test("get_time tool should accept empty parameters", async () => {
     const tools = server["config"].tools!;
     const getTime = tools.find((t) => t.name === "get_time");
 
-    expect(getTime!.inputSchema.properties).toEqual({});
-    expect(getTime!.inputSchema.required).toEqual([]);
+    expect(getTime?.inputSchema.properties).toEqual({});
+    expect(getTime?.inputSchema.required).toEqual([]);
   });
 
   test("resource URIs should be valid URLs", async () => {
@@ -114,8 +114,8 @@ describe("Transport - HTTP Request Handling", () => {
     const prompts = server["config"].prompts!;
     const greet = prompts.find((p) => p.name === "greet");
 
-    expect(greet!.arguments[0].name).toBe("name");
-    expect(greet!.arguments[0].required).toBe(true);
+    expect(greet?.arguments[0].name).toBe("name");
+    expect(greet?.arguments[0].required).toBe(true);
   });
 });
 
@@ -147,8 +147,8 @@ describe("Transport - HTTP Response Format", () => {
     const textResource = resources.find((r) => r.mimeType === "text/plain");
 
     expect(textResource).toBeDefined();
-    expect(typeof textResource!.content).toBe("string");
-    expect(textResource!.content.length).toBeGreaterThan(0);
+    expect(typeof textResource?.content).toBe("string");
+    expect(textResource?.content.length).toBeGreaterThan(0);
   });
 
   test("resources should have JSON content", async () => {
@@ -156,15 +156,15 @@ describe("Transport - HTTP Response Format", () => {
     const jsonResource = resources.find((r) => r.mimeType === "application/json");
 
     expect(jsonResource).toBeDefined();
-    expect(() => JSON.parse(jsonResource!.content)).not.toThrow();
+    expect(() => JSON.parse(jsonResource?.content)).not.toThrow();
   });
 
   test("prompts should return string content", async () => {
     const prompts = server["config"].prompts!;
     const greet = prompts.find((p) => p.name === "greet");
 
-    expect(typeof greet!.handler).toBe("function");
-    const result = await greet!.handler({ name: "Test" });
+    expect(typeof greet?.handler).toBe("function");
+    const result = await greet?.handler({ name: "Test" });
     expect(typeof result).toBe("string");
     expect(result.length).toBeGreaterThan(0);
   });
@@ -230,7 +230,7 @@ describe("Transport - HTTP Concurrent Operations", () => {
   });
 
   test("server can handle multiple tool additions", async () => {
-    const initialCount = server["config"].tools!.length;
+    const initialCount = server["config"].tools?.length;
 
     for (let i = 0; i < 10; i++) {
       server.addTool(
@@ -241,11 +241,11 @@ describe("Transport - HTTP Concurrent Operations", () => {
       );
     }
 
-    expect(server["config"].tools!.length).toBe(initialCount + 10);
+    expect(server["config"].tools?.length).toBe(initialCount + 10);
   });
 
   test("server can handle multiple resource additions", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     for (let i = 0; i < 10; i++) {
       server.addResource(
@@ -257,11 +257,11 @@ describe("Transport - HTTP Concurrent Operations", () => {
       );
     }
 
-    expect(server["config"].resources!.length).toBe(initialCount + 10);
+    expect(server["config"].resources?.length).toBe(initialCount + 10);
   });
 
   test("server can handle multiple prompt additions", async () => {
-    const initialCount = server["config"].prompts!.length;
+    const initialCount = server["config"].prompts?.length;
 
     for (let i = 0; i < 5; i++) {
       server.addPrompt(
@@ -272,7 +272,7 @@ describe("Transport - HTTP Concurrent Operations", () => {
       );
     }
 
-    expect(server["config"].prompts!.length).toBe(initialCount + 5);
+    expect(server["config"].prompts?.length).toBe(initialCount + 5);
   });
 
   test("all dynamic tools should be retrievable", async () => {

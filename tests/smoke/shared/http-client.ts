@@ -323,7 +323,7 @@ export function assertValidPrometheusFormat(result: MetricsResult): void {
     } else if (line.includes(" ")) {
       // Simple metric
       const parts = line.split(" ");
-      if (parts.length !== 2 || isNaN(parseFloat(parts[1]))) {
+      if (parts.length !== 2 || Number.isNaN(parseFloat(parts[1]))) {
         throw new Error(`Invalid Prometheus format: ${line}`);
       }
     } else {

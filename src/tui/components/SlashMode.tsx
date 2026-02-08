@@ -3,8 +3,8 @@
  * Provides autocomplete for slash commands in the TUI
  */
 
-import { useState, useEffect, useMemo } from "react";
 import { Box, Text, useInput } from "ink";
+import { useEffect, useMemo, useState } from "react";
 import type { Registry } from "../../gateway/registry.js";
 
 interface SlashCommand {
@@ -42,7 +42,10 @@ export function SlashMode({ registry, onExecute, onExit }: SlashModeProps) {
       try {
         const response = await fetch("http://localhost:3000/api/v1/slashes");
         if (response.ok) {
-          const data = (await response.json()) as { commands: SlashCommand[]; conflicts: Array<{ command: string }> };
+          const data = (await response.json()) as {
+            commands: SlashCommand[];
+            conflicts: Array<{ command: string }>;
+          };
           setCommands(data.commands || []);
           setConflicts((data.conflicts || []).map((c) => c.command));
         }

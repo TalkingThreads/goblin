@@ -225,16 +225,14 @@ export class TransportPool {
       }
 
       // Smart mode: evict if idle
-      if (entry.config.mode === "smart") {
-        if (now - entry.lastUsed > this.IDLE_TIMEOUT_MS) {
-          logger.info(
-            { serverName: name, transport: entry.config.transport, mode: entry.config.mode },
-            "Idle transport evicted",
-          );
-          this.releaseTransport(name).catch((err) =>
-            logger.error({ error: err, serverName: name }, "Transport eviction failed"),
-          );
-        }
+      if (entry.config.mode === "smart" && now - entry.lastUsed > this.IDLE_TIMEOUT_MS) {
+        logger.info(
+          { serverName: name, transport: entry.config.transport, mode: entry.config.mode },
+          "Idle transport evicted",
+        );
+        this.releaseTransport(name).catch((err) =>
+          logger.error({ error: err, serverName: name }, "Transport eviction failed"),
+        );
       }
 
       // Stateless mode: evict immediately (or next tick) - simplified to same eviction loop for MVP

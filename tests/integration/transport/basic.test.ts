@@ -55,17 +55,17 @@ describe("Transport - Basic Connection", () => {
 
   test("server should have tools after start", async () => {
     const tools = server["config"].tools;
-    expect(tools!.length).toBeGreaterThan(0);
+    expect(tools?.length).toBeGreaterThan(0);
   });
 
   test("server should have resources after start", async () => {
     const resources = server["config"].resources;
-    expect(resources!.length).toBeGreaterThan(0);
+    expect(resources?.length).toBeGreaterThan(0);
   });
 
   test("server should have prompts after start", async () => {
     const prompts = server["config"].prompts;
-    expect(prompts!.length).toBeGreaterThan(0);
+    expect(prompts?.length).toBeGreaterThan(0);
   });
 });
 
@@ -160,13 +160,13 @@ describe("Transport - Reconnection", () => {
     server.connectToClient(client);
 
     const tools = server["config"].tools;
-    expect(tools!.length).toBe(3);
+    expect(tools?.length).toBe(3);
 
     await client.disconnect();
 
     // Server should still have tools
     const toolsAfter = server["config"].tools;
-    expect(toolsAfter!.length).toBe(3);
+    expect(toolsAfter?.length).toBe(3);
   });
 
   test("can connect multiple times", async () => {
@@ -248,32 +248,32 @@ describe("Transport - Configuration Persistence", () => {
   });
 
   test("tools persist across restarts", async () => {
-    const toolsBefore = server["config"].tools!.map((t) => t.name);
+    const toolsBefore = server["config"].tools?.map((t) => t.name);
 
     await server.stop();
     await server.start();
 
-    const toolsAfter = server["config"].tools!.map((t) => t.name);
+    const toolsAfter = server["config"].tools?.map((t) => t.name);
     expect(toolsBefore).toEqual(toolsAfter);
   });
 
   test("resources persist across restarts", async () => {
-    const resourcesBefore = server["config"].resources!.map((r) => r.uri);
+    const resourcesBefore = server["config"].resources?.map((r) => r.uri);
 
     await server.stop();
     await server.start();
 
-    const resourcesAfter = server["config"].resources!.map((r) => r.uri);
+    const resourcesAfter = server["config"].resources?.map((r) => r.uri);
     expect(resourcesBefore).toEqual(resourcesAfter);
   });
 
   test("prompts persist across restarts", async () => {
-    const promptsBefore = server["config"].prompts!.map((p) => p.name);
+    const promptsBefore = server["config"].prompts?.map((p) => p.name);
 
     await server.stop();
     await server.start();
 
-    const promptsAfter = server["config"].prompts!.map((p) => p.name);
+    const promptsAfter = server["config"].prompts?.map((p) => p.name);
     expect(promptsBefore).toEqual(promptsAfter);
   });
 
@@ -285,12 +285,12 @@ describe("Transport - Configuration Persistence", () => {
       async () => ({ content: [{ type: "text", text: "test" }] }),
     );
 
-    const toolsBefore = server["config"].tools!.map((t) => t.name);
+    const toolsBefore = server["config"].tools?.map((t) => t.name);
 
     await server.stop();
     await server.start();
 
-    const toolsAfter = server["config"].tools!.map((t) => t.name);
+    const toolsAfter = server["config"].tools?.map((t) => t.name);
     expect(toolsAfter).toEqual(toolsBefore);
     expect(toolsAfter).toContain("persist_test");
   });

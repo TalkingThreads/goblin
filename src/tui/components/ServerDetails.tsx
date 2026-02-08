@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from "ink";
-import { useCallback, memo } from "react";
+import { memo, useCallback } from "react";
 import type { TuiServer } from "../types.js";
 
 interface ServerDetailsProps {
@@ -7,10 +7,7 @@ interface ServerDetailsProps {
   onClose: () => void;
 }
 
-const ServerDetails = memo(function ServerDetails({
-  server,
-  onClose,
-}: ServerDetailsProps) {
+const ServerDetails = memo(function ServerDetails({ server, onClose }: ServerDetailsProps) {
   const handleKeyDown = useCallback(
     (input: string) => {
       if (input === "\u001b" || input === "q" || input === "Escape") {
@@ -23,13 +20,7 @@ const ServerDetails = memo(function ServerDetails({
   useInput(handleKeyDown, { isActive: true });
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="double"
-      borderColor="blue"
-      paddingX={2}
-      paddingY={1}
-    >
+    <Box flexDirection="column" borderStyle="double" borderColor="blue" paddingX={2} paddingY={1}>
       <Box marginBottom={1}>
         <Text bold color="blue" underline>
           Server Details
@@ -38,9 +29,17 @@ const ServerDetails = memo(function ServerDetails({
 
       <Box flexDirection="column" marginLeft={1}>
         <DetailRow label="Name" value={server.name} />
-        <DetailRow label="Status" value={server.status} valueColor={getStatusColor(server.status)} />
+        <DetailRow
+          label="Status"
+          value={server.status}
+          valueColor={getStatusColor(server.status)}
+        />
         <DetailRow label="Transport" value={server.transport} />
-        <DetailRow label="Enabled" value={server.enabled ? "Yes" : "No"} valueColor={server.enabled ? "green" : "red"} />
+        <DetailRow
+          label="Enabled"
+          value={server.enabled ? "Yes" : "No"}
+          valueColor={server.enabled ? "green" : "red"}
+        />
         {server.command && <DetailRow label="Command" value={server.command} />}
         {server.url && <DetailRow label="URL" value={server.url} />}
         {server.tools !== undefined && <DetailRow label="Tools" value={server.tools.toString()} />}

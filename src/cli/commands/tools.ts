@@ -75,10 +75,8 @@ export function createToolsCommand(context?: CliContext): Command {
         await toolsInvoke(name, { ...options, context });
       } catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        if (error instanceof Error) {
-          if (error.message.includes("Invalid JSON")) {
-            process.exit(ExitCode.VALIDATION_ERROR);
-          }
+        if (error instanceof Error && error.message.includes("Invalid JSON")) {
+          process.exit(ExitCode.VALIDATION_ERROR);
         }
         process.exit(ExitCode.CONNECTION_ERROR);
       }

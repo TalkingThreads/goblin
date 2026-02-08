@@ -67,9 +67,6 @@ function calculatePercentile(values: number[], p: number): number {
 }
 
 export class LoadGenerator {
-  private warmupRequests: number = 100;
-  private defaultPipelining: number = 1;
-
   async generateLoad(config: LoadConfig): Promise<LoadResult> {
     const { url, concurrentClients, duration, method = "GET", headers = {}, body, signal } = config;
 

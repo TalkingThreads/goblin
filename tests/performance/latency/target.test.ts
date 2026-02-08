@@ -64,8 +64,8 @@ describe("Performance Latency Tests - Target Measurements", () => {
       const result = await latencyMeasurer.measureLatency(makeRequest, latConfig);
 
       console.log("p50 latency target:", {
-        p50: result.p50.toFixed(2) + "ms",
-        average: result.average.toFixed(2) + "ms",
+        p50: `${result.p50.toFixed(2)}ms`,
+        average: `${result.average.toFixed(2)}ms`,
         samples: result.samples,
       });
 
@@ -92,9 +92,9 @@ describe("Performance Latency Tests - Target Measurements", () => {
       const maxP50 = Math.max(...results);
 
       console.log("p50 consistency across runs:", {
-        runs: results.map((r) => r.toFixed(2) + "ms"),
-        average: avgP50.toFixed(2) + "ms",
-        max: maxP50.toFixed(2) + "ms",
+        runs: results.map((r) => `${r.toFixed(2)}ms`),
+        average: `${avgP50.toFixed(2)}ms`,
+        max: `${maxP50.toFixed(2)}ms`,
       });
 
       expect(maxP50).toBeLessThanOrEqual(
@@ -114,8 +114,8 @@ describe("Performance Latency Tests - Target Measurements", () => {
       const result = await latencyMeasurer.measureLatency(makeRequest, latConfig);
 
       console.log("p95 latency target:", {
-        p95: result.p95.toFixed(2) + "ms",
-        p99: result.p99.toFixed(2) + "ms",
+        p95: `${result.p95.toFixed(2)}ms`,
+        p99: `${result.p99.toFixed(2)}ms`,
         samples: result.samples,
       });
 
@@ -136,8 +136,8 @@ describe("Performance Latency Tests - Target Measurements", () => {
       const result = await latencyMeasurer.measureLatency(makeRequest, latConfig);
 
       console.log("p99 latency target:", {
-        p99: result.p99.toFixed(2) + "ms",
-        max: result.max.toFixed(2) + "ms",
+        p99: `${result.p99.toFixed(2)}ms`,
+        max: `${result.max.toFixed(2)}ms`,
         samples: result.samples,
       });
 
@@ -159,9 +159,9 @@ describe("Performance Latency Tests - Target Measurements", () => {
 
       console.log("p99 outlier analysis:", {
         totalSamples: result.samples,
-        p99Value: result.p99.toFixed(2) + "ms",
+        p99Value: `${result.p99.toFixed(2)}ms`,
         outliersBeyondP99: outliers,
-        outlierPercent: ((outliers / result.samples) * 100).toFixed(2) + "%",
+        outlierPercent: `${((outliers / result.samples) * 100).toFixed(2)}%`,
       });
 
       expect(outliers).toBeLessThanOrEqual(

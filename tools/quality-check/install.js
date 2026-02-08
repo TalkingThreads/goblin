@@ -5,7 +5,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const HUSKY_DIR = ".husky";
@@ -35,34 +35,36 @@ echo "✅ Quality checks passed!"
 echo "🔧 Auto-fixing common issues..."
 bun run lint:fix
 echo "✅ Auto-fixes applied"
-`
+`,
 };
 
 function installHusky() {
   console.log("📦 Checking Husky...");
-  
+
   try {
     // Check if husky is installed
     execSync("bun ls husky", { stdio: "pipe" });
     console.log("✅ Husky already installed");
   } catch {
     console.log("📦 Husky not found, skipping npm install...");
-    console.log("   Note: If Husky isn't installed, run 'npm install --save-dev husky@^9.1.5' manually");
+    console.log(
+      "   Note: If Husky isn't installed, run 'npm install --save-dev husky@^9.1.5' manually",
+    );
   }
 }
 
 function setupHuskyDir() {
   console.log("🔧 Setting up Husky directory...");
-  
+
   if (!existsSync(HUSKY_DIR)) {
     mkdirSync(HUSKY_DIR, { recursive: true });
   }
-  
+
   // Initialize Husky
   try {
     execSync("npx husky install", { stdio: "inherit" });
     console.log("✅ Husky initialized");
-  } catch (e) {
+  } catch (_e) {
     console.log("⚠️  Husky init failed, trying alternative...");
     execSync("npx husky .", { stdio: "inherit" });
   }
@@ -70,7 +72,7 @@ function setupHuskyDir() {
 
 function createHooks() {
   console.log("🔧 Creating pre-commit hooks...");
-  
+
   for (const [name, content] of Object.entries(HOOKS)) {
     const hookPath = join(HUSKY_DIR, name);
     writeFileSync(hookPath, content, { mode: 0o755 });
@@ -80,33 +82,33 @@ function createHooks() {
 
 function addHuskyConfig() {
   console.log("🔧 Configuring Husky in package.json...");
-  
+
   const pkgPath = "package.json";
   const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-  
+
   // Add husky configuration
   pkg.scripts = pkg.scripts || {};
   pkg.scripts["postinstall"] = "husky install";
-  
+
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
   console.log("✅ Husky config added to package.json");
 }
 
 function verifyInstallation() {
   console.log("🔍 Verifying installation...");
-  
+
   try {
     // Test quality check
     console.log("\n🧪 Testing quality check...");
     execSync("bun run typecheck", { stdio: "inherit" });
     console.log("✅ TypeScript check works");
-    
+
     console.log("\n🧪 Testing lint...");
     execSync("bun run lint", { stdio: "inherit" });
     console.log("✅ Lint check works");
-    
+
     return true;
-  } catch (e) {
+  } catch (_e) {
     console.log("⚠️  Some checks failed, but installation is complete");
     return false;
   }
@@ -115,22 +117,22 @@ function verifyInstallation() {
 // Main installation
 function install() {
   console.log("🚀 Proactive Quality System Installer v1.0.0\n");
-  
+
   installHusky();
   addHuskyConfig();
   setupHuskyDir();
   createHooks();
-  
+
   console.log("\n✅ Installation complete!");
-  
+
   const verified = verifyInstallation();
-  
+
   console.log("\n📋 Next Steps:");
   console.log("   • Pre-commit hooks are now active");
   console.log("   • TypeScript and lint checks run before each commit");
   console.log("   • Use 'npm run quality:fix' to auto-fix issues");
   console.log("   • Use 'git commit' normally - hooks run automatically");
-  
+
   if (!verified) {
     console.log("\n⚠️  Some quality checks failed initially.");
     console.log("   Run 'npm run quality:check' to see issues.");
@@ -145,15 +147,15 @@ switch (command) {
   case undefined:
     install();
     break;
-  
+
   case "hooks":
     createHooks();
     break;
-  
+
   case "verify":
     verifyInstallation();
     break;
-  
+
   default:
     console.log(`
 🚀 Proactive Quality System Installer
@@ -172,7 +174,7 @@ Options:
 }
 
 // Run if called directly
-const isMainModule = process.argv[1] && process.argv[1].endsWith("install.js");
+const isMainModule = process.argv[1]?.endsWith("install.js");
 if (isMainModule) {
   install();
 }

@@ -69,7 +69,7 @@ describe("Performance Load Tests - Concurrent Clients", () => {
         p95: result.latency.p95,
         errors: result.errors,
         requests: result.requests,
-        errorRate: errorRate.toFixed(2) + "%",
+        errorRate: `${errorRate.toFixed(2)}%`,
       });
 
       expect(errorRate).toBeLessThan(1, `Error rate ${errorRate.toFixed(2)}% should be < 1%`);
@@ -147,7 +147,7 @@ describe("Performance Load Tests - Concurrent Clients", () => {
         requests: result.requests,
         rps: result.requestsPerSecond,
         errors: result.errors,
-        errorRate: errorRate.toFixed(2) + "%",
+        errorRate: `${errorRate.toFixed(2)}%`,
       });
 
       expect(result.requests).toBeGreaterThan(0, "Should process some requests");
@@ -168,7 +168,7 @@ describe("Performance Load Tests - Concurrent Clients", () => {
       console.log("Graceful degradation metrics:", {
         p95: result.latency.p95,
         p99: result.latency.p99,
-        errorRate: errorRate.toFixed(2) + "%",
+        errorRate: `${errorRate.toFixed(2)}%`,
       });
     }, 60000);
   });

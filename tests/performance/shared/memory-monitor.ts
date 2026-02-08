@@ -132,7 +132,7 @@ export class MemoryMonitor {
     return this.takeSnapshot();
   }
 
-  async detectLeaks(operation: () => Promise<void>, config: MemoryConfig): Promise<MemoryResult> {
+  async detectLeaks(operation: () => Promise<void>, _config: MemoryConfig): Promise<MemoryResult> {
     const initialSnapshot = this.takeSnapshot();
     await operation();
     const finalSnapshot = this.takeSnapshot();

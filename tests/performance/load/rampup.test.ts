@@ -117,10 +117,10 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
         console.log("Latency proportionality during ramp:", {
           firstClients: firstStep.clients,
           lastClients: lastStep.clients,
-          firstLatencyP50: firstStep.latencyP50.toFixed(2) + "ms",
-          lastLatencyP50: lastStep.latencyP50.toFixed(2) + "ms",
-          latencyGrowth: latencyGrowth.toFixed(2) + "x",
-          clientGrowth: clientGrowth.toFixed(2) + "x",
+          firstLatencyP50: `${firstStep.latencyP50.toFixed(2)}ms`,
+          lastLatencyP50: `${lastStep.latencyP50.toFixed(2)}ms`,
+          latencyGrowth: `${latencyGrowth.toFixed(2)}x`,
+          clientGrowth: `${clientGrowth.toFixed(2)}x`,
         });
 
         expect(latencyGrowth).toBeLessThan(
@@ -152,8 +152,8 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
         console.log("Stabilization at final load:", {
           finalClients: lastStep.clients,
           finalRps: lastStep.rps.toFixed(2),
-          finalLatencyP50: lastStep.latencyP50.toFixed(2) + "ms",
-          finalLatencyP95: lastStep.latencyP95.toFixed(2) + "ms",
+          finalLatencyP50: `${lastStep.latencyP50.toFixed(2)}ms`,
+          finalLatencyP95: `${lastStep.latencyP95.toFixed(2)}ms`,
         });
 
         expect(lastStep.rps).toBeGreaterThan(
@@ -184,7 +184,7 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
           errors: result.errors,
           errorRate:
             result.requests > 0
-              ? ((result.errors / result.requests) * 100).toFixed(2) + "%"
+              ? `${((result.errors / result.requests) * 100).toFixed(2)}%`
               : "N/A",
         });
 
@@ -206,10 +206,10 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
         const result = await loadGenerator.generateLoad(loadConfig);
 
         console.log("Instant ramp latency spike:", {
-          p50: result.latency.p50.toFixed(2) + "ms",
-          p95: result.latency.p95.toFixed(2) + "ms",
-          p99: result.latency.p99.toFixed(2) + "ms",
-          max: result.latency.max.toFixed(2) + "ms",
+          p50: `${result.latency.p50.toFixed(2)}ms`,
+          p95: `${result.latency.p95.toFixed(2)}ms`,
+          p99: `${result.latency.p99.toFixed(2)}ms`,
+          max: `${result.latency.max.toFixed(2)}ms`,
         });
 
         expect(result.latency.max).toBeLessThan(
@@ -233,9 +233,9 @@ describe("Performance Load Tests - Ramp Up Behavior", () => {
         const result = await loadGenerator.generateLoad(loadConfig);
 
         console.log("Post-spike stabilization:", {
-          averageLatency: result.latency.average.toFixed(2) + "ms",
-          p50Latency: result.latency.p50.toFixed(2) + "ms",
-          p95Latency: result.latency.p95.toFixed(2) + "ms",
+          averageLatency: `${result.latency.average.toFixed(2)}ms`,
+          p50Latency: `${result.latency.p50.toFixed(2)}ms`,
+          p95Latency: `${result.latency.p95.toFixed(2)}ms`,
         });
 
         expect(result.latency.p50).toBeLessThan(

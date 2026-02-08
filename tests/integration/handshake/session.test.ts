@@ -43,19 +43,19 @@ describe("MCP Handshake - Session Creation", () => {
   test("should have tools available after session", async () => {
     const tools = server["config"].tools;
     expect(tools).toBeDefined();
-    expect(tools!.length).toBeGreaterThan(0);
+    expect(tools?.length).toBeGreaterThan(0);
   });
 
   test("should have resources available after session", async () => {
     const resources = server["config"].resources;
     expect(resources).toBeDefined();
-    expect(resources!.length).toBeGreaterThan(0);
+    expect(resources?.length).toBeGreaterThan(0);
   });
 
   test("should have prompts available after session", async () => {
     const prompts = server["config"].prompts;
     expect(prompts).toBeDefined();
-    expect(prompts!.length).toBeGreaterThan(0);
+    expect(prompts?.length).toBeGreaterThan(0);
   });
 });
 
@@ -135,14 +135,14 @@ describe("MCP Handshake - Session State", () => {
     const resources1 = server["config"].resources;
     const resources2 = server["config"].resources;
 
-    expect(resources1!.length).toBe(resources2!.length);
+    expect(resources1?.length).toBe(resources2?.length);
   });
 
   test("should preserve prompt list", async () => {
     const prompts1 = server["config"].prompts;
     const prompts2 = server["config"].prompts;
 
-    expect(prompts1!.length).toBe(prompts2!.length);
+    expect(prompts1?.length).toBe(prompts2?.length);
   });
 });
 

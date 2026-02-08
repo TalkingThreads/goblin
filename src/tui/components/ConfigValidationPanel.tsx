@@ -1,6 +1,6 @@
-import { Box, Text, useInput } from "ink";
-import { useState, useCallback, memo } from "react";
 import { spawn } from "node:child_process";
+import { Box, Text, useInput } from "ink";
+import { memo, useCallback, useState } from "react";
 
 interface ValidationError {
   path: string;
@@ -33,13 +33,15 @@ const ConfigValidationPanel = memo(function ConfigValidationPanel({
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     try {
-      const response = await fetch(`http://localhost:3000/config/validate?path=${encodeURIComponent(configPath)}`);
+      const response = await fetch(
+        `http://localhost:3000/config/validate?path=${encodeURIComponent(configPath)}`,
+      );
 
       if (response.ok) {
         setResult({ valid: true, path: configPath, errors: [] });
         setStep("result");
       } else {
-        const data = await response.json() as Record<string, unknown>;
+        const data = (await response.json()) as Record<string, unknown>;
         const errors: ValidationError[] = [];
 
         if ("errors" in data) {
@@ -57,7 +59,7 @@ const ConfigValidationPanel = memo(function ConfigValidationPanel({
       });
       setStep("result");
     }
-  }, [configPath]);
+  }, [configPath, parseZodErrors]);
 
   const parseZodErrors = (
     errorObj: Record<string, unknown>,

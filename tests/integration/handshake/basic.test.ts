@@ -54,17 +54,17 @@ describe("MCP Handshake - Basic", () => {
   test("should have tools configured on server", async () => {
     // Verify the server has tools by checking its config
     expect(server["config"].tools).toBeDefined();
-    expect(server["config"].tools!.length).toBeGreaterThan(0);
+    expect(server["config"].tools?.length).toBeGreaterThan(0);
   });
 
   test("should have resources configured on server", async () => {
     expect(server["config"].resources).toBeDefined();
-    expect(server["config"].resources!.length).toBeGreaterThan(0);
+    expect(server["config"].resources?.length).toBeGreaterThan(0);
   });
 
   test("should have prompts configured on server", async () => {
     expect(server["config"].prompts).toBeDefined();
-    expect(server["config"].prompts!.length).toBeGreaterThan(0);
+    expect(server["config"].prompts?.length).toBeGreaterThan(0);
   });
 
   test("should stop server successfully", async () => {
@@ -103,10 +103,10 @@ describe("MCP Handshake - Capability Negotiation", () => {
   test("should have tools capability configured", async () => {
     const tools = server["config"].tools;
     expect(tools).toBeDefined();
-    expect(tools!.length).toBeGreaterThan(0);
+    expect(tools?.length).toBeGreaterThan(0);
 
     // Verify tool structure
-    const tool = tools![0];
+    const tool = tools?.[0];
     expect(tool.name).toBeDefined();
     expect(tool.description).toBeDefined();
     expect(tool.inputSchema).toBeDefined();
@@ -115,10 +115,10 @@ describe("MCP Handshake - Capability Negotiation", () => {
   test("should have resources capability configured", async () => {
     const resources = server["config"].resources;
     expect(resources).toBeDefined();
-    expect(resources!.length).toBeGreaterThan(0);
+    expect(resources?.length).toBeGreaterThan(0);
 
     // Verify resource structure
-    const resource = resources![0];
+    const resource = resources?.[0];
     expect(resource.uri).toBeDefined();
     expect(resource.name).toBeDefined();
     expect(resource.mimeType).toBeDefined();
@@ -128,10 +128,10 @@ describe("MCP Handshake - Capability Negotiation", () => {
   test("should have prompts capability configured", async () => {
     const prompts = server["config"].prompts;
     expect(prompts).toBeDefined();
-    expect(prompts!.length).toBeGreaterThan(0);
+    expect(prompts?.length).toBeGreaterThan(0);
 
     // Verify prompt structure
-    const prompt = prompts![0];
+    const prompt = prompts?.[0];
     expect(prompt.name).toBeDefined();
     expect(prompt.description).toBeDefined();
     expect(prompt.arguments).toBeDefined();

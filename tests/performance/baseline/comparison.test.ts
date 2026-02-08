@@ -4,12 +4,8 @@
  * Tests baseline comparison and regression detection.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import {
-  baselineManager,
-  createBaselineManager,
-  type PerformanceMetrics,
-} from "../shared/baseline-manager.js";
+import { beforeAll, describe, expect, it } from "bun:test";
+import { baselineManager, type PerformanceMetrics } from "../shared/baseline-manager.js";
 
 describe("Performance Baseline Tests - Comparison", () => {
   const baselineMetrics: PerformanceMetrics = {
@@ -43,8 +39,7 @@ describe("Performance Baseline Tests - Comparison", () => {
       regression: result.regression,
       severity: result.severity,
       changes: result.changes.length,
-      p50Change:
-        result.changes.find((c) => c.metric === "latency.p50")?.changePercent.toFixed(2) + "%",
+      p50Change: `${result.changes.find((c) => c.metric === "latency.p50")?.changePercent.toFixed(2)}%`,
     });
 
     expect(result.regression).toBe(true, "Should detect latency regression");
@@ -62,10 +57,9 @@ describe("Performance Baseline Tests - Comparison", () => {
     console.log("Throughput regression detection:", {
       regression: result.regression,
       severity: result.severity,
-      throughputChange:
-        result.changes
-          .find((c) => c.metric === "throughput.requestsPerSecond")
-          ?.changePercent.toFixed(2) + "%",
+      throughputChange: `${result.changes
+        .find((c) => c.metric === "throughput.requestsPerSecond")
+        ?.changePercent.toFixed(2)}%`,
     });
 
     expect(
@@ -108,8 +102,7 @@ describe("Performance Baseline Tests - Comparison", () => {
     console.log("Acceptable change detection:", {
       regression: result.regression,
       severity: result.severity,
-      p50Change:
-        result.changes.find((c) => c.metric === "latency.p50")?.changePercent.toFixed(2) + "%",
+      p50Change: `${result.changes.find((c) => c.metric === "latency.p50")?.changePercent.toFixed(2)}%`,
     });
 
     expect(result.severity).toBe("none", "Should report no significant regression");

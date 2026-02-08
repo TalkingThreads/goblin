@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from "ink";
-import { useState, useCallback, memo } from "react";
+import { memo, useCallback, useState } from "react";
 import type { TuiServer } from "../types.js";
 
 interface ServerListProps {

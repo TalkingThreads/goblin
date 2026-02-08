@@ -1,0 +1,185 @@
+{
+  "project": {
+    "lsp": {
+      "biome": {
+        "binary": {
+          "path": "biome",
+          "arguments": ["lsp-proxy"]
+        },
+        "settings": {
+          "config_path": "./biome.json"
+        }
+      }
+    }
+  },
+  "languages": {
+    "TypeScript": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "outline": "lsp",
+      "pin": "lsp"
+    },
+    "TSX": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "outline": "lsp",
+      "pin": "lsp"
+    },
+    "JavaScript": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "outline": "lsp",
+      "pin": "lsp"
+    },
+    "JSON": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      }
+    },
+    "JSONC": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      }
+    },
+    "CSS": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      }
+    },
+    "GraphQL": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      }
+    }
+  },
+  "editor": {
+    "tab_size": 2,
+    "insert_spaces": true,
+    "format_on_save": {
+      "only_fix_on_save": true,
+      "mode": "language_server"
+    },
+    "format_on_paste": false,
+    "auto_closing_brackets": "always",
+    "auto_surround": "language_definition",
+    "soft_wrap": "none",
+    "gutter": {
+      "line_numbers": true,
+      "relative_line_numbers": true,
+      "diff_git": true
+    },
+    "code_actions_on_format": {
+      "source.fixAll.biome": true,
+      "source.organizeImports.biome": true
+    },
+    "line_length": 100,
+    "indent_guides": {
+      "enabled": true,
+      "radius": 2
+    },
+    "bracket_pair_colorization": {
+      "enabled": true
+    },
+    "current_line_highlight": "all",
+    "word_wrap": "off",
+    "sticky_scroll": {
+      "enabled": true,
+      "max_line_count": 10
+    },
+    "show_breadcrumbs": true,
+    "show_whitespaces": "selection",
+    "render_final_newline": true,
+    "trim_final_newlines": true,
+    "trim_trailing_whitespace": true
+  },
+  "buffer": {
+    "search": {
+      "dexclude": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/.git/**",
+        "**/coverage/**",
+        "**/*.log",
+        "**/*.min.js",
+        "**/*.min.css"
+      ]
+    }
+  },
+  "file_watcher": {
+    "dexclude": [
+      "**/.git/objects/**",
+      "**/.git/subtree-cache/**",
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.nyc_output/**",
+      "**/coverage/**"
+    ]
+  },
+  "theme": {
+    "mode": "system"
+  },
+  "terminal": {
+    "shell": "system",
+    "alternate_switch": true
+  },
+  "assistant": {
+    "enabled": true,
+    "default_model": "anthropic::2024-10-22::sonnet"
+  },
+  "confirm": {
+    "quit": "always"
+  },
+  "notifications": {
+    "debug": "show",
+    "info": "show",
+    "warnings": "show",
+    "errors": "show"
+  }
+}

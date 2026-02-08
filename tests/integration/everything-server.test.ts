@@ -242,13 +242,13 @@ describe("Everything Server Integration Tests", () => {
 
   describe("Server Availability", () => {
     test("Everything server should be running", () => {
-      expect(fixture!.isAvailable()).toBe(true);
+      expect(fixture?.isAvailable()).toBe(true);
     });
 
     test("Everything server should have config", () => {
-      expect(fixture!.getConfig()).toBeDefined();
-      expect(fixture!.getConfig().name).toBe("everything-test");
-      expect(fixture!.getConfig().transport).toBe("stdio");
+      expect(fixture?.getConfig()).toBeDefined();
+      expect(fixture?.getConfig().name).toBe("everything-test");
+      expect(fixture?.getConfig().transport).toBe("stdio");
     });
   });
 

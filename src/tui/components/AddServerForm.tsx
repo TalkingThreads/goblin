@@ -1,6 +1,6 @@
 import { Box, Text, useInput } from "ink";
-import { useState, useCallback, memo } from "react";
-import type { TuiTransportType, AddServerFormData } from "../types.js";
+import { memo, useCallback, useState } from "react";
+import type { AddServerFormData, TuiTransportType } from "../types.js";
 
 interface AddServerFormProps {
   onSubmit: (data: AddServerFormData) => void;
@@ -16,10 +16,7 @@ const TRANSPORTS: { value: TuiTransportType; label: string }[] = [
   { value: "streamablehttp", label: "streamablehttp" },
 ];
 
-const AddServerForm = memo(function AddServerForm({
-  onSubmit,
-  onCancel,
-}: AddServerFormProps) {
+const AddServerForm = memo(function AddServerForm({ onSubmit, onCancel }: AddServerFormProps) {
   const [step, setStep] = useState<FormStep>("name");
   const [formData, setFormData] = useState<AddServerFormData>({
     name: "",
@@ -142,7 +139,10 @@ const AddServerForm = memo(function AddServerForm({
           }
         } else if (input.length === 1 && !input.match(/[\x00-\x1F\x7F]/)) {
           if (formData.transport === "stdio") {
-            setFormData((prev) => ({ ...prev, command: ((prev.command ?? "") + input).slice(0, 256) }));
+            setFormData((prev) => ({
+              ...prev,
+              command: ((prev.command ?? "") + input).slice(0, 256),
+            }));
           } else {
             setFormData((prev) => ({ ...prev, url: ((prev.url ?? "") + input).slice(0, 256) }));
           }

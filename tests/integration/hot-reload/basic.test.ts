@@ -51,7 +51,7 @@ describe("Hot-Reload - Basic Functionality", () => {
   });
 
   test("can add tools without restarting", async () => {
-    const initialCount = server["config"].tools!.length;
+    const initialCount = server["config"].tools?.length;
 
     server.addTool(
       "hot_reload_tool",
@@ -60,11 +60,11 @@ describe("Hot-Reload - Basic Functionality", () => {
       async () => ({ content: [{ type: "text", text: "hot" }] }),
     );
 
-    expect(server["config"].tools!.length).toBe(initialCount + 1);
+    expect(server["config"].tools?.length).toBe(initialCount + 1);
   });
 
   test("can add resources without restarting", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     server.addResource(
       "test://hot-resource",
@@ -74,11 +74,11 @@ describe("Hot-Reload - Basic Functionality", () => {
       "Hot content",
     );
 
-    expect(server["config"].resources!.length).toBe(initialCount + 1);
+    expect(server["config"].resources?.length).toBe(initialCount + 1);
   });
 
   test("can add prompts without restarting", async () => {
-    const initialCount = server["config"].prompts!.length;
+    const initialCount = server["config"].prompts?.length;
 
     server.addPrompt(
       "hot_prompt",
@@ -87,7 +87,7 @@ describe("Hot-Reload - Basic Functionality", () => {
       async (args) => `Hot: ${args.input || "default"}`,
     );
 
-    expect(server["config"].prompts!.length).toBe(initialCount + 1);
+    expect(server["config"].prompts?.length).toBe(initialCount + 1);
   });
 });
 
@@ -107,7 +107,7 @@ describe("Hot-Reload - Dynamic Updates", () => {
   });
 
   test("can add multiple tools dynamically", async () => {
-    const initialCount = server["config"].tools!.length;
+    const initialCount = server["config"].tools?.length;
 
     for (let i = 0; i < 5; i++) {
       server.addTool(
@@ -118,11 +118,11 @@ describe("Hot-Reload - Dynamic Updates", () => {
       );
     }
 
-    expect(server["config"].tools!.length).toBe(initialCount + 5);
+    expect(server["config"].tools?.length).toBe(initialCount + 5);
   });
 
   test("can add multiple resources dynamically", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     for (let i = 0; i < 5; i++) {
       server.addResource(
@@ -134,17 +134,17 @@ describe("Hot-Reload - Dynamic Updates", () => {
       );
     }
 
-    expect(server["config"].resources!.length).toBe(initialCount + 5);
+    expect(server["config"].resources?.length).toBe(initialCount + 5);
   });
 
   test("can add multiple prompts dynamically", async () => {
-    const initialCount = server["config"].prompts!.length;
+    const initialCount = server["config"].prompts?.length;
 
     for (let i = 0; i < 3; i++) {
       server.addPrompt(`dynamic_prompt_${i}`, `Dynamic prompt ${i}`, [], async () => `Prompt ${i}`);
     }
 
-    expect(server["config"].prompts!.length).toBe(initialCount + 3);
+    expect(server["config"].prompts?.length).toBe(initialCount + 3);
   });
 
   test("all dynamic tools are accessible", async () => {
@@ -197,30 +197,30 @@ describe("Hot-Reload - Persistence", () => {
   });
 
   test("initial tools persist", async () => {
-    const initialTools = server["config"].tools!.map((t) => t.name);
+    const initialTools = server["config"].tools?.map((t) => t.name);
 
     // Server continues running
     expect(server.isRunning()).toBe(true);
 
-    const currentTools = server["config"].tools!.map((t) => t.name);
+    const currentTools = server["config"].tools?.map((t) => t.name);
     expect(currentTools).toEqual(initialTools);
   });
 
   test("initial resources persist", async () => {
-    const initialResources = server["config"].resources!.map((r) => r.uri);
+    const initialResources = server["config"].resources?.map((r) => r.uri);
 
     expect(server.isRunning()).toBe(true);
 
-    const currentResources = server["config"].resources!.map((r) => r.uri);
+    const currentResources = server["config"].resources?.map((r) => r.uri);
     expect(currentResources).toEqual(initialResources);
   });
 
   test("initial prompts persist", async () => {
-    const initialPrompts = server["config"].prompts!.map((p) => p.name);
+    const initialPrompts = server["config"].prompts?.map((p) => p.name);
 
     expect(server.isRunning()).toBe(true);
 
-    const currentPrompts = server["config"].prompts!.map((p) => p.name);
+    const currentPrompts = server["config"].prompts?.map((p) => p.name);
     expect(currentPrompts).toEqual(initialPrompts);
   });
 
@@ -234,7 +234,7 @@ describe("Hot-Reload - Persistence", () => {
 
     expect(server.isRunning()).toBe(true);
 
-    const tools = server["config"].tools!.map((t) => t.name);
+    const tools = server["config"].tools?.map((t) => t.name);
     expect(tools).toContain("persist_tool");
   });
 
@@ -249,7 +249,7 @@ describe("Hot-Reload - Persistence", () => {
       );
     }
 
-    expect(server["config"].tools!.length).toBe(3 + 10);
+    expect(server["config"].tools?.length).toBe(3 + 10);
   });
 });
 
@@ -286,13 +286,13 @@ describe("Hot-Reload - Server Identity", () => {
       async () => ({ content: [{ type: "text", text: "s1" }] }),
     );
 
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
     expect(tools2).not.toContain("server1_only");
   });
 
   test("both servers have same initial structure", async () => {
-    expect(server1["config"].tools!.length).toBe(server2["config"].tools!.length);
-    expect(server1["config"].resources!.length).toBe(server2["config"].resources!.length);
-    expect(server1["config"].prompts!.length).toBe(server2["config"].prompts!.length);
+    expect(server1["config"].tools?.length).toBe(server2["config"].tools?.length);
+    expect(server1["config"].resources?.length).toBe(server2["config"].resources?.length);
+    expect(server1["config"].prompts?.length).toBe(server2["config"].prompts?.length);
   });
 });

@@ -38,8 +38,8 @@ describe("Multi-Server - Tool Routing", () => {
     await server1.start();
     await server2.start();
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("echo");
     expect(tools2).toContain("echo");
@@ -49,8 +49,8 @@ describe("Multi-Server - Tool Routing", () => {
     await server1.start();
     await server2.start();
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("add");
     expect(tools2).toContain("add");
@@ -60,8 +60,8 @@ describe("Multi-Server - Tool Routing", () => {
     await server1.start();
     await server2.start();
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("get_time");
     expect(tools2).toContain("get_time");
@@ -85,8 +85,8 @@ describe("Multi-Server - Tool Routing", () => {
       async () => ({ content: [{ type: "text", text: "from server2" }] }),
     );
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("unique_tool_1");
     expect(tools2).toContain("unique_tool_2");
@@ -98,10 +98,10 @@ describe("Multi-Server - Tool Routing", () => {
     await server1.start();
     await server2.start();
 
-    const echo1 = server1["config"].tools!.find((t) => t.name === "echo");
-    const echo2 = server2["config"].tools!.find((t) => t.name === "echo");
+    const echo1 = server1["config"].tools?.find((t) => t.name === "echo");
+    const echo2 = server2["config"].tools?.find((t) => t.name === "echo");
 
-    expect(echo1!.inputSchema).toEqual(echo2!.inputSchema);
+    expect(echo1?.inputSchema).toEqual(echo2?.inputSchema);
   });
 });
 
@@ -127,35 +127,35 @@ describe("Multi-Server - Tool Schema Validation", () => {
     await server1.start();
     await server2.start();
 
-    const echo1 = server1["config"].tools!.find((t) => t.name === "echo");
-    const echo2 = server2["config"].tools!.find((t) => t.name === "echo");
+    const echo1 = server1["config"].tools?.find((t) => t.name === "echo");
+    const echo2 = server2["config"].tools?.find((t) => t.name === "echo");
 
-    expect(echo1!.inputSchema.properties.message).toBeDefined();
-    expect(echo2!.inputSchema.properties.message).toBeDefined();
+    expect(echo1?.inputSchema.properties.message).toBeDefined();
+    expect(echo2?.inputSchema.properties.message).toBeDefined();
   });
 
   test("add tool should have a and b parameters", async () => {
     await server1.start();
     await server2.start();
 
-    const add1 = server1["config"].tools!.find((t) => t.name === "add");
-    const add2 = server2["config"].tools!.find((t) => t.name === "add");
+    const add1 = server1["config"].tools?.find((t) => t.name === "add");
+    const add2 = server2["config"].tools?.find((t) => t.name === "add");
 
-    expect(add1!.inputSchema.properties.a).toBeDefined();
-    expect(add1!.inputSchema.properties.b).toBeDefined();
-    expect(add2!.inputSchema.properties.a).toBeDefined();
-    expect(add2!.inputSchema.properties.b).toBeDefined();
+    expect(add1?.inputSchema.properties.a).toBeDefined();
+    expect(add1?.inputSchema.properties.b).toBeDefined();
+    expect(add2?.inputSchema.properties.a).toBeDefined();
+    expect(add2?.inputSchema.properties.b).toBeDefined();
   });
 
   test("get_time tool should have no required parameters", async () => {
     await server1.start();
     await server2.start();
 
-    const getTime1 = server1["config"].tools!.find((t) => t.name === "get_time");
-    const getTime2 = server2["config"].tools!.find((t) => t.name === "get_time");
+    const getTime1 = server1["config"].tools?.find((t) => t.name === "get_time");
+    const getTime2 = server2["config"].tools?.find((t) => t.name === "get_time");
 
-    expect(getTime1!.inputSchema.required.length).toBe(0);
-    expect(getTime2!.inputSchema.required.length).toBe(0);
+    expect(getTime1?.inputSchema.required.length).toBe(0);
+    expect(getTime2?.inputSchema.required.length).toBe(0);
   });
 });
 
@@ -188,8 +188,8 @@ describe("Multi-Server - Dynamic Tool Addition", () => {
       async () => ({ content: [{ type: "text", text: "dynamic1" }] }),
     );
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("server1_dynamic");
     expect(tools2).not.toContain("server1_dynamic");
@@ -206,8 +206,8 @@ describe("Multi-Server - Dynamic Tool Addition", () => {
       async () => ({ content: [{ type: "text", text: "dynamic2" }] }),
     );
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools2).toContain("server2_dynamic");
     expect(tools1).not.toContain("server2_dynamic");
@@ -231,8 +231,8 @@ describe("Multi-Server - Dynamic Tool Addition", () => {
       async () => ({ content: [{ type: "text", text: "b" }] }),
     );
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("tool_a");
     expect(tools2).toContain("tool_b");

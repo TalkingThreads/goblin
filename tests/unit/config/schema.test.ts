@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ConfigSchema, ServerConfigSchema } from "../../../src/config/schema.js";
+import { ConfigSchema } from "../../../src/config/schema.js";
 
 describe("ConfigSchema", () => {
   test("should validate default config", () => {

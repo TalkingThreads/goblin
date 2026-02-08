@@ -38,19 +38,19 @@ describe("MCP Handshake - Capabilities", () => {
   test("should have tools capability configured", async () => {
     const tools = server["config"].tools;
     expect(tools).toBeDefined();
-    expect(tools!.length).toBeGreaterThan(0);
+    expect(tools?.length).toBeGreaterThan(0);
   });
 
   test("should have resources capability configured", async () => {
     const resources = server["config"].resources;
     expect(resources).toBeDefined();
-    expect(resources!.length).toBeGreaterThan(0);
+    expect(resources?.length).toBeGreaterThan(0);
   });
 
   test("should have prompts capability configured", async () => {
     const prompts = server["config"].prompts;
     expect(prompts).toBeDefined();
-    expect(prompts!.length).toBeGreaterThan(0);
+    expect(prompts?.length).toBeGreaterThan(0);
   });
 });
 
@@ -80,9 +80,9 @@ describe("MCP Handshake - Dynamic Capability Updates", () => {
     );
 
     const updatedTools = server["config"].tools;
-    expect(updatedTools!.length).toBeGreaterThan(initialCount);
+    expect(updatedTools?.length).toBeGreaterThan(initialCount);
 
-    const toolNames = updatedTools!.map((t) => t.name);
+    const toolNames = updatedTools?.map((t) => t.name);
     expect(toolNames).toContain("dynamic_tool");
 
     await cleanup.run();
@@ -112,9 +112,9 @@ describe("MCP Handshake - Dynamic Capability Updates", () => {
     );
 
     const updatedResources = server["config"].resources;
-    expect(updatedResources!.length).toBeGreaterThan(initialCount);
+    expect(updatedResources?.length).toBeGreaterThan(initialCount);
 
-    const resourceUris = updatedResources!.map((r) => r.uri);
+    const resourceUris = updatedResources?.map((r) => r.uri);
     expect(resourceUris).toContain("test://dynamic-resource");
 
     await cleanup.run();
@@ -143,9 +143,9 @@ describe("MCP Handshake - Dynamic Capability Updates", () => {
     );
 
     const updatedPrompts = server["config"].prompts;
-    expect(updatedPrompts!.length).toBeGreaterThan(initialCount);
+    expect(updatedPrompts?.length).toBeGreaterThan(initialCount);
 
-    const promptNames = updatedPrompts!.map((p) => p.name);
+    const promptNames = updatedPrompts?.map((p) => p.name);
     expect(promptNames).toContain("dynamic_prompt");
 
     await cleanup.run();
@@ -240,9 +240,9 @@ describe("MCP Handshake - List Changed Notifications", () => {
     );
 
     const tools2 = server["config"].tools;
-    expect(tools2!.length).toBe(count1 + 1);
+    expect(tools2?.length).toBe(count1 + 1);
 
-    const toolNames = tools2!.map((t) => t.name);
+    const toolNames = tools2?.map((t) => t.name);
     expect(toolNames).toContain("new_tool");
 
     await cleanup.run();
@@ -272,7 +272,7 @@ describe("MCP Handshake - List Changed Notifications", () => {
     );
 
     const resources2 = server["config"].resources;
-    expect(resources2!.length).toBe(count1 + 1);
+    expect(resources2?.length).toBe(count1 + 1);
 
     await cleanup.run();
   });
@@ -300,7 +300,7 @@ describe("MCP Handshake - List Changed Notifications", () => {
     );
 
     const prompts2 = server["config"].prompts;
-    expect(prompts2!.length).toBe(count1 + 1);
+    expect(prompts2?.length).toBe(count1 + 1);
 
     await cleanup.run();
   });

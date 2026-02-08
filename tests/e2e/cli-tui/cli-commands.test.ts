@@ -4,7 +4,7 @@
  * Tests CLI command execution, output formatting, and error display.
  */
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { CliTester } from "../shared/cli-tester.js";
 import { TestEnvironment } from "../shared/environment.js";
 

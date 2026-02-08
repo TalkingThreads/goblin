@@ -1,7 +1,7 @@
 import { Box, Text, useInput } from "ink";
-import { useState, useCallback, memo } from "react";
-import type { ToolCard } from "../../gateway/types.js";
+import { memo, useCallback, useState } from "react";
 import type { GoblinGateway } from "../../core/gateway.js";
+import type { ToolCard } from "../../gateway/types.js";
 
 interface ToolInvocationPanelProps {
   tools: ToolCard[];
@@ -79,7 +79,7 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
         error: null,
       }));
     }
-  }, [state.step, state.argsText, tools]);
+  }, [state.step, handleInvoke]);
 
   const handleInvoke = useCallback(async () => {
     const tool = tools[state.selectedToolIndex];
@@ -186,7 +186,13 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
   const selectedTool = tools[state.selectedToolIndex];
 
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor="magenta" paddingX={1} flexGrow={1}>
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      borderColor="magenta"
+      paddingX={1}
+      flexGrow={1}
+    >
       <Box marginBottom={1}>
         <Text bold underline color="magenta">
           TOOL INVOCATION
@@ -211,13 +217,23 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
             {tools.map((tool, index) => (
               <Box key={tool.name}>
                 <Box width={2}>
-                  <Text color={state.step === "tool-select" && index === state.selectedToolIndex ? "magenta" : "gray"}>
+                  <Text
+                    color={
+                      state.step === "tool-select" && index === state.selectedToolIndex
+                        ? "magenta"
+                        : "gray"
+                    }
+                  >
                     {state.step === "tool-select" && index === state.selectedToolIndex ? "▶" : " "}
                   </Text>
                 </Box>
                 <Box width={25}>
                   <Text
-                    color={state.step === "tool-select" && index === state.selectedToolIndex ? "magenta" : undefined}
+                    color={
+                      state.step === "tool-select" && index === state.selectedToolIndex
+                        ? "magenta"
+                        : undefined
+                    }
                   >
                     {tool.name}
                   </Text>
@@ -229,7 +245,7 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
             ))}
           </Box>
 
-          {selectedTool && selectedTool.description && (
+          {selectedTool?.description && (
             <Box marginTop={1} flexDirection="column">
               <Text bold color="gray">
                 Description:
@@ -258,11 +274,7 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
               bold
               color={state.step === "result" ? "magenta" : state.isLoading ? "yellow" : "gray"}
             >
-              {state.isLoading
-                ? "⏳ Invoking..."
-                : state.result
-                  ? "Result:"
-                  : "[Enter] Invoke"}
+              {state.isLoading ? "⏳ Invoking..." : state.result ? "Result:" : "[Enter] Invoke"}
             </Text>
           </Box>
 

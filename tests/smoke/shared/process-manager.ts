@@ -94,21 +94,20 @@ export class ProcessManager {
         if (isPlainText) {
           const lowerOutput = output.toLowerCase();
           if (
-            lowerOutput.includes("started") ||
-            lowerOutput.includes("listening") ||
-            lowerOutput.includes("ready") ||
-            lowerOutput.includes("running")
+            (lowerOutput.includes("started") ||
+              lowerOutput.includes("listening") ||
+              lowerOutput.includes("ready") ||
+              lowerOutput.includes("running")) &&
+            !started
           ) {
-            if (!started) {
-              started = true;
-              clearTimeout(timeout);
-              resolve({
-                process: this.process!,
-                pid: this.process!.pid!,
-                port,
-                baseUrl,
-              });
-            }
+            started = true;
+            clearTimeout(timeout);
+            resolve({
+              process: this.process!,
+              pid: this.process?.pid!,
+              port,
+              baseUrl,
+            });
           }
         }
       };

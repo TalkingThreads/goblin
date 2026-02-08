@@ -92,7 +92,7 @@ describe("Resource - Subscription State", () => {
   });
 
   test("server maintains resources during operations", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
     expect(initialCount).toBe(2);
   });
 
@@ -112,9 +112,9 @@ describe("Resource - Subscription State", () => {
   });
 
   test("server maintains resources after client operations", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
     expect(initialCount).toBe(2);
-    expect(server["config"].resources!.length).toBe(initialCount);
+    expect(server["config"].resources?.length).toBe(initialCount);
   });
 });
 
@@ -155,12 +155,12 @@ describe("Resource - Subscription Multi-Server", () => {
   });
 
   test("both servers have same resource count", async () => {
-    expect(server1["config"].resources!.length).toBe(server2["config"].resources!.length);
+    expect(server1["config"].resources?.length).toBe(server2["config"].resources?.length);
   });
 
   test("resources from different servers have valid URIs", async () => {
-    const uri1 = server1["config"].resources![0].uri;
-    const uri2 = server2["config"].resources![0].uri;
+    const uri1 = server1["config"].resources?.[0].uri;
+    const uri2 = server2["config"].resources?.[0].uri;
     expect(uri1.length).toBeGreaterThan(0);
     expect(uri2.length).toBeGreaterThan(0);
   });
@@ -197,9 +197,9 @@ describe("Resource - Subscription Dynamic", () => {
       "content",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://dynamic-sub");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://dynamic-sub");
     expect(resource).toBeDefined();
-    expect(resource!.uri).toBe("test://dynamic-sub");
+    expect(resource?.uri).toBe("test://dynamic-sub");
   });
 
   test("dynamically added resources have valid URIs", async () => {
@@ -211,13 +211,13 @@ describe("Resource - Subscription Dynamic", () => {
       "content",
     );
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://dynamic-unsub");
-    expect(resource!.uri.length).toBeGreaterThan(0);
-    expect(resource!.uri.includes("://")).toBe(true);
+    const resource = server["config"].resources?.find((r) => r.uri === "test://dynamic-unsub");
+    expect(resource?.uri.length).toBeGreaterThan(0);
+    expect(resource?.uri.includes("://")).toBe(true);
   });
 
   test("multiple dynamic resources can be added", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     for (let i = 0; i < 3; i++) {
       server.addResource(
@@ -229,7 +229,7 @@ describe("Resource - Subscription Dynamic", () => {
       );
     }
 
-    expect(server["config"].resources!.length).toBe(initialCount + 3);
+    expect(server["config"].resources?.length).toBe(initialCount + 3);
   });
 
   test("all dynamic resources are accessible", async () => {
@@ -293,7 +293,7 @@ describe("Resource - Subscription Validation", () => {
   });
 
   test("server resources remain consistent", async () => {
-    const initialResources = server["config"].resources!.map((r) => r.uri).sort();
+    const initialResources = server["config"].resources?.map((r) => r.uri).sort();
     expect(initialResources).toEqual(["test://resource1", "test://resource2"]);
   });
 });

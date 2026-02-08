@@ -49,7 +49,7 @@ describe("Performance Throughput Tests - Capacity", () => {
       console.log("Saturation point identification:", {
         maxStableRps: result.maxStableRps,
         saturationPoint: result.saturationPoint,
-        errorRateAtSaturation: (result.errorRateAtSaturation * 100).toFixed(2) + "%",
+        errorRateAtSaturation: `${(result.errorRateAtSaturation * 100).toFixed(2)}%`,
         stepsTested: result.rpsProgression.length,
       });
 
@@ -73,7 +73,7 @@ describe("Performance Throughput Tests - Capacity", () => {
 
       console.log("Capacity analysis:", {
         recommendedMaxRps: analysis.recommendedMaxRps,
-        headroomPercent: analysis.headroomPercent.toFixed(2) + "%",
+        headroomPercent: `${analysis.headroomPercent.toFixed(2)}%`,
         bottleneckType: analysis.bottleneckType,
         recommendations: analysis.scalingRecommendations.length,
       });

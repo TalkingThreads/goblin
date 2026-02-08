@@ -4,7 +4,7 @@
  * Tests for goblin start command
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { spawn } from "node:child_process";
 import { request } from "node:http";
 
@@ -55,7 +55,7 @@ async function runCli(args: string[], timeout: number = 10000): Promise<CliResul
   });
 }
 
-async function waitForHealth(port: number, maxAttempts: number = 20): Promise<boolean> {
+async function _waitForHealth(port: number, maxAttempts: number = 20): Promise<boolean> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       await new Promise<void>((resolve, reject) => {

@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from "ink";
-import { useState, memo } from "react";
+import { memo, useState } from "react";
 import type { TuiServer } from "../types.js";
 
 interface ConfirmDialogProps {
@@ -55,9 +55,7 @@ const ConfirmDialog = memo(function ConfirmDialog({
           [{confirmed ? "x" : " "}] Yes, {type === "remove" ? "remove" : "confirm"}
         </Text>
         <Text> </Text>
-        <Text color={!confirmed ? "green" : "gray"}>
-          [{!confirmed ? "x" : " "}] No, cancel
-        </Text>
+        <Text color={!confirmed ? "green" : "gray"}>[{!confirmed ? "x" : " "}] No, cancel</Text>
       </Box>
 
       <Box marginTop={1}>

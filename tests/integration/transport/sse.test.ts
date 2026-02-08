@@ -188,7 +188,7 @@ describe("Transport - SSE Resource Updates", () => {
   });
 
   test("can add resources during SSE", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     server.addResource(
       "test://sse-resource",
@@ -198,18 +198,18 @@ describe("Transport - SSE Resource Updates", () => {
       "SSE content",
     );
 
-    expect(server["config"].resources!.length).toBe(initialCount + 1);
+    expect(server["config"].resources?.length).toBe(initialCount + 1);
   });
 
   test("can update resource content", async () => {
     server.addResource("test://updatable", "Updatable", "Can be updated", "text/plain", "Initial");
 
-    const resource = server["config"].resources!.find((r) => r.uri === "test://updatable");
-    expect(resource!.content).toBe("Initial");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://updatable");
+    expect(resource?.content).toBe("Initial");
   });
 
   test("multiple resources can be added", async () => {
-    const initialCount = server["config"].resources!.length;
+    const initialCount = server["config"].resources?.length;
 
     for (let i = 0; i < 5; i++) {
       server.addResource(
@@ -221,7 +221,7 @@ describe("Transport - SSE Resource Updates", () => {
       );
     }
 
-    expect(server["config"].resources!.length).toBe(initialCount + 5);
+    expect(server["config"].resources?.length).toBe(initialCount + 5);
   });
 
   test("all added resources have valid URIs", async () => {
@@ -239,7 +239,7 @@ describe("Transport - SSE Resource Updates", () => {
     for (let i = 0; i < 3; i++) {
       const resource = resources.find((r) => r.uri === `test://sse_uri_${i}`);
       expect(resource).toBeDefined();
-      expect(resource!.uri.includes("://")).toBe(true);
+      expect(resource?.uri.includes("://")).toBe(true);
     }
   });
 });

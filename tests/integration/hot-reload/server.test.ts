@@ -66,7 +66,7 @@ describe("Hot-Reload - Server Lifecycle", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
 
-    expect(server["config"].tools!.length).toBe(4);
+    expect(server["config"].tools?.length).toBe(4);
     expect(server.isRunning()).toBe(true);
   });
 });
@@ -167,8 +167,8 @@ describe("Hot-Reload - Multi-Server Hot-Reload", () => {
   });
 
   test("can hot-reload server1 independently", async () => {
-    const initialTools1 = server1["config"].tools!.length;
-    const initialTools2 = server2["config"].tools!.length;
+    const initialTools1 = server1["config"].tools?.length;
+    const initialTools2 = server2["config"].tools?.length;
 
     server1.addTool(
       "server1_hot",
@@ -177,13 +177,13 @@ describe("Hot-Reload - Multi-Server Hot-Reload", () => {
       async () => ({ content: [{ type: "text", text: "s1" }] }),
     );
 
-    expect(server1["config"].tools!.length).toBe(initialTools1 + 1);
-    expect(server2["config"].tools!.length).toBe(initialTools2);
+    expect(server1["config"].tools?.length).toBe(initialTools1 + 1);
+    expect(server2["config"].tools?.length).toBe(initialTools2);
   });
 
   test("can hot-reload server2 independently", async () => {
-    const initialTools1 = server1["config"].tools!.length;
-    const initialTools2 = server2["config"].tools!.length;
+    const initialTools1 = server1["config"].tools?.length;
+    const initialTools2 = server2["config"].tools?.length;
 
     server2.addTool(
       "server2_hot",
@@ -192,8 +192,8 @@ describe("Hot-Reload - Multi-Server Hot-Reload", () => {
       async () => ({ content: [{ type: "text", text: "s2" }] }),
     );
 
-    expect(server2["config"].tools!.length).toBe(initialTools2 + 1);
-    expect(server1["config"].tools!.length).toBe(initialTools1);
+    expect(server2["config"].tools?.length).toBe(initialTools2 + 1);
+    expect(server1["config"].tools?.length).toBe(initialTools1);
   });
 
   test("both servers can be hot-reloaded simultaneously", async () => {
@@ -210,8 +210,8 @@ describe("Hot-Reload - Multi-Server Hot-Reload", () => {
       async () => ({ content: [{ type: "text", text: "2" }] }),
     );
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("s1_tool");
     expect(tools2).toContain("s2_tool");
@@ -229,8 +229,8 @@ describe("Hot-Reload - Multi-Server Hot-Reload", () => {
       );
     }
 
-    expect(server1["config"].tools!.length).toBe(3 + 5);
-    expect(server2["config"].tools!.length).toBe(3);
+    expect(server1["config"].tools?.length).toBe(3 + 5);
+    expect(server2["config"].tools?.length).toBe(3);
   });
 });
 
@@ -250,7 +250,7 @@ describe("Hot-Reload - Resource Hot-Reload", () => {
   });
 
   test("can add resources while running", async () => {
-    const initial = server["config"].resources!.length;
+    const initial = server["config"].resources?.length;
 
     server.addResource(
       "test://hot-resource",
@@ -260,7 +260,7 @@ describe("Hot-Reload - Resource Hot-Reload", () => {
       "content",
     );
 
-    expect(server["config"].resources!.length).toBe(initial + 1);
+    expect(server["config"].resources?.length).toBe(initial + 1);
   });
 
   test("resources have valid structure after hot-reload", async () => {
@@ -272,17 +272,17 @@ describe("Hot-Reload - Resource Hot-Reload", () => {
       "content",
     );
 
-    const resource = server["config"].resources!.find(
+    const resource = server["config"].resources?.find(
       (r) => r.uri === "test://structured-resource",
     );
-    expect(resource!.uri).toBe("test://structured-resource");
-    expect(resource!.name).toBe("Structured Resource");
-    expect(resource!.mimeType).toBe("text/plain");
-    expect(resource!.content).toBe("content");
+    expect(resource?.uri).toBe("test://structured-resource");
+    expect(resource?.name).toBe("Structured Resource");
+    expect(resource?.mimeType).toBe("text/plain");
+    expect(resource?.content).toBe("content");
   });
 
   test("can add multiple resources in sequence", async () => {
-    const initial = server["config"].resources!.length;
+    const initial = server["config"].resources?.length;
 
     for (let i = 0; i < 3; i++) {
       server.addResource(
@@ -294,7 +294,7 @@ describe("Hot-Reload - Resource Hot-Reload", () => {
       );
     }
 
-    expect(server["config"].resources!.length).toBe(initial + 3);
+    expect(server["config"].resources?.length).toBe(initial + 3);
   });
 });
 
@@ -314,7 +314,7 @@ describe("Hot-Reload - Prompt Hot-Reload", () => {
   });
 
   test("can add prompts while running", async () => {
-    const initial = server["config"].prompts!.length;
+    const initial = server["config"].prompts?.length;
 
     server.addPrompt(
       "hot_prompt",
@@ -323,7 +323,7 @@ describe("Hot-Reload - Prompt Hot-Reload", () => {
       async (args) => `Hot: ${args.input}`,
     );
 
-    expect(server["config"].prompts!.length).toBe(initial + 1);
+    expect(server["config"].prompts?.length).toBe(initial + 1);
   });
 
   test("prompts have valid structure after hot-reload", async () => {
@@ -337,11 +337,11 @@ describe("Hot-Reload - Prompt Hot-Reload", () => {
       async (args) => `Result: ${args.arg1}`,
     );
 
-    const prompt = server["config"].prompts!.find((p) => p.name === "structured-prompt");
-    expect(prompt!.name).toBe("structured-prompt");
-    expect(prompt!.description).toBe("Structured Prompt");
-    expect(prompt!.arguments.length).toBe(2);
-    expect(typeof prompt!.handler).toBe("function");
+    const prompt = server["config"].prompts?.find((p) => p.name === "structured-prompt");
+    expect(prompt?.name).toBe("structured-prompt");
+    expect(prompt?.description).toBe("Structured Prompt");
+    expect(prompt?.arguments.length).toBe(2);
+    expect(typeof prompt?.handler).toBe("function");
   });
 
   test("prompt handler executes correctly", async () => {
@@ -352,8 +352,8 @@ describe("Hot-Reload - Prompt Hot-Reload", () => {
       async (args) => `Handler received: ${args.value}`,
     );
 
-    const prompt = server["config"].prompts!.find((p) => p.name === "handler-test");
-    const result = await prompt!.handler({ value: "test-value" });
+    const prompt = server["config"].prompts?.find((p) => p.name === "handler-test");
+    const result = await prompt?.handler({ value: "test-value" });
     expect(result).toBe("Handler received: test-value");
   });
 });

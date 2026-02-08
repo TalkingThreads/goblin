@@ -4,10 +4,9 @@
  * Tests baseline storage and retrieval functionality.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, describe, expect, it } from "bun:test";
 import {
   baselineManager,
-  createBaselineManager,
   type PerformanceMetrics,
   type TestConfiguration,
 } from "../shared/baseline-manager.js";

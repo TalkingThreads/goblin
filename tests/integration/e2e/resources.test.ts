@@ -37,27 +37,27 @@ describe("E2E - Resources", () => {
 
   test("should have two resources configured", async () => {
     const resources = server["config"].resources;
-    expect(resources!.length).toBe(2);
+    expect(resources?.length).toBe(2);
   });
 
   test("first resource should be test://resource1", async () => {
     const resources = server["config"].resources;
-    expect(resources![0].uri).toBe("test://resource1");
+    expect(resources?.[0].uri).toBe("test://resource1");
   });
 
   test("second resource should be test://resource2", async () => {
     const resources = server["config"].resources;
-    expect(resources![1].uri).toBe("test://resource2");
+    expect(resources?.[1].uri).toBe("test://resource2");
   });
 
   test("first resource should have text/plain mimeType", async () => {
     const resources = server["config"].resources;
-    expect(resources![0].mimeType).toBe("text/plain");
+    expect(resources?.[0].mimeType).toBe("text/plain");
   });
 
   test("second resource should have application/json mimeType", async () => {
     const resources = server["config"].resources;
-    expect(resources![1].mimeType).toBe("application/json");
+    expect(resources?.[1].mimeType).toBe("application/json");
   });
 
   test("all resources should have names", async () => {
@@ -92,17 +92,17 @@ describe("E2E - Resource Content", () => {
 
   test("first resource should have text content", async () => {
     const resources = server["config"].resources;
-    expect(resources![0].content).toBe("This is test resource content 1");
+    expect(resources?.[0].content).toBe("This is test resource content 1");
   });
 
   test("second resource should have JSON content", async () => {
     const resources = server["config"].resources;
-    expect(() => JSON.parse(resources![1].content)).not.toThrow();
+    expect(() => JSON.parse(resources?.[1].content)).not.toThrow();
   });
 
   test("JSON resource should parse to object", async () => {
     const resources = server["config"].resources;
-    const parsed = JSON.parse(resources![1].content);
+    const parsed = JSON.parse(resources?.[1].content);
     expect(parsed).toEqual({ key: "value" });
   });
 
@@ -115,10 +115,10 @@ describe("E2E - Resource Content", () => {
       "Dynamic content",
     );
     const resources = server["config"].resources;
-    expect(resources!.length).toBe(3);
-    const dynamic = resources!.find((r) => r.uri === "test://dynamic-resource");
+    expect(resources?.length).toBe(3);
+    const dynamic = resources?.find((r) => r.uri === "test://dynamic-resource");
     expect(dynamic).toBeDefined();
-    expect(dynamic!.content).toBe("Dynamic content");
+    expect(dynamic?.content).toBe("Dynamic content");
   });
 
   test("dynamic resource should be readable", async () => {
@@ -130,8 +130,8 @@ describe("E2E - Resource Content", () => {
       "Read this content",
     );
     const resources = server["config"].resources;
-    const readable = resources!.find((r) => r.uri === "test://readable");
-    expect(readable!.content).toBe("Read this content");
+    const readable = resources?.find((r) => r.uri === "test://readable");
+    expect(readable?.content).toBe("Read this content");
   });
 });
 
@@ -159,8 +159,8 @@ describe("E2E - Resource Variations", () => {
       "",
     );
     const resources = server["config"].resources;
-    const empty = resources!.find((r) => r.uri === "test://empty");
-    expect(empty!.content).toBe("");
+    const empty = resources?.find((r) => r.uri === "test://empty");
+    expect(empty?.content).toBe("");
   });
 
   test("should handle large content resource", async () => {
@@ -173,8 +173,8 @@ describe("E2E - Resource Variations", () => {
       largeContent,
     );
     const resources = server["config"].resources;
-    const large = resources!.find((r) => r.uri === "test://large");
-    expect(large!.content.length).toBe(50000);
+    const large = resources?.find((r) => r.uri === "test://large");
+    expect(large?.content.length).toBe(50000);
   });
 
   test("should handle different mime types", async () => {
@@ -186,8 +186,8 @@ describe("E2E - Resource Variations", () => {
       "<html><body>Hello</body></html>",
     );
     const resources = server["config"].resources;
-    const html = resources!.find((r) => r.uri === "test://html");
-    expect(html!.mimeType).toBe("text/html");
+    const html = resources?.find((r) => r.uri === "test://html");
+    expect(html?.mimeType).toBe("text/html");
   });
 
   test("should handle XML content", async () => {
@@ -199,8 +199,8 @@ describe("E2E - Resource Variations", () => {
       '<?xml version="1.0"?><root/>',
     );
     const resources = server["config"].resources;
-    const xml = resources!.find((r) => r.uri === "test://xml");
-    expect(xml!.mimeType).toBe("application/xml");
+    const xml = resources?.find((r) => r.uri === "test://xml");
+    expect(xml?.mimeType).toBe("application/xml");
   });
 
   test("should handle base64 content", async () => {
@@ -212,8 +212,8 @@ describe("E2E - Resource Variations", () => {
       "SGVsbG8gV29ybGQ=",
     );
     const resources = server["config"].resources;
-    const base64 = resources!.find((r) => r.uri === "test://base64");
-    expect(base64!.mimeType).toBe("application/octet-stream");
+    const base64 = resources?.find((r) => r.uri === "test://base64");
+    expect(base64?.mimeType).toBe("application/octet-stream");
   });
 });
 
@@ -241,7 +241,7 @@ describe("E2E - Resource URIs", () => {
 
   test("resource URIs should be unique", async () => {
     const resources = server["config"].resources;
-    const uris = resources!.map((r) => r.uri);
+    const uris = resources?.map((r) => r.uri);
     const uniqueUris = new Set(uris);
     expect(uris.length).toBe(uniqueUris.size);
   });
@@ -255,7 +255,7 @@ describe("E2E - Resource URIs", () => {
       "content",
     );
     const resources = server["config"].resources;
-    const custom = resources!.find((r) => r.uri === "custom://my-resource");
+    const custom = resources?.find((r) => r.uri === "custom://my-resource");
     expect(custom).toBeDefined();
   });
 
@@ -268,7 +268,7 @@ describe("E2E - Resource URIs", () => {
       "content",
     );
     const resources = server["config"].resources;
-    const query = resources!.find((r) => r.uri.includes("?version=1"));
+    const query = resources?.find((r) => r.uri.includes("?version=1"));
     expect(query).toBeDefined();
   });
 
@@ -281,7 +281,7 @@ describe("E2E - Resource URIs", () => {
       "content",
     );
     const resources = server["config"].resources;
-    const fragment = resources!.find((r) => r.uri.includes("#"));
+    const fragment = resources?.find((r) => r.uri.includes("#"));
     expect(fragment).toBeDefined();
   });
 });

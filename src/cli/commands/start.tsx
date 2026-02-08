@@ -65,11 +65,14 @@ export async function startGateway(options: StartOptions): Promise<void> {
     // Keep process running
     await new Promise(() => {});
   } catch (error: any) {
-    logger.error({ 
-      message: error.message,
-      stack: error.stack,
-      error 
-    }, "Failed to start gateway");
+    logger.error(
+      {
+        message: error.message,
+        stack: error.stack,
+        error,
+      },
+      "Failed to start gateway",
+    );
     process.exit(1);
   }
 }

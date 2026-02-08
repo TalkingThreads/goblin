@@ -46,19 +46,19 @@ describe("E2E - Streaming", () => {
   test("server should have tools that could stream", async () => {
     const tools = server["config"].tools;
     expect(tools).toBeDefined();
-    expect(tools!.length).toBeGreaterThan(0);
+    expect(tools?.length).toBeGreaterThan(0);
   });
 
   test("get_time tool exists for time streaming", async () => {
     const tools = server["config"].tools;
-    const toolNames = tools!.map((t) => t.name);
+    const toolNames = tools?.map((t) => t.name);
     expect(toolNames).toContain("get_time");
   });
 
   test("server should have resources that could be streamed", async () => {
     const resources = server["config"].resources;
     expect(resources).toBeDefined();
-    expect(resources!.length).toBeGreaterThan(0);
+    expect(resources?.length).toBeGreaterThan(0);
   });
 
   test("all resources should have content for streaming", async () => {
@@ -106,7 +106,7 @@ describe("E2E - Streaming Behavior", () => {
   test("should have consistent resource configuration", async () => {
     const resources1 = server["config"].resources;
     const resources2 = server["config"].resources;
-    expect(resources1!.length).toBe(resources2!.length);
+    expect(resources1?.length).toBe(resources2?.length);
   });
 
   test("should have consistent prompt configuration", async () => {
@@ -162,7 +162,7 @@ describe("E2E - Streaming Edge Cases", () => {
       "",
     );
     const resources = server2["config"].resources;
-    expect(resources![0].content).toBe("");
+    expect(resources?.[0].content).toBe("");
   });
 
   test("should handle large resource content", async () => {
@@ -176,7 +176,7 @@ describe("E2E - Streaming Edge Cases", () => {
       largeContent,
     );
     const resources = server2["config"].resources;
-    expect(resources![0].content.length).toBe(10000);
+    expect(resources?.[0].content.length).toBe(10000);
   });
 
   test("should handle unicode in resource content", async () => {
@@ -190,7 +190,7 @@ describe("E2E - Streaming Edge Cases", () => {
       unicodeContent,
     );
     const resources = server2["config"].resources;
-    expect(resources![0].content).toBe(unicodeContent);
+    expect(resources?.[0].content).toBe(unicodeContent);
   });
 
   test("should handle special characters in tool descriptions", async () => {
@@ -202,7 +202,7 @@ describe("E2E - Streaming Edge Cases", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
     const tools = server2["config"].tools;
-    expect(tools![0].description).toContain("@#$%^&*()");
+    expect(tools?.[0].description).toContain("@#$%^&*()");
   });
 
   test("should handle json resource with nested objects", async () => {
@@ -220,7 +220,7 @@ describe("E2E - Streaming Edge Cases", () => {
       jsonContent,
     );
     const resources = server2["config"].resources;
-    const parsed = JSON.parse(resources![0].content);
+    const parsed = JSON.parse(resources?.[0].content);
     expect(parsed.nested.object.deep.value).toBe(42);
   });
 });

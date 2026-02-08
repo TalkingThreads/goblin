@@ -36,9 +36,9 @@ describe("Hot-Reload - Configuration Updates", () => {
   });
 
   test("initial config is valid", async () => {
-    expect(server["config"].tools!.length).toBe(3);
-    expect(server["config"].resources!.length).toBe(2);
-    expect(server["config"].prompts!.length).toBe(1);
+    expect(server["config"].tools?.length).toBe(3);
+    expect(server["config"].resources?.length).toBe(2);
+    expect(server["config"].prompts?.length).toBe(1);
   });
 
   test("config tools have valid structure", async () => {
@@ -81,9 +81,9 @@ describe("Hot-Reload - Configuration Updates", () => {
       async () => ({ content: [{ type: "text", text: "updated" }] }),
     );
 
-    const tool = server["config"].tools!.find((t) => t.name === "update_test");
-    expect(tool!.name).toBe("update_test");
-    expect(tool!.inputSchema.properties.test).toBeDefined();
+    const tool = server["config"].tools?.find((t) => t.name === "update_test");
+    expect(tool?.name).toBe("update_test");
+    expect(tool?.inputSchema.properties.test).toBeDefined();
   });
 });
 
@@ -160,33 +160,33 @@ describe("Hot-Reload - Schema Validation", () => {
   });
 
   test("echo tool has valid input schema", async () => {
-    const echo = server["config"].tools!.find((t) => t.name === "echo");
-    expect(echo!.inputSchema.type).toBe("object");
-    expect(echo!.inputSchema.properties.message.type).toBe("string");
-    expect(echo!.inputSchema.required).toContain("message");
+    const echo = server["config"].tools?.find((t) => t.name === "echo");
+    expect(echo?.inputSchema.type).toBe("object");
+    expect(echo?.inputSchema.properties.message.type).toBe("string");
+    expect(echo?.inputSchema.required).toContain("message");
   });
 
   test("add tool has valid input schema", async () => {
-    const add = server["config"].tools!.find((t) => t.name === "add");
-    expect(add!.inputSchema.type).toBe("object");
-    expect(add!.inputSchema.properties.a.type).toBe("number");
-    expect(add!.inputSchema.properties.b.type).toBe("number");
-    expect(add!.inputSchema.required).toContain("a");
-    expect(add!.inputSchema.required).toContain("b");
+    const add = server["config"].tools?.find((t) => t.name === "add");
+    expect(add?.inputSchema.type).toBe("object");
+    expect(add?.inputSchema.properties.a.type).toBe("number");
+    expect(add?.inputSchema.properties.b.type).toBe("number");
+    expect(add?.inputSchema.required).toContain("a");
+    expect(add?.inputSchema.required).toContain("b");
   });
 
   test("get_time tool has valid input schema", async () => {
-    const getTime = server["config"].tools!.find((t) => t.name === "get_time");
-    expect(getTime!.inputSchema.type).toBe("object");
-    expect(getTime!.inputSchema.properties).toEqual({});
-    expect(getTime!.inputSchema.required).toEqual([]);
+    const getTime = server["config"].tools?.find((t) => t.name === "get_time");
+    expect(getTime?.inputSchema.type).toBe("object");
+    expect(getTime?.inputSchema.properties).toEqual({});
+    expect(getTime?.inputSchema.required).toEqual([]);
   });
 
   test("greet prompt has valid arguments", async () => {
-    const greet = server["config"].prompts!.find((p) => p.name === "greet");
-    expect(greet!.arguments.length).toBe(1);
-    expect(greet!.arguments[0].name).toBe("name");
-    expect(greet!.arguments[0].required).toBe(true);
+    const greet = server["config"].prompts?.find((p) => p.name === "greet");
+    expect(greet?.arguments.length).toBe(1);
+    expect(greet?.arguments[0].name).toBe("name");
+    expect(greet?.arguments[0].required).toBe(true);
   });
 
   test("dynamic tool maintains schema validation", async () => {
@@ -204,10 +204,10 @@ describe("Hot-Reload - Schema Validation", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
 
-    const tool = server["config"].tools!.find((t) => t.name === "validated_tool");
-    expect(tool!.inputSchema.properties.param1.type).toBe("string");
-    expect(tool!.inputSchema.properties.param2.type).toBe("number");
-    expect(tool!.inputSchema.required).toContain("param1");
+    const tool = server["config"].tools?.find((t) => t.name === "validated_tool");
+    expect(tool?.inputSchema.properties.param1.type).toBe("string");
+    expect(tool?.inputSchema.properties.param2.type).toBe("number");
+    expect(tool?.inputSchema.required).toContain("param1");
   });
 });
 
@@ -227,8 +227,8 @@ describe("Hot-Reload - Mixed Updates", () => {
   });
 
   test("can mix tool and resource additions", async () => {
-    const initialTools = server["config"].tools!.length;
-    const initialResources = server["config"].resources!.length;
+    const initialTools = server["config"].tools?.length;
+    const initialResources = server["config"].resources?.length;
 
     server.addTool(
       "mixed_tool",
@@ -238,14 +238,14 @@ describe("Hot-Reload - Mixed Updates", () => {
     );
     server.addResource("test://mixed_resource", "Mixed", "Mixed", "text/plain", "content");
 
-    expect(server["config"].tools!.length).toBe(initialTools + 1);
-    expect(server["config"].resources!.length).toBe(initialResources + 1);
+    expect(server["config"].tools?.length).toBe(initialTools + 1);
+    expect(server["config"].resources?.length).toBe(initialResources + 1);
   });
 
   test("can mix all capability additions", async () => {
-    const initialTools = server["config"].tools!.length;
-    const initialResources = server["config"].resources!.length;
-    const initialPrompts = server["config"].prompts!.length;
+    const initialTools = server["config"].tools?.length;
+    const initialResources = server["config"].resources?.length;
+    const initialPrompts = server["config"].prompts?.length;
 
     server.addTool(
       "mix_tool",
@@ -256,9 +256,9 @@ describe("Hot-Reload - Mixed Updates", () => {
     server.addResource("test://mix_resource", "Mix", "Mix", "text/plain", "content");
     server.addPrompt("mix_prompt", "Mix", [], async () => "mix");
 
-    expect(server["config"].tools!.length).toBe(initialTools + 1);
-    expect(server["config"].resources!.length).toBe(initialResources + 1);
-    expect(server["config"].prompts!.length).toBe(initialPrompts + 1);
+    expect(server["config"].tools?.length).toBe(initialTools + 1);
+    expect(server["config"].resources?.length).toBe(initialResources + 1);
+    expect(server["config"].prompts?.length).toBe(initialPrompts + 1);
   });
 
   test("all additions maintain independence", async () => {
@@ -271,9 +271,9 @@ describe("Hot-Reload - Mixed Updates", () => {
     server.addResource("test://ind_resource", "Ind Resource", "Ind", "text/plain", "resource");
     server.addPrompt("ind_prompt", "Ind Prompt", [], async () => "prompt");
 
-    const tool = server["config"].tools!.find((t) => t.name === "ind_tool");
-    const resource = server["config"].resources!.find((r) => r.uri === "test://ind_resource");
-    const prompt = server["config"].prompts!.find((p) => p.name === "ind_prompt");
+    const tool = server["config"].tools?.find((t) => t.name === "ind_tool");
+    const resource = server["config"].resources?.find((r) => r.uri === "test://ind_resource");
+    const prompt = server["config"].prompts?.find((p) => p.name === "ind_prompt");
 
     expect(tool).toBeDefined();
     expect(resource).toBeDefined();

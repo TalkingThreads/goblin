@@ -68,7 +68,6 @@ export function useGatewayData(gateway: GoblinGateway | null): GatewayData {
     setLogs(logsRef.current);
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: addLog is memoized with useCallback
   useEffect(() => {
     if (!gateway) {
       addLog("Gateway not initialized", "warn");

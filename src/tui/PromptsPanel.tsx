@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import { useGatewayData, useFilteredPrompts } from "./hooks/useGatewayData.js";
+import { useEffect, useState } from "react";
 import type { GoblinGateway } from "../core/gateway.js";
+import { useFilteredPrompts, useGatewayData } from "./hooks/useGatewayData.js";
 
 /**
  * PromptsPanel Component
@@ -16,16 +16,14 @@ const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
   const filteredPrompts = useFilteredPrompts(prompts, filterServer, searchQuery);
 
   // Get unique server names for filter
-  const serverNames = [...new Set(prompts.map((p) => p.serverId))].filter(
-    (s) => s !== "goblin",
-  );
+  const serverNames = [...new Set(prompts.map((p) => p.serverId))].filter((s) => s !== "goblin");
 
   // Reset selected index when filtered results change
   useEffect(() => {
     if (selectedIndex >= filteredPrompts.length) {
       setSelectedIndex(Math.max(0, filteredPrompts.length - 1));
     }
-  }, [filteredPrompts.length]);
+  }, [filteredPrompts.length, selectedIndex]);
 
   useInput((input, key) => {
     if (key.upArrow) {
@@ -37,9 +35,9 @@ const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
     if (input === "f") {
       // Toggle server filter
       setFilterServer((prev) => {
-        const currentIdx = serverNames.findIndex((s) => s === prev);
+        const currentIdx = serverNames.indexOf(prev);
         const nextIdx = currentIdx < serverNames.length - 1 ? currentIdx + 1 : -1;
-        return nextIdx >= 0 ? serverNames[nextIdx] ?? null : null;
+        return nextIdx >= 0 ? (serverNames[nextIdx] ?? null) : null;
       });
     }
     if (input === "/") {
@@ -48,13 +46,7 @@ const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
   });
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      paddingX={1}
-      flexGrow={1}
-      minWidth={40}
-    >
+    <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={1} minWidth={40}>
       <Box marginBottom={1}>
         <Text bold underline color="magenta">
           AVAILABLE PROMPTS
@@ -65,15 +57,11 @@ const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
       <Box marginBottom={1}>
         <Text color="gray">Filter: </Text>
         <Text color={filterServer ? "cyan" : "gray"}>
-          {filterServer
-            ? serverNames.find((s) => s === filterServer) || filterServer
-            : "All"}
+          {filterServer ? serverNames.find((s) => s === filterServer) || filterServer : "All"}
         </Text>
         <Text color="gray"> | </Text>
         <Text color="gray">Search: </Text>
-        <Text color={searchQuery ? "green" : "gray"}>
-          {searchQuery || "(press / to search)"}
-        </Text>
+        <Text color={searchQuery ? "green" : "gray"}>{searchQuery || "(press / to search)"}</Text>
       </Box>
 
       {/* Column headers */}
@@ -95,10 +83,7 @@ const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
           <Text color="gray">No prompts found</Text>
         ) : (
           filteredPrompts.map((prompt, index) => (
-            <Box
-              key={prompt.id}
-              backgroundColor={index === selectedIndex ? "gray" : undefined}
-            >
+            <Box key={prompt.id} backgroundColor={index === selectedIndex ? "gray" : undefined}>
               <Box width={20}>
                 <Text color={index === selectedIndex ? "cyan" : "white"}>
                   {prompt.id.split("_").slice(1).join("_")}
@@ -110,7 +95,7 @@ const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
               <Box flexGrow={1}>
                 <Text color="gray" dimColor>
                   {prompt.def.description && prompt.def.description.length > 40
-                    ? prompt.def.description.slice(0, 37) + "..."
+                    ? `${prompt.def.description.slice(0, 37)}...`
                     : prompt.def.description || "No description"}
                 </Text>
               </Box>

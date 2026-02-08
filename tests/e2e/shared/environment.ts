@@ -31,8 +31,6 @@ export class TestEnvironment {
     dockerContainers: [],
   };
 
-  constructor(_config: TestEnvironmentConfig) {}
-
   /**
    * Create a temporary directory for the test
    */

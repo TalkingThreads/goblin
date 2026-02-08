@@ -147,13 +147,13 @@ describe("Virtual Tools - Search Multi-Server", () => {
   });
 
   test("both servers have searchable tools", async () => {
-    expect(server1["config"].tools!.length).toBeGreaterThan(0);
-    expect(server2["config"].tools!.length).toBeGreaterThan(0);
+    expect(server1["config"].tools?.length).toBeGreaterThan(0);
+    expect(server2["config"].tools?.length).toBeGreaterThan(0);
   });
 
   test("echo exists on both servers", async () => {
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
     expect(tools1).toContain("echo");
     expect(tools2).toContain("echo");
   });
@@ -172,8 +172,8 @@ describe("Virtual Tools - Search Multi-Server", () => {
       async () => ({ content: [{ type: "text", text: "2" }] }),
     );
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("unique_s1");
     expect(tools2).toContain("unique_s2");
@@ -196,8 +196,8 @@ describe("Virtual Tools - Search Multi-Server", () => {
     );
 
     const allCombined = [
-      ...server1["config"].tools!.filter((t) => t.name.startsWith("combined")),
-      ...server2["config"].tools!.filter((t) => t.name.startsWith("combined")),
+      ...server1["config"].tools?.filter((t) => t.name.startsWith("combined")),
+      ...server2["config"].tools?.filter((t) => t.name.startsWith("combined")),
     ];
 
     expect(allCombined.length).toBe(2);

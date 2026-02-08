@@ -75,17 +75,17 @@ export function levenshteinDistance(a: string, b: string): number {
       const charB = b.charAt(i - 1);
       const charA = a.charAt(j - 1);
       if (charB === charA) {
-        matrix[i]![j] = matrix[i - 1]![j - 1]!;
+        matrix[i]![j] = matrix[i - 1]?.[j - 1]!;
       } else {
-        const substitution = matrix[i - 1]![j - 1]! + 1;
-        const insertion = matrix[i]![j - 1]! + 1;
-        const deletion = matrix[i - 1]![j]! + 1;
+        const substitution = matrix[i - 1]?.[j - 1]! + 1;
+        const insertion = matrix[i]?.[j - 1]! + 1;
+        const deletion = matrix[i - 1]?.[j]! + 1;
         matrix[i]![j] = Math.min(substitution, insertion, deletion);
       }
     }
   }
 
-  return matrix[bLength]![aLength]!;
+  return matrix[bLength]?.[aLength]!;
 }
 
 /**

@@ -10,7 +10,7 @@ describe("Backend Connection Discovery", () => {
   it("should make new tools appear after backend connects", async () => {
     const registry = {
       tools: [] as string[],
-      connect(id: string, newTools: string[]) {
+      connect(_id: string, newTools: string[]) {
         this.tools.push(...newTools);
       },
     };

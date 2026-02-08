@@ -37,30 +37,30 @@ describe("E2E - Error Handling", () => {
 
   test("should handle valid tool call", async () => {
     const tools = server["config"].tools;
-    const echo = tools!.find((t) => t.name === "echo");
+    const echo = tools?.find((t) => t.name === "echo");
     expect(echo).toBeDefined();
-    expect(typeof echo!.handler).toBe("function");
+    expect(typeof echo?.handler).toBe("function");
   });
 
   test("should handle tool with valid input schema", async () => {
     const tools = server["config"].tools;
-    const echo = tools!.find((t) => t.name === "echo");
-    expect(echo!.inputSchema.properties.message).toBeDefined();
-    expect(echo!.inputSchema.required).toContain("message");
+    const echo = tools?.find((t) => t.name === "echo");
+    expect(echo?.inputSchema.properties.message).toBeDefined();
+    expect(echo?.inputSchema.required).toContain("message");
   });
 
   test("should handle add tool with number parameters", async () => {
     const tools = server["config"].tools;
-    const add = tools!.find((t) => t.name === "add");
-    expect(add!.inputSchema.properties.a.type).toBe("number");
-    expect(add!.inputSchema.properties.b.type).toBe("number");
+    const add = tools?.find((t) => t.name === "add");
+    expect(add?.inputSchema.properties.a.type).toBe("number");
+    expect(add?.inputSchema.properties.b.type).toBe("number");
   });
 
   test("should handle get_time tool with empty schema", async () => {
     const tools = server["config"].tools;
-    const getTime = tools!.find((t) => t.name === "get_time");
-    expect(getTime!.inputSchema.properties).toEqual({});
-    expect(getTime!.inputSchema.required).toEqual([]);
+    const getTime = tools?.find((t) => t.name === "get_time");
+    expect(getTime?.inputSchema.properties).toEqual({});
+    expect(getTime?.inputSchema.required).toEqual([]);
   });
 });
 
@@ -81,31 +81,31 @@ describe("E2E - Error Scenarios", () => {
 
   test("should handle tool that doesn't exist", async () => {
     const tools = server["config"].tools;
-    const nonExistent = tools!.find((t) => t.name === "non_existent_tool");
+    const nonExistent = tools?.find((t) => t.name === "non_existent_tool");
     expect(nonExistent).toBeUndefined();
   });
 
   test("should handle resource that doesn't exist", async () => {
     const resources = server["config"].resources;
-    const nonExistent = resources!.find((r) => r.uri === "test://non_existent");
+    const nonExistent = resources?.find((r) => r.uri === "test://non_existent");
     expect(nonExistent).toBeUndefined();
   });
 
   test("should handle prompt that doesn't exist", async () => {
     const prompts = server["config"].prompts;
-    const nonExistent = prompts!.find((p) => p.name === "non_existent_prompt");
+    const nonExistent = prompts?.find((p) => p.name === "non_existent_prompt");
     expect(nonExistent).toBeUndefined();
   });
 
   test("should handle empty tool name", async () => {
     const tools = server["config"].tools;
-    const emptyName = tools!.find((t) => t.name === "");
+    const emptyName = tools?.find((t) => t.name === "");
     expect(emptyName).toBeUndefined();
   });
 
   test("should handle empty resource URI", async () => {
     const resources = server["config"].resources;
-    const emptyUri = resources!.find((r) => r.uri === "");
+    const emptyUri = resources?.find((r) => r.uri === "");
     expect(emptyUri).toBeUndefined();
   });
 });
@@ -141,7 +141,7 @@ describe("E2E - Error Recovery", () => {
   test("should maintain resource state after access", async () => {
     const resources1 = server["config"].resources;
     const resources2 = server["config"].resources;
-    expect(resources1!.length).toBe(resources2!.length);
+    expect(resources1?.length).toBe(resources2?.length);
   });
 
   test("should maintain prompt state after access", async () => {
@@ -160,7 +160,7 @@ describe("E2E - Error Recovery", () => {
       );
     }
     const tools = server["config"].tools;
-    expect(tools!.length).toBe(3 + 5);
+    expect(tools?.length).toBe(3 + 5);
   });
 
   test("should handle repeated resource additions", async () => {
@@ -174,7 +174,7 @@ describe("E2E - Error Recovery", () => {
       );
     }
     const resources = server["config"].resources;
-    expect(resources!.length).toBe(2 + 5);
+    expect(resources?.length).toBe(2 + 5);
   });
 });
 
@@ -222,13 +222,13 @@ describe("E2E - Validation Errors", () => {
 
   test("should validate required tool parameters", async () => {
     const tools = server["config"].tools;
-    const echo = tools!.find((t) => t.name === "echo");
-    expect(echo!.inputSchema.required).toContain("message");
+    const echo = tools?.find((t) => t.name === "echo");
+    expect(echo?.inputSchema.required).toContain("message");
   });
 
   test("should validate optional tool parameters", async () => {
     const tools = server["config"].tools;
-    const getTime = tools!.find((t) => t.name === "get_time");
-    expect(getTime!.inputSchema.required.length).toBe(0);
+    const getTime = tools?.find((t) => t.name === "get_time");
+    expect(getTime?.inputSchema.required.length).toBe(0);
   });
 });

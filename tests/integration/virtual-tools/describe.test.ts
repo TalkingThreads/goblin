@@ -96,20 +96,20 @@ describe("Virtual Tools - Describe Details", () => {
   });
 
   test("echo tool has message parameter", async () => {
-    const echo = server["config"].tools!.find((t) => t.name === "echo");
-    expect(echo!.inputSchema.properties.message).toBeDefined();
-    expect(echo!.inputSchema.properties.message.type).toBe("string");
+    const echo = server["config"].tools?.find((t) => t.name === "echo");
+    expect(echo?.inputSchema.properties.message).toBeDefined();
+    expect(echo?.inputSchema.properties.message.type).toBe("string");
   });
 
   test("add tool has number parameters", async () => {
-    const add = server["config"].tools!.find((t) => t.name === "add");
-    expect(add!.inputSchema.properties.a.type).toBe("number");
-    expect(add!.inputSchema.properties.b.type).toBe("number");
+    const add = server["config"].tools?.find((t) => t.name === "add");
+    expect(add?.inputSchema.properties.a.type).toBe("number");
+    expect(add?.inputSchema.properties.b.type).toBe("number");
   });
 
   test("get_time has no required parameters", async () => {
-    const getTime = server["config"].tools!.find((t) => t.name === "get_time");
-    expect(getTime!.inputSchema.required.length).toBe(0);
+    const getTime = server["config"].tools?.find((t) => t.name === "get_time");
+    expect(getTime?.inputSchema.required.length).toBe(0);
   });
 
   test("tool descriptions are descriptive", async () => {
@@ -143,22 +143,22 @@ describe("Virtual Tools - Describe Handler", () => {
   });
 
   test("echo handler executes correctly", async () => {
-    const echo = server["config"].tools!.find((t) => t.name === "echo");
-    const result = await echo!.handler({ message: "hello" });
+    const echo = server["config"].tools?.find((t) => t.name === "echo");
+    const result = await echo?.handler({ message: "hello" });
     expect(result.content[0].type).toBe("text");
     expect(result.content[0].text).toBe("Echo: hello");
   });
 
   test("add handler executes correctly", async () => {
-    const add = server["config"].tools!.find((t) => t.name === "add");
-    const result = await add!.handler({ a: 10, b: 20 });
+    const add = server["config"].tools?.find((t) => t.name === "add");
+    const result = await add?.handler({ a: 10, b: 20 });
     expect(result.content[0].type).toBe("text");
     expect(result.content[0].text).toBe("Result: 30");
   });
 
   test("get_time handler returns time", async () => {
-    const getTime = server["config"].tools!.find((t) => t.name === "get_time");
-    const result = await getTime!.handler({});
+    const getTime = server["config"].tools?.find((t) => t.name === "get_time");
+    const result = await getTime?.handler({});
     expect(result.content[0].type).toBe("text");
     expect(result.content[0].text).toContain("Current time:");
   });
@@ -197,23 +197,23 @@ describe("Virtual Tools - Describe Multi-Server", () => {
   });
 
   test("both servers have tools", async () => {
-    expect(server1["config"].tools!.length).toBeGreaterThan(0);
-    expect(server2["config"].tools!.length).toBeGreaterThan(0);
+    expect(server1["config"].tools?.length).toBeGreaterThan(0);
+    expect(server2["config"].tools?.length).toBeGreaterThan(0);
   });
 
   test("both servers have echo tool", async () => {
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
     expect(tools1).toContain("echo");
     expect(tools2).toContain("echo");
   });
 
   test("tools have consistent structure", async () => {
-    const echo1 = server1["config"].tools!.find((t) => t.name === "echo");
-    const echo2 = server2["config"].tools!.find((t) => t.name === "echo");
+    const echo1 = server1["config"].tools?.find((t) => t.name === "echo");
+    const echo2 = server2["config"].tools?.find((t) => t.name === "echo");
 
-    expect(echo1!.name).toBe(echo2!.name);
-    expect(echo1!.inputSchema.type).toBe(echo2!.inputSchema.type);
+    expect(echo1?.name).toBe(echo2?.name);
+    expect(echo1?.inputSchema.type).toBe(echo2?.inputSchema.type);
   });
 
   test("can add describe-specific tools", async () => {
@@ -231,11 +231,11 @@ describe("Virtual Tools - Describe Multi-Server", () => {
       async () => ({ content: [{ type: "text", text: "described" }] }),
     );
 
-    const tool = server1["config"].tools!.find((t) => t.name === "describe_detail");
+    const tool = server1["config"].tools?.find((t) => t.name === "describe_detail");
     expect(tool).toBeDefined();
-    expect(tool!.inputSchema.properties.format.type).toBe("string");
-    expect(tool!.inputSchema.properties.verbose.type).toBe("boolean");
-    expect(tool!.inputSchema.required).toContain("format");
+    expect(tool?.inputSchema.properties.format.type).toBe("string");
+    expect(tool?.inputSchema.properties.verbose.type).toBe("boolean");
+    expect(tool?.inputSchema.required).toContain("format");
   });
 });
 
@@ -269,9 +269,9 @@ describe("Virtual Tools - Describe Schema Variations", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
 
-    const tool = server["config"].tools!.find((t) => t.name === "optional_params");
-    expect(tool!.inputSchema.required).toContain("required_param");
-    expect(tool!.inputSchema.required).not.toContain("optional_param");
+    const tool = server["config"].tools?.find((t) => t.name === "optional_params");
+    expect(tool?.inputSchema.required).toContain("required_param");
+    expect(tool?.inputSchema.required).not.toContain("optional_param");
   });
 
   test("can create tool with array parameters", async () => {
@@ -288,8 +288,8 @@ describe("Virtual Tools - Describe Schema Variations", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
 
-    const tool = server["config"].tools!.find((t) => t.name === "array_params");
-    expect(tool!.inputSchema.properties.items.type).toBe("array");
+    const tool = server["config"].tools?.find((t) => t.name === "array_params");
+    expect(tool?.inputSchema.properties.items.type).toBe("array");
   });
 
   test("can create tool with object parameters", async () => {
@@ -306,8 +306,8 @@ describe("Virtual Tools - Describe Schema Variations", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
 
-    const tool = server["config"].tools!.find((t) => t.name === "object_params");
-    expect(tool!.inputSchema.properties.data.type).toBe("object");
+    const tool = server["config"].tools?.find((t) => t.name === "object_params");
+    expect(tool?.inputSchema.properties.data.type).toBe("object");
   });
 
   test("schemas maintain type integrity", async () => {

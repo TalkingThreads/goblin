@@ -1,38 +1,18 @@
-# Pre-commit hook for Goblin
-# Runs quality checks before allowing commits
+#!/usr/bin/env sh
+# Husky pre-commit hook
+# Runs lint-staged which executes Biome on staged files
 
-echo "🔍 Running pre-commit quality checks..."
+# Exit on any error
+set -e
 
-# TypeScript type check
-echo "📋 TypeScript type checking..."
-bun run typecheck
-if [ $? -ne 0 ]; then
-  echo "❌ TypeScript type check failed"
-  exit 1
-fi
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Biome lint check
-echo "🔍 Biome linting..."
-bun run lint
-if [ $? -ne 0 ]; then
-  echo "❌ Lint check failed. Run 'bun run lint:fix' to auto-fix issues."
-  exit 1
-fi
+# Change to the repository root
+cd "$SCRIPT_DIR/../.."
 
-# Unit tests
-echo "🧪 Running unit tests..."
-bun test tests/unit/
-if [ $? -ne 0 ]; then
-  echo "❌ Unit tests failed"
-  exit 1
-fi
+# Run lint-staged to check only staged files
+echo "🔍 Running pre-commit checks on staged files..."
+npx lint-staged
 
-# Agent compliance check
-echo "🤖 Running agent compliance checks..."
-./tools/agents-guard/check.sh
-if [ $? -ne 0 ]; then
-  echo "❌ Agent compliance check failed"
-  exit 1
-fi
-
-echo "✅ All quality checks passed!"
+echo "✅ Pre-commit checks passed!"

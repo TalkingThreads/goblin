@@ -105,19 +105,19 @@ describe("Virtual Tools - Catalog Aggregation", () => {
   });
 
   test("both servers have same tool count", async () => {
-    expect(server1["config"].tools!.length).toBe(server2["config"].tools!.length);
+    expect(server1["config"].tools?.length).toBe(server2["config"].tools?.length);
   });
 
   test("servers have echo tool", async () => {
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
     expect(tools1).toContain("echo");
     expect(tools2).toContain("echo");
   });
 
   test("servers have add tool", async () => {
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
     expect(tools1).toContain("add");
     expect(tools2).toContain("add");
   });
@@ -137,8 +137,8 @@ describe("Virtual Tools - Catalog Aggregation", () => {
       async () => ({ content: [{ type: "text", text: "s2" }] }),
     );
 
-    const tools1 = server1["config"].tools!.map((t) => t.name);
-    const tools2 = server2["config"].tools!.map((t) => t.name);
+    const tools1 = server1["config"].tools?.map((t) => t.name);
+    const tools2 = server2["config"].tools?.map((t) => t.name);
 
     expect(tools1).toContain("server1_unique");
     expect(tools2).toContain("server2_unique");
@@ -147,7 +147,7 @@ describe("Virtual Tools - Catalog Aggregation", () => {
   });
 
   test("combined tool count reflects all additions", async () => {
-    const initialCount = server1["config"].tools!.length + server2["config"].tools!.length;
+    const initialCount = server1["config"].tools?.length + server2["config"].tools?.length;
 
     server1.addTool(
       "s1_extra",
@@ -162,7 +162,7 @@ describe("Virtual Tools - Catalog Aggregation", () => {
       async () => ({ content: [{ type: "text", text: "2" }] }),
     );
 
-    const finalCount = server1["config"].tools!.length + server2["config"].tools!.length;
+    const finalCount = server1["config"].tools?.length + server2["config"].tools?.length;
     expect(finalCount).toBe(initialCount + 2);
   });
 });
@@ -183,26 +183,26 @@ describe("Virtual Tools - Catalog Schema", () => {
   });
 
   test("echo tool has correct schema", async () => {
-    const echo = server["config"].tools!.find((t) => t.name === "echo");
-    expect(echo!.inputSchema.type).toBe("object");
-    expect(echo!.inputSchema.properties.message.type).toBe("string");
-    expect(echo!.inputSchema.required).toContain("message");
+    const echo = server["config"].tools?.find((t) => t.name === "echo");
+    expect(echo?.inputSchema.type).toBe("object");
+    expect(echo?.inputSchema.properties.message.type).toBe("string");
+    expect(echo?.inputSchema.required).toContain("message");
   });
 
   test("add tool has correct schema", async () => {
-    const add = server["config"].tools!.find((t) => t.name === "add");
-    expect(add!.inputSchema.type).toBe("object");
-    expect(add!.inputSchema.properties.a.type).toBe("number");
-    expect(add!.inputSchema.properties.b.type).toBe("number");
-    expect(add!.inputSchema.required).toContain("a");
-    expect(add!.inputSchema.required).toContain("b");
+    const add = server["config"].tools?.find((t) => t.name === "add");
+    expect(add?.inputSchema.type).toBe("object");
+    expect(add?.inputSchema.properties.a.type).toBe("number");
+    expect(add?.inputSchema.properties.b.type).toBe("number");
+    expect(add?.inputSchema.required).toContain("a");
+    expect(add?.inputSchema.required).toContain("b");
   });
 
   test("get_time tool has empty schema", async () => {
-    const getTime = server["config"].tools!.find((t) => t.name === "get_time");
-    expect(getTime!.inputSchema.type).toBe("object");
-    expect(getTime!.inputSchema.properties).toEqual({});
-    expect(getTime!.inputSchema.required).toEqual([]);
+    const getTime = server["config"].tools?.find((t) => t.name === "get_time");
+    expect(getTime?.inputSchema.type).toBe("object");
+    expect(getTime?.inputSchema.properties).toEqual({});
+    expect(getTime?.inputSchema.required).toEqual([]);
   });
 
   test("all tools have type object", async () => {
@@ -244,11 +244,11 @@ describe("Virtual Tools - Catalog Dynamic", () => {
       async () => ({ content: [{ type: "text", text: "ok" }] }),
     );
 
-    const tool = server["config"].tools!.find((t) => t.name === "complex_tool");
-    expect(tool!.inputSchema.properties.name.type).toBe("string");
-    expect(tool!.inputSchema.properties.age.type).toBe("number");
-    expect(tool!.inputSchema.properties.active.type).toBe("boolean");
-    expect(tool!.inputSchema.required).toContain("name");
+    const tool = server["config"].tools?.find((t) => t.name === "complex_tool");
+    expect(tool?.inputSchema.properties.name.type).toBe("string");
+    expect(tool?.inputSchema.properties.age.type).toBe("number");
+    expect(tool?.inputSchema.properties.active.type).toBe("boolean");
+    expect(tool?.inputSchema.required).toContain("name");
   });
 
   test("can add multiple tools", async () => {
@@ -261,7 +261,7 @@ describe("Virtual Tools - Catalog Dynamic", () => {
       );
     }
 
-    expect(server["config"].tools!.length).toBe(3 + 5);
+    expect(server["config"].tools?.length).toBe(3 + 5);
   });
 
   test("all dynamic tools are accessible", async () => {
@@ -304,22 +304,22 @@ describe("Virtual Tools - Catalog Handlers", () => {
   });
 
   test("echo handler returns text content", async () => {
-    const echo = server["config"].tools!.find((t) => t.name === "echo");
-    const result = await echo!.handler({ message: "test" });
+    const echo = server["config"].tools?.find((t) => t.name === "echo");
+    const result = await echo?.handler({ message: "test" });
     expect(result.content[0].type).toBe("text");
     expect(result.content[0].text).toBe("Echo: test");
   });
 
   test("add handler returns text content", async () => {
-    const add = server["config"].tools!.find((t) => t.name === "add");
-    const result = await add!.handler({ a: 5, b: 3 });
+    const add = server["config"].tools?.find((t) => t.name === "add");
+    const result = await add?.handler({ a: 5, b: 3 });
     expect(result.content[0].type).toBe("text");
     expect(result.content[0].text).toBe("Result: 8");
   });
 
   test("get_time handler returns text content", async () => {
-    const getTime = server["config"].tools!.find((t) => t.name === "get_time");
-    const result = await getTime!.handler({});
+    const getTime = server["config"].tools?.find((t) => t.name === "get_time");
+    const result = await getTime?.handler({});
     expect(result.content[0].type).toBe("text");
     expect(result.content[0].text).toContain("Current time:");
   });
