@@ -7,6 +7,7 @@ interface ServerListProps {
   onSelectServer: (server: TuiServer) => void;
   onAddServer: () => void;
   onContextMenu?: (server: TuiServer) => void;
+  isActive: boolean;
 }
 
 interface ServerItemProps {
@@ -53,15 +54,16 @@ const ServerList = memo(function ServerList({
   onSelectServer,
   onAddServer,
   onContextMenu,
+  isActive,
 }: ServerListProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const handleUp = useCallback(() => {
-    setSelectedIndex((prev) => (prev > 0 ? prev - 1 : servers.length));
+    setSelectedIndex((prev) => (prev > 0 ? prev - 1 : Math.max(0, servers.length - 1)));
   }, [servers.length]);
 
   const handleDown = useCallback(() => {
-    setSelectedIndex((prev) => (prev < servers.length ? prev + 1 : 0));
+    setSelectedIndex((prev) => (prev < servers.length - 1 ? prev + 1 : 0));
   }, [servers.length]);
 
   const handleEnter = useCallback(() => {
@@ -98,13 +100,18 @@ const ServerList = memo(function ServerList({
         handleContextMenuAction();
       }
     },
-    { isActive: true },
+    { isActive },
   );
 
   return (
-    <Box flexDirection="column" borderStyle="single" paddingX={1}>
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      borderColor={isActive ? "cyan" : "gray"}
+      paddingX={1}
+    >
       <Box marginBottom={1}>
-        <Text bold underline color="cyan">
+        <Text bold underline color={isActive ? "cyan" : "gray"}>
           SERVERS ({servers.length})
         </Text>
         <Box marginLeft={2}>

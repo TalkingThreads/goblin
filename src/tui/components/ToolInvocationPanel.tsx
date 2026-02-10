@@ -6,6 +6,7 @@ import type { ToolCard } from "../../gateway/types.js";
 interface ToolInvocationPanelProps {
   tools: ToolCard[];
   gateway: GoblinGateway | null;
+  isActive: boolean;
 }
 
 type InvokeStep = "tool-select" | "args-edit" | "result";
@@ -22,6 +23,7 @@ interface ToolInvocationState {
 const ToolInvocationPanel = memo(function ToolInvocationPanel({
   tools,
   gateway,
+  isActive,
 }: ToolInvocationPanelProps) {
   const [state, setState] = useState<ToolInvocationState>({
     step: "tool-select",
@@ -65,21 +67,6 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
       setState((prev) => ({ ...prev, step: "result" }));
     }
   }, [state.step]);
-
-  const handleEnter = useCallback(() => {
-    if (state.step === "tool-select") {
-      setState((prev) => ({ ...prev, step: "args-edit" }));
-    } else if (state.step === "args-edit") {
-      handleInvoke();
-    } else if (state.step === "result") {
-      setState((prev) => ({
-        ...prev,
-        step: "tool-select",
-        result: null,
-        error: null,
-      }));
-    }
-  }, [state.step, handleInvoke]);
 
   const handleInvoke = useCallback(async () => {
     const tool = tools[state.selectedToolIndex];
@@ -127,6 +114,21 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
     }
   }, [tools, state.selectedToolIndex, state.argsText, gateway]);
 
+  const handleEnter = useCallback(() => {
+    if (state.step === "tool-select") {
+      setState((prev) => ({ ...prev, step: "args-edit" }));
+    } else if (state.step === "args-edit") {
+      handleInvoke();
+    } else if (state.step === "result") {
+      setState((prev) => ({
+        ...prev,
+        step: "tool-select",
+        result: null,
+        error: null,
+      }));
+    }
+  }, [state.step, handleInvoke]);
+
   const handleKey = useCallback(
     (input: string) => {
       if (state.step === "args-edit") {
@@ -147,28 +149,28 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
   );
 
   useInput(
-    (input) => {
-      if (input === "\t") {
-        handleTab();
+    (input, key) => {
+      if (key.tab) {
+        if (key.shift) {
+          handleBackTab();
+        } else {
+          handleTab();
+        }
         return;
       }
-      if (input === "\u001b[Z") {
-        handleBackTab();
-        return;
-      }
-      if (input === "\r" || input === "\n") {
+      if (key.return) {
         handleEnter();
         return;
       }
-      if (input === "k" || input === "↑") {
+      if (input === "k" || key.upArrow) {
         handleUp();
         return;
       }
-      if (input === "j" || input === "↓") {
+      if (input === "j" || key.downArrow) {
         handleDown();
         return;
       }
-      if (input === "Escape") {
+      if (key.escape) {
         setState((prev) => ({
           ...prev,
           step: "tool-select",
@@ -180,7 +182,7 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
 
       handleKey(input);
     },
-    { isActive: true },
+    { isActive },
   );
 
   const selectedTool = tools[state.selectedToolIndex];
@@ -189,12 +191,12 @@ const ToolInvocationPanel = memo(function ToolInvocationPanel({
     <Box
       flexDirection="column"
       borderStyle="single"
-      borderColor="magenta"
+      borderColor={isActive ? "magenta" : "gray"}
       paddingX={1}
       flexGrow={1}
     >
       <Box marginBottom={1}>
-        <Text bold underline color="magenta">
+        <Text bold underline color={isActive ? "magenta" : "gray"}>
           TOOL INVOCATION
         </Text>
         <Box marginLeft={2}>

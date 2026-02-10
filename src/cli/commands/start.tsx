@@ -68,17 +68,21 @@ export async function startGateway(
     // Render TUI if requested
     if (options.tui) {
       logger.info("Starting TUI mode...");
-      render(<App gateway={gateway} />);
+      const { waitUntilExit } = render(<App gateway={gateway} />);
+      await waitUntilExit();
+      console.log("Shutting down...");
+      await gateway.stop();
+      process.exit(0);
     } else {
       // Print info message
       console.log("\n🟢 Goblin Gateway is running");
-      console.log(`   HTTP: http://${config.gateway.host}:${config.gateway.port}`);
+      console.log(`   HTTP: http://${config.gateway.host}:${config.gateway.port}/mcp`);
       console.log(`   SSE:  http://${config.gateway.host}:${config.gateway.port}/sse`);
       console.log("\nPress Ctrl+C to stop\n");
-    }
 
-    // Keep process running
-    await new Promise(() => {});
+      // Keep process running
+      await new Promise(() => {});
+    }
   } catch (error: any) {
     logger.error(
       {

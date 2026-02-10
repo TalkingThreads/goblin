@@ -182,7 +182,7 @@ goblin tools --search "list_files"
 Once Goblin is running, connect your MCP clients to:
 
 ```
-http://127.0.0.1:3000
+http://127.0.0.1:3000/mcp
 ```
 
 ### Using SSE (Server-Sent Events)

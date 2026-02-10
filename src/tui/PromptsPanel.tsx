@@ -7,7 +7,13 @@ import { useFilteredPrompts, useGatewayData } from "./hooks/useGatewayData.js";
  * PromptsPanel Component
  * Displays available prompts with filtering and search capabilities
  */
-const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
+const PromptsPanel = ({
+  gateway,
+  isActive,
+}: {
+  gateway: GoblinGateway | null;
+  isActive: boolean;
+}) => {
   const { prompts } = useGatewayData(gateway);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [filterServer, setFilterServer] = useState<string | null>(null);
@@ -25,30 +31,40 @@ const PromptsPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
     }
   }, [filteredPrompts.length, selectedIndex]);
 
-  useInput((input, key) => {
-    if (key.upArrow) {
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-    }
-    if (key.downArrow) {
-      setSelectedIndex((prev) => (prev < filteredPrompts.length - 1 ? prev + 1 : prev));
-    }
-    if (input === "f") {
-      // Toggle server filter
-      setFilterServer((prev) => {
-        const currentIdx = serverNames.indexOf(prev);
-        const nextIdx = currentIdx < serverNames.length - 1 ? currentIdx + 1 : -1;
-        return nextIdx >= 0 ? (serverNames[nextIdx] ?? null) : null;
-      });
-    }
-    if (input === "/") {
-      // Enter search mode (simplified - just clears selection)
-    }
-  });
+  useInput(
+    (input, key) => {
+      if (key.upArrow) {
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+      }
+      if (key.downArrow) {
+        setSelectedIndex((prev) => (prev < filteredPrompts.length - 1 ? prev + 1 : prev));
+      }
+      if (input === "f") {
+        // Toggle server filter
+        setFilterServer((prev) => {
+          const currentIdx = prev ? serverNames.indexOf(prev) : -1;
+          const nextIdx = currentIdx < serverNames.length - 1 ? currentIdx + 1 : -1;
+          return nextIdx >= 0 ? (serverNames[nextIdx] ?? null) : null;
+        });
+      }
+      if (input === "/") {
+        // Enter search mode (simplified - just clears selection)
+      }
+    },
+    { isActive },
+  );
 
   return (
-    <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={1} minWidth={40}>
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      borderColor={isActive ? "magenta" : "gray"}
+      paddingX={1}
+      flexGrow={1}
+      minWidth={40}
+    >
       <Box marginBottom={1}>
-        <Text bold underline color="magenta">
+        <Text bold underline color={isActive ? "magenta" : "gray"}>
           AVAILABLE PROMPTS
         </Text>
       </Box>

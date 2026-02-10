@@ -59,7 +59,11 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
     // We explicitly create a single GatewayServer instance for the STDIO connection
     const server = new GatewayServer(gateway.registry, gateway.router, config);
 
-    // 6. Connect Transport
+    // 6. Start the transport to begin listening for stdin
+    logger.info("Starting STDIO transport...");
+    await transport.start();
+
+    // 7. Connect Transport
     logger.info("Connecting to STDIO transport...");
     await server.connect(transport);
 

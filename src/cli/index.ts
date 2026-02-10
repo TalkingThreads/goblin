@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
-import { setLogToStderr } from "../observability/logger.js";
+import { setGlobalLogLevel, setLogToStderr } from "../observability/logger.js";
 import { createCompleteCommand } from "./commands/complete.js";
 import { createCompletionCommand } from "./commands/completion.js";
 import { showConfigCommand, validateConfigCommand } from "./commands/config.js";
@@ -196,7 +196,7 @@ function handleKnownSingleCommands(args: string[], VERSION: string, program: Com
       console.log(VERSION);
       process.exit(0);
     } else {
-      program.parse(args);
+      program.parse(process.argv);
     }
     return true;
   }
@@ -226,6 +226,17 @@ async function main(): Promise<void> {
 
   const args = process.argv.slice(2);
 
+  // Handle verbose flag logic
+  if (globalContext.verbose) {
+    const command = args.find((arg) => !arg.startsWith("-"));
+    const allowedVerboseCommands = ["start", "stdio"];
+
+    // Enable verbose logging only for allowed commands or if no command is specified (root/default)
+    if (!command || allowedVerboseCommands.includes(command)) {
+      setGlobalLogLevel("debug");
+    }
+  }
+
   program
     .name("goblin")
     .description("Goblin MCP Gateway CLI")
@@ -236,11 +247,13 @@ async function main(): Promise<void> {
     .option("--host <host>", "Gateway host")
     .option("--config <path>", "Path to config file")
     .option("--tui", "Launch TUI dashboard")
-    .action((options) => {
+    .action(async (options) => {
       if (options.version) {
         console.log(VERSION);
         process.exit(0);
       }
+      // Default behavior: Start STDIO
+      await startStdioGateway({ config: globalContext.configPath });
     });
 
   program

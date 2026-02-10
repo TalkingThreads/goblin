@@ -55,42 +55,6 @@ async function runCli(args: string[], timeout: number = 10000): Promise<CliResul
   });
 }
 
-async function _waitForHealth(port: number, maxAttempts: number = 20): Promise<boolean> {
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const req = request(
-          {
-            hostname: "localhost",
-            port,
-            path: "/health",
-            method: "GET",
-            timeout: 1000,
-          },
-          (res) => {
-            res.on("data", () => {
-              // Consume data
-            });
-            res.on("end", () => {
-              resolve();
-            });
-          },
-        );
-        req.on("error", reject);
-        req.on("timeout", () => {
-          req.destroy();
-          reject(new Error("Timeout"));
-        });
-        req.end();
-      });
-      return true;
-    } catch {
-      await new Promise((r) => setTimeout(r, 500));
-    }
-  }
-  return false;
-}
-
 describe("CLI Start Command", () => {
   describe("Start Command Execution", () => {
     it("should fail with invalid config", async () => {
@@ -109,6 +73,45 @@ describe("CLI Start Command", () => {
       const duration = Date.now() - startTime;
 
       expect(duration).toBeLessThan(2000);
+    });
+  });
+
+  describe("Start Command Output", () => {
+    it("should log the correct MCP endpoint", async () => {
+      return new Promise<void>((resolve, reject) => {
+        const child = spawn("bun", ["dist/cli/index.js", "start"], {
+          env: { ...process.env, NO_COLOR: "1" },
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+
+        let stdout = "";
+        let found = false;
+
+        child.stdout.on("data", (data) => {
+          stdout += data.toString();
+          if (stdout.includes("http://127.0.0.1:3000/mcp")) {
+            found = true;
+            child.kill();
+          }
+        });
+
+        const timeout = setTimeout(() => {
+          child.kill();
+          if (!found) {
+            reject(new Error(`Timeout waiting for startup log. Got: ${stdout}`));
+          }
+        }, 5000);
+
+        child.on("exit", () => {
+          clearTimeout(timeout);
+          if (found) {
+            expect(stdout).toContain("/sse");
+            resolve();
+          } else {
+            // reject(new Error("Startup log not found"));
+          }
+        });
+      });
     });
   });
 });

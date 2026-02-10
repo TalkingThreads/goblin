@@ -7,7 +7,13 @@ import { useFilteredResources, useGatewayData } from "./hooks/useGatewayData.js"
  * ResourcesPanel Component
  * Displays available resources with filtering and search capabilities
  */
-const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
+const ResourcesPanel = ({
+  gateway,
+  isActive,
+}: {
+  gateway: GoblinGateway | null;
+  isActive: boolean;
+}) => {
   const { resources } = useGatewayData(gateway);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [filterServer, setFilterServer] = useState<string | null>(null);
@@ -34,35 +40,45 @@ const ResourcesPanel = ({ gateway }: { gateway: GoblinGateway | null }) => {
     }
   }, [filteredResources.length, selectedIndex]);
 
-  useInput((input, key) => {
-    if (key.upArrow) {
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
-    }
-    if (key.downArrow) {
-      setSelectedIndex((prev) => (prev < filteredResources.length - 1 ? prev + 1 : prev));
-    }
-    if (input === "f") {
-      // Toggle server filter
-      setFilterServer((prev) => {
-        const currentIdx = serverNames.indexOf(prev);
-        const nextIdx = currentIdx < serverNames.length - 1 ? currentIdx + 1 : -1;
-        return nextIdx >= 0 ? (serverNames[nextIdx] ?? null) : null;
-      });
-    }
-    if (input === "m") {
-      // Toggle MIME type filter
-      setFilterMimeType((prev) => {
-        const currentIdx = mimeTypes.indexOf(prev);
-        const nextIdx = currentIdx < mimeTypes.length - 1 ? currentIdx + 1 : -1;
-        return nextIdx >= 0 ? (mimeTypes[nextIdx] ?? null) : null;
-      });
-    }
-  });
+  useInput(
+    (input, key) => {
+      if (key.upArrow) {
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+      }
+      if (key.downArrow) {
+        setSelectedIndex((prev) => (prev < filteredResources.length - 1 ? prev + 1 : prev));
+      }
+      if (input === "f") {
+        // Toggle server filter
+        setFilterServer((prev) => {
+          const currentIdx = prev ? serverNames.indexOf(prev) : -1;
+          const nextIdx = currentIdx < serverNames.length - 1 ? currentIdx + 1 : -1;
+          return nextIdx >= 0 ? (serverNames[nextIdx] ?? null) : null;
+        });
+      }
+      if (input === "m") {
+        // Toggle MIME type filter
+        setFilterMimeType((prev) => {
+          const currentIdx = prev ? mimeTypes.indexOf(prev) : -1;
+          const nextIdx = currentIdx < mimeTypes.length - 1 ? currentIdx + 1 : -1;
+          return nextIdx >= 0 ? (mimeTypes[nextIdx] ?? null) : null;
+        });
+      }
+    },
+    { isActive },
+  );
 
   return (
-    <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={1} minWidth={40}>
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      borderColor={isActive ? "green" : "gray"}
+      paddingX={1}
+      flexGrow={1}
+      minWidth={40}
+    >
       <Box marginBottom={1}>
-        <Text bold underline color="green">
+        <Text bold underline color={isActive ? "green" : "gray"}>
           AVAILABLE RESOURCES
         </Text>
       </Box>

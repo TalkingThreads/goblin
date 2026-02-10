@@ -297,3 +297,10 @@ export function subscribeToTuiLogs(callback: (entry: TuiLogEntry) => void): () =
 export function clearTuiLogs(): void {
   tuiLogBuffer.clear();
 }
+
+export function setGlobalLogLevel(level: LogLevel): void {
+  process.env["LOG_LEVEL"] = level;
+  for (const logger of loggerCache.values()) {
+    logger.level = level;
+  }
+}

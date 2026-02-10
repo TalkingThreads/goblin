@@ -103,6 +103,8 @@ goblin stdio
 ```
 
 That's it! Goblin is now running at `http://127.0.0.1:3000`.
+- **HTTP**: `http://127.0.0.1:3000/mcp`
+- **SSE**: `http://127.0.0.1:3000/sse`
 
 ---
 

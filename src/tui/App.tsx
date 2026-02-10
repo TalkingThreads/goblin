@@ -6,6 +6,7 @@ import ConfirmDialog from "./components/ConfirmDialog.js";
 import ServerContextMenu from "./components/ServerContextMenu.js";
 import ServerDetails from "./components/ServerDetails.js";
 import ServerList from "./components/ServerList.js";
+import Sidebar, { type SidebarItem } from "./components/Sidebar.js";
 import SlashMode from "./components/SlashMode.js";
 import ToolInvocationPanel from "./components/ToolInvocationPanel.js";
 import { useGatewayData } from "./hooks/useGatewayData.js";
@@ -45,22 +46,30 @@ const Header = memo(function Header({ gateway }: { gateway: GoblinGateway | null
 
 const LogsPane = memo(function LogsPane({
   logs,
+  isActive,
 }: {
   logs: Array<{
     timestamp: Date;
     message: string;
     level: "info" | "warn" | "error" | "debug";
   }>;
+  isActive: boolean;
 }) {
   return (
-    <Box flexDirection="column" borderStyle="single" paddingX={1} flexGrow={2} marginLeft={1}>
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      borderColor={isActive ? "cyan" : "gray"}
+      paddingX={1}
+      flexGrow={1}
+    >
       <Box marginBottom={1}>
-        <Text bold underline color="yellow">
+        <Text bold underline color={isActive ? "cyan" : "gray"}>
           RECENT ACTIVITY
         </Text>
       </Box>
       <Box flexDirection="column">
-        {logs.slice(-12).map((log, i) => (
+        {logs.slice(-20).map((log, i) => (
           <Box key={i}>
             <Text color="gray" dimColor>
               [{log.timestamp.toLocaleTimeString()}]
@@ -81,16 +90,12 @@ const LogsPane = memo(function LogsPane({
   );
 });
 
-const Footer = memo(function Footer({ showMetrics }: { showMetrics: boolean }) {
+const Footer = memo(function Footer({ showMetrics: _showMetrics }: { showMetrics: boolean }) {
   return (
     <Box marginTop={1} paddingX={1} justifyContent="space-between">
       <Box>
         <Text color="gray">
-          q: <Text dimColor>Quit</Text>
-          <Text color="gray"> | r: </Text>
-          <Text dimColor>Reload</Text>
-          <Text color="gray"> | m: </Text>
-          <Text dimColor={!showMetrics}>Metrics</Text>
+          <Text dimColor>Tab: Focus | q: Quit | m: Metrics</Text>
         </Text>
       </Box>
       <Box>
@@ -110,6 +115,11 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
   const [activeScreen, setActiveScreen] = useState<TuiScreen>("dashboard");
   const [selectedServer, setSelectedServer] = useState<TuiServer | null>(null);
   const [contextMenuServer, setContextMenuServer] = useState<TuiServer | null>(null);
+
+  // Layout State
+  const [activeView, setActiveView] = useState<SidebarItem>("servers");
+  const [focusArea, setFocusArea] = useState<"sidebar" | "content">("sidebar");
+
   const { servers, tools, logs } = useGatewayData(gateway);
 
   const handleSelectServer = useCallback((server: TuiServer) => {
@@ -181,7 +191,7 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
     setSelectedServer(null);
   }, []);
 
-  useInput((input) => {
+  useInput((input, key) => {
     if (activeScreen !== "dashboard") {
       if (input === "\u001b") {
         if (activeScreen === "add-server") {
@@ -195,14 +205,39 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
 
     if (slashMode) {
       if (input === "/") {
+        // Handled by SlashMode component
       }
       return;
     }
 
+    // Global navigation
+    if (key.tab) {
+      setFocusArea((prev) => (prev === "sidebar" ? "content" : "sidebar"));
+      return;
+    }
+
+    if (focusArea === "sidebar") {
+      if (key.return || input === " ") {
+        setFocusArea("content");
+        return;
+      }
+    }
+
+    if (focusArea === "content") {
+      if (key.escape) {
+        setFocusArea("sidebar");
+        return;
+      }
+    }
+
+    // Global hotkeys (when not in content mode that consumes input)
+    // We allow these if focus is sidebar OR if the active content doesn't aggressively consume all keys
+    // For safety, let's keep them global but handle conflicts in sub-components if needed.
+    // Actually, sub-components with useInput({isActive: true}) will consume input first if they return/stop propagation?
+    // Ink doesn't stop propagation by default.
+
     if (input === "q") {
       exit();
-    }
-    if (input === "r") {
     }
     if (input === "m") {
       setShowMetrics((prev) => !prev);
@@ -222,8 +257,9 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
   };
 
   return (
-    <Box flexDirection="column" padding={1}>
+    <Box flexDirection="column" padding={1} height="100%">
       <Header gateway={gateway} />
+
       {slashMode && (
         <SlashMode
           registry={gateway?.registry ?? null}
@@ -231,6 +267,8 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
           onExit={handleSlashExit}
         />
       )}
+
+      {/* Modal Dialogs */}
       {activeScreen === "add-server" && (
         <AddServerForm onSubmit={handleAddServerSubmit} onCancel={handleAddServerCancel} />
       )}
@@ -252,21 +290,48 @@ const App = ({ gateway }: { gateway: GoblinGateway | null }) => {
           onClose={handleContextMenuClose}
         />
       )}
+
+      {/* Main Dashboard Layout */}
       {activeScreen === "dashboard" && (
-        <Box flexGrow={1} height={18}>
-          <ServerList
-            servers={servers as import("./types.js").TuiServer[]}
-            onSelectServer={handleSelectServer}
-            onAddServer={handleAddServer}
-            onContextMenu={handleContextMenu}
+        <Box flexDirection="row" flexGrow={1}>
+          {/* Left Sidebar */}
+          <Sidebar
+            activeView={activeView}
+            onSelect={setActiveView}
+            isActive={focusArea === "sidebar"}
           />
-          <ToolInvocationPanel tools={tools} gateway={gateway} />
-          <PromptsPanel gateway={gateway} />
-          <ResourcesPanel gateway={gateway} />
-          {showMetrics && <MetricsPanel />}
-          <LogsPane logs={logs} />
+
+          {/* Right Content Area */}
+          <Box flexGrow={1} flexDirection="column">
+            {activeView === "servers" && (
+              <ServerList
+                servers={servers as import("./types.js").TuiServer[]}
+                onSelectServer={handleSelectServer}
+                onAddServer={handleAddServer}
+                onContextMenu={handleContextMenu}
+                isActive={focusArea === "content"}
+              />
+            )}
+            {activeView === "tools" && (
+              <ToolInvocationPanel
+                tools={tools}
+                gateway={gateway}
+                isActive={focusArea === "content"}
+              />
+            )}
+            {activeView === "prompts" && (
+              <PromptsPanel gateway={gateway} isActive={focusArea === "content"} />
+            )}
+            {activeView === "resources" && (
+              <ResourcesPanel gateway={gateway} isActive={focusArea === "content"} />
+            )}
+            {activeView === "logs" && <LogsPane logs={logs} isActive={focusArea === "content"} />}
+
+            {showMetrics && <MetricsPanel />}
+          </Box>
         </Box>
       )}
+
       {activeScreen === "dashboard" && <Footer showMetrics={showMetrics} />}
     </Box>
   );

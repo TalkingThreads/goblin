@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Redesigned TUI**:
+  - Implemented a Sidebar + Content layout for better organization.
+  - Added robust focus management with visual indicators (colored borders).
+  - Improved keyboard navigation: Tab to switch focus, Arrow keys for selection, Enter to activate.
+  - Sidebar menu with Servers, Tools, Prompts, Resources, and Logs views.
+  - Tool Invocation Panel now supports full keyboard navigation and correct input handling.
+
+### Fixed
+
+- **CLI Stability**:
+  - Fixed `goblin start` and `goblin stdio` prematurely exiting due to incorrect argument parsing.
+  - Fixed `goblin --verbose` command exiting without action; now defaults to starting STDIO mode.
+  - Fixed TUI crash (`ReferenceError`) caused by incorrect variable initialization order in `ToolInvocationPanel`.
+  - Fixed TUI exit behavior (`q` key) to properly shut down the gateway and process.
+
+- **Verbose Logging**:
+  - Fixed `goblin <command> --verbose` not enabling debug logs.
+  - Scoped verbose logging to only `start`, `stdio`, and default commands to prevent noise in output-sensitive commands like `tools`.
+
+- **Documentation**:
+  - Updated startup logs to correctly point to `http://<host>:<port>/mcp` for the MCP endpoint.
+  - Updated `README.md` and `docs/getting-started.md` with correct endpoints.
+
+### Changed
+
+- **HTTP Endpoint**: Updated startup message to explicitly show `/mcp` as the HTTP endpoint for clarity.
+
+### Quality Safeguards
+
 - **Quality Safeguards**: Comprehensive quality assurance system (7 phases)
   - **Phase 1 - Foundation**: Husky pre-commit hooks with TypeScript, Biome lint, unit tests
   - **Phase 2 - Process**: Changelog validation workflow, quality documentation in AGENTS.md and README
