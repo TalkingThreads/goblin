@@ -151,7 +151,7 @@ async function runHttpMode(
 
   setupShutdownHandlers(shutdown);
 
-  await gateway.start(config, configPath);
+  await gateway.start(config, configPath, transportType);
 
   logger.info(
     { port: config.gateway.port, host: config.gateway.host, transportType },
@@ -160,8 +160,12 @@ async function runHttpMode(
 
   console.log("\n🟢 Goblin Gateway is running");
   console.log(`   REST API: http://${config.gateway.host}:${config.gateway.port}/`);
-  console.log(`   MCP:      http://${config.gateway.host}:${config.gateway.port}/mcp`);
-  console.log(`   SSE:      http://${config.gateway.host}:${config.gateway.port}/sse`);
+  if (transportType === "http") {
+    console.log(`   MCP:      http://${config.gateway.host}:${config.gateway.port}/mcp`);
+  } else {
+    console.log(`   SSE:      http://${config.gateway.host}:${config.gateway.port}/sse`);
+    console.log(`   Messages: http://${config.gateway.host}:${config.gateway.port}/messages`);
+  }
   console.log("\nPress Ctrl+C to stop\n");
 
   await new Promise(() => {});

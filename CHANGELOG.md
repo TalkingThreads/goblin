@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `goblin start` now supports `--transport` option with values: `http`, `sse`, `stdio` (default: stdio).
   - REST API is always available when using `--transport http` or `--transport sse`.
 
+- **Transport Modes**:
+  - `--transport http`: Only exposes `/mcp` endpoint (Streamable HTTP transport)
+  - `--transport sse`: Only exposes `/sse` and `/messages` endpoints (SSE transport)
+  - Both modes include all REST API endpoints (`/api/v1/*`, `/tools`, `/servers`, `/health`, etc.)
+
 ### Added
 
 - **Configuration System**:

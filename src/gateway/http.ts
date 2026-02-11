@@ -33,6 +33,8 @@ const logger = createLogger("http-gateway");
 const TIMEOUT_MS = 30000;
 const MCP_TIMEOUT_MS = 60000;
 
+export type TransportMode = "http" | "sse";
+
 export class HttpGateway {
   public app: Hono;
   private sessions = new Map<
@@ -56,6 +58,7 @@ export class HttpGateway {
     private registry: Registry,
     private router: Router,
     private config: Config,
+    private transportMode: TransportMode = "http",
   ) {
     this.slashCommandRouter = new SlashCommandRouter(this.registry, this.router);
     this.sessionTimeoutMs = config.streamableHttp?.sessionTimeout ?? 300000;
@@ -297,87 +300,87 @@ export class HttpGateway {
       return c.json(metricsRegistry.toJSON());
     });
 
-    // SSE Endpoint
-    this.app.get("/sse", async (c) => {
-      const sessionId = crypto.randomUUID();
+    if (this.transportMode === "sse") {
+      // SSE Endpoint
+      this.app.get("/sse", async (c) => {
+        const sessionId = crypto.randomUUID();
 
-      return streamSSE(c, async (stream) => {
-        const requestId = getRequestId();
-        logger.info({ sessionId, requestId }, "SSE connection established");
-
-        // Create transport
-        const transport = createHonoSseTransport("/messages", c, stream);
-        this.sessions.set(sessionId, { transport, server: null }); // Placeholder
-
-        // Send endpoint event
-        await stream.writeSSE({
-          event: "endpoint",
-          data: `/messages?sessionId=${sessionId}`,
-        });
-
-        // Create GatewayServer for this session
-        const server = new GatewayServer(this.registry, this.router, this.config);
-        // biome-ignore lint/style/noNonNullAssertion: Session was just created above, guaranteed to exist
-        this.sessions.get(sessionId)!.server = server;
-
-        // Connect server to transport
-        await server.connect(transport);
-
-        // Cleanup on disconnect
-        stream.onAbort(async () => {
+        return streamSSE(c, async (stream) => {
           const requestId = getRequestId();
-          logger.info({ sessionId, requestId }, "SSE connection closed");
-          const session = this.sessions.get(sessionId);
-          if (session?.server) {
-            await session.server.close();
-            this.sessions.delete(sessionId);
+          logger.info({ sessionId, requestId }, "SSE connection established");
+
+          // Create transport
+          const transport = createHonoSseTransport("/messages", c, stream);
+          this.sessions.set(sessionId, { transport, server: null }); // Placeholder
+
+          // Send endpoint event
+          await stream.writeSSE({
+            event: "endpoint",
+            data: `/messages?sessionId=${sessionId}`,
+          });
+
+          // Create GatewayServer for this session
+          const server = new GatewayServer(this.registry, this.router, this.config);
+          // biome-ignore lint/style/noNonNullAssertion: Session was just created above, guaranteed to exist
+          this.sessions.get(sessionId)!.server = server;
+
+          // Connect server to transport
+          await server.connect(transport);
+
+          // Cleanup on disconnect
+          stream.onAbort(async () => {
+            const requestId = getRequestId();
+            logger.info({ sessionId, requestId }, "SSE connection closed");
+            const session = this.sessions.get(sessionId);
+            if (session?.server) {
+              await session.server.close();
+              this.sessions.delete(sessionId);
+            }
+          });
+
+          // Keep alive
+          while (true) {
+            await stream.sleep(30000);
           }
         });
+      });
 
-        // Keep alive
-        while (true) {
-          await stream.sleep(30000);
-          // Just waiting, Hono handles keep-alive if configured?
-          // Or we can send comments.
+      // Messages Endpoint
+      this.app.post("/messages", async (c) => {
+        const sessionId = c.req.query("sessionId");
+
+        if (!sessionId || !this.sessions.has(sessionId)) {
+          return c.json({ error: "Session not found" }, 404);
+        }
+
+        // biome-ignore lint/style/noNonNullAssertion: Session existence checked above
+        const { transport } = this.sessions.get(sessionId)!;
+
+        try {
+          const body = await c.req.json();
+          await transport.handleMessage(body);
+        } catch (error) {
+          const requestId = getRequestId();
+          logger.error({ sessionId, error, requestId }, "Message handling failed");
+          return c.json({ error: "Internal error" }, 500);
+        }
+
+        return c.json({ success: true }); // Acknowledge
+      });
+    } else {
+      // Streamable HTTP Endpoint (for http mode)
+      this.app.all("/mcp", async (c) => {
+        const requestId = getRequestId();
+
+        try {
+          const response = await this.handleStreamableHttpRequest(c.req.raw);
+          return response;
+        } catch (error) {
+          logger.error({ error, requestId }, "Streamable HTTP request failed");
+          return c.json({ error: "Internal server error" }, 500);
         }
       });
-    });
-
-    // Messages Endpoint
-    this.app.post("/messages", async (c) => {
-      const sessionId = c.req.query("sessionId");
-
-      if (!sessionId || !this.sessions.has(sessionId)) {
-        return c.json({ error: "Session not found" }, 404);
-      }
-
-      // biome-ignore lint/style/noNonNullAssertion: Session existence checked above
-      const { transport } = this.sessions.get(sessionId)!;
-
-      try {
-        const body = await c.req.json();
-        await transport.handleMessage(body);
-      } catch (error) {
-        const requestId = getRequestId();
-        logger.error({ sessionId, error, requestId }, "Message handling failed");
-        return c.json({ error: "Internal error" }, 500);
-      }
-
-      return c.json({ success: true }); // Acknowledge
-    });
-
-    // Streamable HTTP Endpoint (POST /mcp)
-    this.app.all("/mcp", async (c) => {
-      const requestId = getRequestId();
-
-      try {
-        const response = await this.handleStreamableHttpRequest(c.req.raw);
-        return response;
-      } catch (error) {
-        logger.error({ error, requestId }, "Streamable HTTP request failed");
-        return c.json({ error: "Internal server error" }, 500);
-      }
-    });
+    }
 
     // Slash Commands Endpoints
     this.app.get("/api/v1/slashes", async (c) => {

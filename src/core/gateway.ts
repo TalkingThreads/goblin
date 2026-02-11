@@ -155,13 +155,18 @@ export class GoblinGateway {
    *
    * @param customConfig - Optional pre-loaded configuration
    * @param configPath - Optional path to the configuration file
+   * @param transportMode - Transport mode: "http" or "sse"
    */
-  async start(customConfig?: Config, configPath?: string): Promise<void> {
+  async start(
+    customConfig?: Config,
+    configPath?: string,
+    transportMode: "http" | "sse" = "http",
+  ): Promise<void> {
     const config = await this.initialize(customConfig, configPath);
 
     // Start HTTP
     // biome-ignore lint/style/noNonNullAssertion: Router initialized in initialize()
-    this.httpGateway = new HttpGateway(this.registry, this.router!, config);
+    this.httpGateway = new HttpGateway(this.registry, this.router!, config, transportMode);
 
     // Set up shutdown callback for graceful stop via API
     this.httpGateway.setShutdownCallback(() => {
