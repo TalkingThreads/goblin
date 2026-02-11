@@ -1005,48 +1005,60 @@ For hot reload to work:
 
 ---
 
-## Logging and Health
+## Logging
 
-### `goblin logs`
+Goblin uses session-based file logging. All logs are written to `~/.goblin/logs/` directory.
 
-Show gateway logs with filtering.
+### Log Location
 
-**Basic Usage**:
-```bash
-goblin logs
+```
+~/.goblin/logs/goblin-{ISO-timestamp}.log
 ```
 
-**Options**:
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--follow` | Follow logs in real-time | false |
-| `--level` | Filter by log level | all |
-| `--limit` | Number of lines | 100 |
-| `--server` | Filter by server | all |
-| `--json` | Output JSON | - |
+Example: `~/.goblin/logs/goblin-2026-02-11T21-14-08.log`
 
-**Examples**:
-```bash
-# Show recent logs
-goblin logs
+### Log Format
 
-# Follow logs
-goblin logs -f
+Logs are written in JSON format for easy parsing:
 
-# Filter by level
-goblin logs --level error
-
-# JSON output
-goblin logs --json
+```json
+{"level":30,"time":"2026-02-11T21:14:08.766Z","pid":12345,"hostname":"hostname","name":"goblin","component":"cli-stdio","msg":"Starting Goblin in STDIO mode..."}
 ```
 
-**Log Levels**:
-- `trace` - Detailed debugging information
-- `debug` - Technical debugging details
-- `info` - Normal operations and state changes
-- `warn` - Recoverable issues and degraded performance
-- `error` - Failures and exceptions
-- `fatal` - Process-threatening errors
+### Log Levels
+
+| Level | Description |
+|-------|-------------|
+| `trace` | Detailed debugging information |
+| `debug` | Technical debugging details |
+| `info` | Normal operations and state changes |
+| `warn` | Recoverable issues and degraded performance |
+| `error` | Failures and exceptions |
+| `fatal` | Process-threatening errors |
+
+### Environment Variables for Logging
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LOG_LEVEL` | Logging level (trace, debug, info, warn, error, fatal) | info |
+| `LOG_FORMAT` | Log format (pretty, json) | pretty (dev), json (prod) |
+| `DEBUG` | Enable debug mode (sets LOG_LEVEL to trace) | false |
+
+### STDIO Mode Logging
+
+In STDIO mode, logs are written to the log file only. The `[Goblin] Logging to <path>` message is printed to stderr to indicate where logs are being written.
+
+```bash
+$ goblin
+[Goblin] Logging to C:\Users\user\.goblin\logs\goblin-2026-02-11T21-14-08.log
+Goblin STDIO server running
+```
+
+### Log File Management
+
+- Each CLI session creates a new log file with timestamp
+- Log files are never rotated automatically
+- Manually delete old logs from `~/.goblin/logs/` to save disk space
 
 ### `goblin metrics`
 
@@ -1379,12 +1391,19 @@ goblin status || exit $?
 
 ## Environment Variables
 
+### Logging Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LOG_LEVEL` | Logging level (trace, debug, info, warn, error, fatal) | info |
+| `LOG_FORMAT` | Log format (pretty, json) | pretty (dev), json (prod) |
+| `DEBUG` | Enable debug mode (sets LOG_LEVEL to trace) | false |
+
 ### Core Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `GOBLIN_CONFIG_PATH` | Path to config file | OS default |
-| `LOG_LEVEL` | Logging level | info |
 | `GOBLIN_PORT` | Gateway port | 3000 |
 | `GOBLIN_HOST` | Gateway host | 127.0.0.1 |
 | `GOBLIN_TIMEOUT` | Default timeout | 30s |
@@ -1512,6 +1531,33 @@ echo "Found tool: $TOOL_ID"
 # This is just for demonstration
 echo "Executing $TOOL_ID..."
 ```
+
+---
+
+## Entry Point
+
+Goblin uses a single CLI entry point built from `src/cli/index.ts`.
+
+### Building
+
+```bash
+bun run build       # Build CLI to dist/index.js
+bun run start       # Run CLI in STDIO mode (default)
+bun run cli start   # Run CLI in HTTP mode
+goblin              # Production: uses installed CLI
+```
+
+### Running
+
+```bash
+bun run start       # STDIO mode (default, for Claude integration)
+bun run cli start   # HTTP gateway mode
+goblin              # Same as above (after npm install -g)
+```
+
+### Log Location
+
+All sessions write logs to `~/.goblin/logs/goblin-{ISO-timestamp}.log`
 
 ---
 
