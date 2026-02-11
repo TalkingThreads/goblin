@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "goblin": "dist/cli/index.js"
+    "goblin": "dist/index.js"
   },
   "scripts": {
     "dev": "bun run --watch src/cli/index.ts",

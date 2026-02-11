@@ -1,7 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { Command } from "commander";
+import { PROJECT_META } from "../meta.js";
 import { initSessionLogging } from "../observability/init.js";
 import { createCompletionCommand } from "./commands/completion.js";
 import { logsCommand } from "./commands/logs.js";
@@ -13,7 +11,6 @@ import { handleUnknownCommand } from "./utils/suggestions.js";
 
 const MAIN_COMMANDS = [
   "start",
-  "stdio",
   "version",
   "help",
   "status",
@@ -31,18 +28,6 @@ function isKnownCommand(arg: string): boolean {
   return MAIN_COMMANDS.includes(normalized);
 }
 
-async function getVersion(): Promise<string> {
-  try {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    const packageJsonPath = join(__dirname, "..", "..", "package.json");
-    const content = await readFile(packageJsonPath, "utf-8");
-    const packageJson = JSON.parse(content);
-    return packageJson.version || "0.1.0";
-  } catch {
-    return "0.1.0";
-  }
-}
-
 function displayRootHelp(version: string): void {
   console.log(`
 Goblin MCP Gateway ${version}
@@ -52,11 +37,12 @@ A developer-first MCP gateway that aggregates multiple MCP servers behind a sing
 Usage: goblin <command> [options]
 
 Common Commands:
-  goblin stdio         Start in STDIO mode (default)
-  goblin start         Start HTTP gateway server
-  goblin servers       List and manage configured servers
-  goblin tools         List available tools
-  goblin tui           Launch interactive TUI (coming soon)
+  goblin start              Start gateway (defaults to STDIO mode)
+  goblin start --transport http  Start with HTTP server + REST API
+  goblin start --transport sse   Start with SSE server + REST API
+  goblin servers            List and manage configured servers
+  goblin tools              List available tools
+  goblin tui                Launch interactive TUI (coming soon)
 
 Global Flags:
   -h, --help         Show this help message
@@ -71,13 +57,14 @@ Documentation:
   https://goblin.sh/docs
 
 For more information, run: goblin <command> --help
-`);
+ `);
 }
 
 interface StartOptions {
   tui?: boolean;
   port?: string;
   config?: string;
+  transport?: "http" | "sse" | "stdio";
 }
 
 function parseGlobalFlags(args: string[]): CliContext {
@@ -131,17 +118,9 @@ async function validateConfigPath(configPath: string): Promise<boolean> {
   }
 }
 
-async function handleEmptyArgs(globalContext: CliContext): Promise<void> {
-  if (globalContext.configPath) {
-    const configExists = await validateConfigPath(globalContext.configPath);
-    if (!configExists) {
-      console.error(`Error: Config file not found: ${globalContext.configPath}`);
-      process.exit(ExitCode.CONFIG_ERROR);
-      return;
-    }
-  }
-  const { startStdioGateway } = await import("./commands/stdio.js");
-  await startStdioGateway({});
+async function handleEmptyArgs(_globalContext: CliContext, VERSION: string): Promise<void> {
+  displayRootHelp(VERSION);
+  process.exit(0);
 }
 
 async function handleTuiFlag(args: string[], globalContext: CliContext): Promise<void> {
@@ -214,7 +193,7 @@ async function main(): Promise<void> {
   const logPath = await initSessionLogging();
   console.error(`[Goblin] Logging to ${logPath}`);
 
-  const VERSION = await getVersion();
+  const VERSION = PROJECT_META.version;
 
   const program = new Command();
 
@@ -225,7 +204,7 @@ async function main(): Promise<void> {
   // Handle verbose flag logic - set LOG_LEVEL env var for verbose mode
   if (globalContext.verbose) {
     const command = args.find((arg) => !arg.startsWith("-"));
-    const allowedVerboseCommands = ["start", "stdio"];
+    const allowedVerboseCommands = ["start"];
 
     // Enable verbose logging only for allowed commands or if no command is specified (root/default)
     if (!command || allowedVerboseCommands.includes(command)) {
@@ -248,9 +227,9 @@ async function main(): Promise<void> {
         console.log(VERSION);
         process.exit(0);
       }
-      // Default behavior: Start STDIO
-      const { startStdioGateway } = await import("./commands/stdio.js");
-      await startStdioGateway({ config: globalContext.configPath });
+      // Default behavior: Show help
+      displayRootHelp(VERSION);
+      process.exit(0);
     });
 
   program
@@ -270,25 +249,21 @@ async function main(): Promise<void> {
   program
     .command("start")
     .description("Start the Gateway")
+    .option("-t, --transport <type>", "Transport type: http, sse, stdio (default: stdio)")
     .option("--tui", "Enable TUI mode")
     .option("--port <number>", "Port to listen on")
     .option("--config <path>", "Path to config file")
     .addHelpText(
       "after",
-      "\nExamples:\n  goblin start                    # Start gateway on default port 3000\n  goblin start --port 8080       # Start on port 8080\n  goblin start --tui             # Start with interactive TUI\n  goblin start --config ~/my-config.json  # Use custom config file",
+      "\nExamples:\n  goblin start                    # Start in STDIO mode (default)\n  goblin start --transport http   # Start HTTP gateway with REST API\n  goblin start --transport sse    # Start SSE gateway with REST API\n  goblin start --port 8080        # Start on port 8080\n  goblin start --tui              # Start with interactive TUI\n  goblin start --config ~/my-config.json  # Use custom config file",
     )
-    .action(async (options: StartOptions) => {
+    .action(async (options: StartOptions & { transport?: string }) => {
       const { startGateway } = await import("./commands/start.jsx");
-      await startGateway(options, globalContext);
-    });
-
-  program
-    .command("stdio")
-    .description("Start Goblin in STDIO mode")
-    .option("--config <path>", "Path to config file")
-    .action(async (options: { config?: string }) => {
-      const { startStdioGateway } = await import("./commands/stdio.js");
-      await startStdioGateway(options);
+      const startOptions: StartOptions = {
+        ...options,
+        transport: options.transport as StartOptions["transport"],
+      };
+      await startGateway(startOptions, globalContext);
     });
 
   program
@@ -412,7 +387,7 @@ async function main(): Promise<void> {
     });
 
   if (args.length === 0) {
-    await handleEmptyArgs(globalContext);
+    await handleEmptyArgs(globalContext, VERSION);
     return;
   }
 

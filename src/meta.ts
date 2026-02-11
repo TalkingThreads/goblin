@@ -16,26 +16,52 @@ export interface ProjectMeta {
   version: string;
 }
 
+export class VersionLoadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "VersionLoadError";
+  }
+}
+
+function loadProjectMeta(): ProjectMeta {
+  const packageJsonPath = join(__dirname, "..", "..", "package.json");
+
+  let content: string;
+  try {
+    content = readFileSync(packageJsonPath, "utf-8");
+  } catch (error) {
+    throw new VersionLoadError(
+      `Failed to read package.json at ${packageJsonPath}: ${error instanceof Error ? error.message : error}`,
+    );
+  }
+
+  let packageJson: { name?: string; version?: string };
+  try {
+    packageJson = JSON.parse(content);
+  } catch (error) {
+    throw new VersionLoadError(
+      `Failed to parse package.json: ${error instanceof Error ? error.message : error}`,
+    );
+  }
+
+  if (!packageJson.version) {
+    throw new VersionLoadError(
+      `Version not found in package.json. Please ensure 'version' field is set.`,
+    );
+  }
+
+  return {
+    name: packageJson.name || "@talkingthreads/goblin",
+    version: packageJson.version,
+  };
+}
+
 /**
  * Synchronous access to project metadata from package.json
  * Reads from disk at module load time.
+ * Throws VersionLoadError if version cannot be determined.
  */
-export const PROJECT_META: ProjectMeta = (() => {
-  try {
-    const packageJsonPath = join(__dirname, "..", "..", "package.json");
-    const content = readFileSync(packageJsonPath, "utf-8");
-    const packageJson = JSON.parse(content);
-    return {
-      name: packageJson.name || "@talkingthreads/goblin",
-      version: packageJson.version || "0.1.0",
-    };
-  } catch {
-    return {
-      name: "@talkingthreads/goblin",
-      version: "0.1.0",
-    };
-  }
-})();
+export const PROJECT_META: ProjectMeta = loadProjectMeta();
 
 /**
  * Server name used in MCP protocol

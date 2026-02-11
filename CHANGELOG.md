@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **CLI Commands**:
+  - `goblin` without arguments now shows help instead of starting STDIO mode.
+  - `goblin stdio` command has been removed (use `goblin start` without `--transport`).
+  - `goblin start` now supports `--transport` option with values: `http`, `sse`, `stdio` (default: stdio).
+  - REST API is always available when using `--transport http` or `--transport sse`.
+
 ### Added
 
 - **Configuration System**:
