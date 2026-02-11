@@ -9,7 +9,7 @@ import { existsSync } from "node:fs";
 import { copyFile, mkdir, rename, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createLogger } from "../observability/logger.js";
-import { DEFAULT_CONFIG_COMMENT } from "./defaults.js";
+import { DEFAULT_CONFIG, DEFAULT_CONFIG_COMMENT } from "./defaults.js";
 import { getConfigDir, getConfigPath } from "./paths.js";
 import { type Config, ConfigSchema } from "./schema.js";
 
@@ -224,9 +224,9 @@ export async function writeDefaultConfig(options: WriteConfigOptions = {}): Prom
   }
 
   const content =
-    options.includeComments !== false
+    options.includeComments === true
       ? DEFAULT_CONFIG_COMMENT
-      : JSON.stringify(DEFAULT_CONFIG_COMMENT, null, 2);
+      : JSON.stringify(DEFAULT_CONFIG, null, 2);
 
   await writeFile(configPath, content, "utf-8");
   return configPath;
