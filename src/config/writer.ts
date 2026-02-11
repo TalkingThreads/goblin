@@ -87,8 +87,39 @@ export class ConfigWriter {
       return this.configPath;
     } catch (error) {
       logger.error({ error, path: this.configPath }, "Failed to write configuration");
+
+      // Provide actionable error message based on error type
+      let detailedMessage = `Failed to write configuration to ${this.configPath}`;
+
+      if (error instanceof Error) {
+        const errorMessage = error.message.toLowerCase();
+
+        if (errorMessage.includes("permission") || errorMessage.includes("access")) {
+          detailedMessage +=
+            `\n\nPossible solutions:\n` +
+            `  1. Check file permissions: chmod 644 ${this.configPath}\n` +
+            `  2. Ensure you have write access to the directory\n` +
+            `  3. Check if the file is open in another application`;
+        } else if (errorMessage.includes("enoent") || errorMessage.includes("no such file")) {
+          detailedMessage +=
+            `\n\nPossible solutions:\n` +
+            `  1. Ensure the parent directory exists: ${join(this.configPath, "..")}\n` +
+            `  2. Create the directory if needed`;
+        } else if (errorMessage.includes("eacces")) {
+          detailedMessage +=
+            `\n\nPossible solutions:\n` +
+            `  1. Check file permissions\n` +
+            `  2. Run the application with appropriate privileges`;
+        } else if (errorMessage.includes("ebusy") || errorMessage.includes("locked")) {
+          detailedMessage +=
+            `\n\nPossible solutions:\n` +
+            `  1. The file may be open in another application\n` +
+            `  2. Close the application that is using the file`;
+        }
+      }
+
       throw new ConfigWriteError(
-        `Failed to write configuration to ${this.configPath}`,
+        detailedMessage,
         error instanceof Error ? error : undefined,
         this.configPath,
       );
@@ -107,7 +138,10 @@ export class ConfigWriter {
       const errors = result.error.issues
         .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
         .join("; ");
-      throw new ConfigWriteError(`Configuration validation failed: ${errors}`);
+      throw new ConfigWriteError(
+        `Configuration validation failed: ${errors}\n\n` +
+          `Run 'goblin config validate' for detailed error information.`,
+      );
     }
   }
 

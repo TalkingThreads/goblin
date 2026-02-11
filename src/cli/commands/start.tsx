@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { render } from "ink";
-import { loadConfig } from "../../config/index.js";
+import { initConfig } from "../../config/index.js";
 import { GoblinGateway } from "../../core/gateway.js";
 import { createLogger } from "../../observability/logger.js";
 import { setupShutdownHandlers } from "../../observability/utils.js";
@@ -28,8 +28,8 @@ export async function startGateway(
     // Use config from global context (handles --config flag correctly)
     const configPath = globalContext.configPath ?? options.config;
 
-    // Load configuration
-    const config = await loadConfig(configPath);
+    // Initialize config system (creates default config file if needed)
+    const config = await initConfig(configPath ? { customPath: configPath } : undefined);
 
     // Override port if specified (use globalContext.port which is parsed by global flags)
     const portValue = globalContext.port ?? options.port;

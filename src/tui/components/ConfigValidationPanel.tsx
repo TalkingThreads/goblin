@@ -19,6 +19,31 @@ interface ConfigValidationPanelProps {
 
 type ValidationStep = "idle" | "validating" | "result";
 
+const parseZodErrors = (
+  errorObj: Record<string, unknown>,
+  prefix: string,
+  errors: ValidationError[],
+) => {
+  for (const [key, value] of Object.entries(errorObj)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+
+    if (typeof value === "string") {
+      errors.push({ path, message: value });
+    } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
+      errors.push({ path, message: value[0] as string });
+    } else if (typeof value === "object" && value !== null) {
+      const obj = value as Record<string, unknown>;
+      if ("_errors" in obj && Array.isArray(obj["_errors"])) {
+        for (const err of obj["_errors"] as string[]) {
+          errors.push({ path, message: err });
+        }
+      } else {
+        parseZodErrors(obj, path, errors);
+      }
+    }
+  }
+};
+
 const ConfigValidationPanel = memo(function ConfigValidationPanel({
   configPath: initialConfigPath,
 }: ConfigValidationPanelProps) {
@@ -59,32 +84,7 @@ const ConfigValidationPanel = memo(function ConfigValidationPanel({
       });
       setStep("result");
     }
-  }, [configPath, parseZodErrors]);
-
-  const parseZodErrors = (
-    errorObj: Record<string, unknown>,
-    prefix: string,
-    errors: ValidationError[],
-  ) => {
-    for (const [key, value] of Object.entries(errorObj)) {
-      const path = prefix ? `${prefix}.${key}` : key;
-
-      if (typeof value === "string") {
-        errors.push({ path, message: value });
-      } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
-        errors.push({ path, message: value[0] as string });
-      } else if (typeof value === "object" && value !== null) {
-        const obj = value as Record<string, unknown>;
-        if ("_errors" in obj && Array.isArray(obj["_errors"])) {
-          for (const err of obj["_errors"] as string[]) {
-            errors.push({ path, message: err });
-          }
-        } else {
-          parseZodErrors(obj, path, errors);
-        }
-      }
-    }
-  };
+  }, [configPath]);
 
   const handleOpenEditor = useCallback(() => {
     const editor = process.env["VISUAL"] || process.env["EDITOR"] || "vi";

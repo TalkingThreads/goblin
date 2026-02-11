@@ -40,6 +40,9 @@ describe("Config Loader", () => {
     const validConfig = {
       servers: [],
       gateway: { port: 8080 },
+      streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
+      auth: { mode: "dev" },
+      policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
     };
     await writeFile(tempConfigPath, JSON.stringify(validConfig));
 
@@ -54,14 +57,101 @@ describe("Config Loader", () => {
     expect(config.gateway.port).toBe(3000); // Default
   });
 
+  test("should display warning for invalid JSON", async () => {
+    await writeFile(tempConfigPath, "{ invalid json");
+
+    let warningDisplayed = false;
+    let warningContent = "";
+    const originalWarn = console.warn;
+    console.warn = (msg: string) => {
+      warningDisplayed = true;
+      warningContent = msg;
+    };
+
+    try {
+      await loadConfig();
+      expect(warningDisplayed).toBe(true);
+      expect(warningContent).toContain("Configuration file contains invalid JSON");
+      expect(warningContent).toContain("Using default configuration instead");
+      expect(warningContent).toContain("goblin config validate");
+    } finally {
+      console.warn = originalWarn;
+    }
+  });
+
   test("should return default config on validation failure", async () => {
     const invalidConfig = {
+      servers: [],
       gateway: { port: "not-a-number" },
+      streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
+      auth: { mode: "dev" },
+      policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
     };
     await writeFile(tempConfigPath, JSON.stringify(invalidConfig));
 
     const config = await loadConfig();
     expect(config.gateway.port).toBe(3000); // Default
+  });
+
+  test("should display warning for validation failure", async () => {
+    const invalidConfig = {
+      servers: [],
+      gateway: { port: "not-a-number" },
+      streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
+      auth: { mode: "dev" },
+      policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
+    };
+    await writeFile(tempConfigPath, JSON.stringify(invalidConfig));
+
+    let warningDisplayed = false;
+    let warningContent = "";
+    const originalWarn = console.warn;
+    console.warn = (msg: string) => {
+      warningDisplayed = true;
+      warningContent = msg;
+    };
+
+    try {
+      await loadConfig();
+      expect(warningDisplayed).toBe(true);
+      expect(warningContent).toContain("Configuration file is invalid");
+      expect(warningContent).toContain("Using default configuration instead");
+      expect(warningContent).toContain("goblin config validate");
+    } finally {
+      console.warn = originalWarn;
+    }
+  });
+
+  test("should throw error for custom path with missing file", async () => {
+    const customPath = join(tempDir, "nonexistent.json");
+
+    await expect(loadConfig(customPath)).rejects.toThrow("Configuration file not found at");
+  });
+
+  test("should throw error for custom path with invalid JSON", async () => {
+    const customPath = join(tempDir, "invalid.json");
+    await writeFile(customPath, "{ invalid json");
+
+    try {
+      await loadConfig(customPath);
+      expect.unreachable("Should have thrown an error");
+    } catch (error) {
+      expect((error as Error).message).toContain("JSON Parse error");
+    }
+  });
+
+  test("should throw error for custom path with validation failure", async () => {
+    const customPath = join(tempDir, "invalid.json");
+    const invalidConfig = {
+      servers: [],
+      gateway: { port: "not-a-number" },
+      streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
+      auth: { mode: "dev" },
+      policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
+    };
+    await writeFile(customPath, JSON.stringify(invalidConfig));
+
+    await expect(loadConfig(customPath)).rejects.toThrow("Configuration validation failed");
   });
 });
 
@@ -77,9 +167,10 @@ describe("Config Watcher", () => {
   test("should detect config changes", async () => {
     const initialConfig = {
       servers: [],
-      gateway: { port: 3000, host: "127.0.0.1" },
+      gateway: { port: 3000, host: "127.0.0.1", transport: "both" as const },
       auth: { mode: "dev" as const },
       policies: { outputSizeLimit: 1024, defaultTimeout: 1000 },
+      streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
     };
 
     await writeFile(tempConfigPath, JSON.stringify(initialConfig));
