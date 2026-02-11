@@ -1,8 +1,5 @@
-import { createLogger } from "../../observability/logger.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
-
-const logger = createLogger("cli-health");
 
 interface HealthOptions {
   json?: boolean;
@@ -129,7 +126,6 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
         }),
       );
     } else {
-      logger.error({ error, url: baseUrl }, "Failed to fetch health status");
       console.error(`Error: Could not connect to gateway at ${url}`);
       console.error("Make sure the gateway is running (goblin start)");
     }

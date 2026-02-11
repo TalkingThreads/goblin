@@ -1,10 +1,8 @@
 import { getConfigManager } from "../../config/manager.js";
 import { getConfigPath } from "../../config/paths.js";
 import { ConfigSchema } from "../../config/schema.js";
-import { createLogger } from "../../observability/logger.js";
+import { userOutput } from "../../observability/logger.js";
 import type { CliContext } from "../types.js";
-
-const logger = createLogger("cli-config");
 
 interface ConfigOptions {
   path?: string;
@@ -60,10 +58,8 @@ export async function validateConfigCommand(options: ConfigOptions): Promise<voi
         }),
       );
     } else {
-      logger.error({ error, configPath }, "Failed to validate config");
-      console.error(
-        `Error reading config at ${configPath}:`,
-        error instanceof Error ? error.message : error,
+      userOutput.error(
+        `Error reading config at ${configPath}: ${error instanceof Error ? error.message : error}`,
       );
     }
     process.exit(4);
@@ -100,10 +96,8 @@ export async function showConfigCommand(options: ConfigOptions): Promise<void> {
         }),
       );
     } else {
-      logger.error({ error, configPath }, "Failed to show config");
-      console.error(
-        `Error reading config at ${configPath}:`,
-        error instanceof Error ? error.message : error,
+      userOutput.error(
+        `Error reading config at ${configPath}: ${error instanceof Error ? error.message : error}`,
       );
     }
     process.exit(1);

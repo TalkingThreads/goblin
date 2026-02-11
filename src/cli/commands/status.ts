@@ -1,8 +1,5 @@
-import { createLogger } from "../../observability/logger.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
-
-const logger = createLogger("cli-status");
 
 interface StatusOptions {
   json?: boolean;
@@ -84,7 +81,6 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
     console.log(`Health: ${data.health}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.debug({ error, errorMessage }, "Status fetch error details");
     const isConnectionRefused =
       errorMessage.includes("ECONNREFUSED") ||
       errorMessage.includes("connection refused") ||
@@ -113,7 +109,6 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
         console.log("Use 'goblin start' to start the gateway");
         process.exit(ExitCode.SUCCESS);
       } else {
-        logger.error({ error, url: statusUrl }, "Failed to fetch gateway status");
         console.error(`Error: Could not connect to gateway at ${url}`);
         console.error("Make sure the gateway is running (goblin start)");
         process.exit(ExitCode.CONNECTION_ERROR);

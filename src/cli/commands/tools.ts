@@ -1,9 +1,6 @@
 import { Command } from "commander";
-import { createLogger } from "../../observability/logger.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
-
-const logger = createLogger("cli-tools");
 
 interface ToolInfo {
   name: string;
@@ -173,7 +170,6 @@ export async function toolsList(options: ToolListOptions): Promise<void> {
         }),
       );
     } else {
-      logger.error({ error, url: url.toString() }, "Failed to fetch tools");
       console.error("Error: Could not connect to gateway");
       console.error("Make sure the gateway is running (goblin start)");
     }
@@ -338,7 +334,6 @@ export async function toolsSearch(
         }),
       );
     } else {
-      logger.error({ error, url: url.toString() }, "Failed to search tools");
       console.error("Error: Could not connect to gateway");
       console.error("Make sure the gateway is running (goblin start)");
     }

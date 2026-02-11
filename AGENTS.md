@@ -219,12 +219,33 @@ function handleError(error: unknown): void {
 
 ### Logging
 
-Use pino with component-based child loggers and follow these conventions:
+Use pino with component-based child loggers. Goblin uses **session-based file logging** by default.
 
-#### Message Conventions
-- Use action-oriented, past tense messages
-- Include context object with relevant fields
-- Message format: `{action} {entity}` or `{action} {entity} {result}`
+#### Log Destinations
+
+```typescript
+// Logs are written to: ~/.goblin/logs/goblin-{ISO-timestamp}.log
+// Format: pretty (development) or json (production)
+// Level: controlled by LOG_LEVEL env var (default: "info")
+```
+
+#### User-Facing Messages vs Logs
+
+**User-facing messages** (for commands that don't start a session):
+Use `userOutput` for direct user communication:
+
+```typescript
+import { userOutput } from "./observability/logger.js";
+
+// User-facing messages (not logs)
+userOutput.info("Configuration validated successfully");
+userOutput.warn("Deprecated option, use --new-option instead");
+userOutput.error("Failed to connect to gateway");
+userOutput.success("Server added successfully");
+```
+
+**Logs** (for session-based commands like `goblin start`):
+Use `logger` with appropriate levels:
 
 ```typescript
 import { createLogger } from "./observability/logger.js";
@@ -236,12 +257,12 @@ logger.info({ serverId, toolName }, "Tool invoked");
 logger.error({ error, serverId, requestId }, "Connection failed");
 logger.debug({ duration, attempt, maxRetries }, "Retry attempt failed");
 logger.info({ configPath }, "Configuration reloaded");
-
-// ❌ Avoid: Plain strings, present tense, no context
-logger.info("Starting server");
-logger.error("Error occurred");
-logger.debug("Processing request");
 ```
+
+#### Message Conventions
+- Use action-oriented, past tense messages
+- Include context object with relevant fields
+- Message format: `{action} {entity}` or `{action} {entity} {result}`
 
 #### Context Standards
 Include relevant context fields for different operation types:
@@ -279,6 +300,40 @@ const logger = createLogger("gateway-server");  // src/gateway/server.ts
 const logger = createLogger("http-gateway");    // src/gateway/http.ts
 const logger = createLogger("config-loader");   // src/config/loader.ts
 const logger = createLogger("transport-pool");  // src/transport/pool.ts
+```
+
+#### Sensitive Data Redaction
+Logs automatically redact sensitive fields:
+
+```typescript
+// These are automatically redacted from logs:
+password, token, apiKey, accessToken, refreshToken, authorization, cookie, secret
+```
+
+#### Request Correlation
+Propagate request IDs for distributed tracing:
+
+```typescript
+import { getRequestId, createRequestLogger } from "./observability/correlation.js";
+
+// Create child logger with request context
+const requestLogger = createRequestLogger(logger);
+
+// All logs from this request include requestId
+requestLogger.info({ path: c.req.path }, "Request received");
+```
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | "info" | Log level (trace, debug, info, warn, error, fatal) |
+| `LOG_FORMAT` | "pretty" (dev), "json" (prod) | Output format |
+| `DEBUG` | - | Set to "1" for trace-level logging |
+
+#### Log File Location
+```
+~/.goblin/logs/goblin-{YYYY-MM-DD-HH-MM-SS}.log
 ```
 
 #### Error Logging with Error Codes

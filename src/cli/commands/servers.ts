@@ -5,12 +5,9 @@ import { z } from "zod";
 import { getConfigPath } from "../../config/paths.js";
 import type { Config, ServerConfig } from "../../config/schema.js";
 import { writeConfig } from "../../config/writer.js";
-import { createLogger } from "../../observability/logger.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 import { addServerInteractive } from "./servers/add-interactive.js";
-
-const logger = createLogger("cli-servers");
 
 const TransportTypeSchema = z.enum(["stdio", "http", "sse", "streamablehttp"]);
 
@@ -543,7 +540,6 @@ export async function serversCommand(options: ServerOptions): Promise<void> {
         }),
       );
     } else {
-      logger.error({ error, url: serversUrl.toString() }, "Failed to fetch servers");
       console.error(`Error: Could not connect to gateway at ${url}`);
       console.error("Make sure the gateway is running (goblin start)");
     }

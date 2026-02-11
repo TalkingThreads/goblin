@@ -24,9 +24,20 @@ export {
 } from "./file-destinations.js";
 // HTTP logging
 export { createRequestLoggingMiddleware, requestIdMiddleware } from "./http-logging.js";
-export type { Logger, LoggerOptions } from "./logger.js";
 // Logger
-export { createLogger, createLoggerWithConfig, logger, tuiLogBuffer } from "./logger.js";
+export type { Logger } from "./logger.js";
+export {
+  clearLogs,
+  createLogger,
+  flushAndCloseLogs,
+  getCurrentLogPath,
+  getLogsDir,
+  getTuiLogs,
+  initSessionLogging,
+  isDebugEnabled,
+  redirectLogsToStderr,
+  userOutput,
+} from "./logger.js";
 export type { Counter, Gauge, Histogram, Labels, MetricsRegistry } from "./metrics.js";
 // Metrics
 export {

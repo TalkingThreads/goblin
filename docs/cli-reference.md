@@ -34,7 +34,7 @@ goblin [global-options] <command> [command-options] [arguments]
 |--------|-------------|---------|
 | `-h, --help` | Show help for command | - |
 | `-v, --version` | Show CLI version | - |
-| `--verbose` | Enable verbose logging | false |
+| `--verbose` | Enable verbose messaging | false |
 | `--json` | Output JSON instead of human-readable | false |
 | `--port <number>` | Override gateway port | 3000 |
 | `--host <host>` | Override gateway host | 127.0.0.1 |

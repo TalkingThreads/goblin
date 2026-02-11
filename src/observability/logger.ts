@@ -1,11 +1,35 @@
 /**
  * Enhanced structured logger using pino
+ *
+ * Design principles:
+ * - Session-based file logging: ~/.goblin/logs/goblin-{timestamp}.log
+ * - Pretty print by default for development
+ * - JSON format for production
+ * - Async writes using pino transports
+ * - User-facing messages: use console directly (not logger)
+ * - Logs: use logger with appropriate levels
  */
 
-import { createWriteStream } from "node:fs";
-import { Writable } from "node:stream";
 import pino from "pino";
-import type { LogFormat, LoggingConfig, LogLevel } from "../config/schema.js";
+import type { LogFormat, LogLevel } from "../config/schema.js";
+import {
+  flushAndCloseLogs,
+  getCurrentLogPath,
+  getLogState,
+  getLogsDir,
+  getSessionLogPath,
+  initSessionLogging,
+  redirectLogsToStderr,
+} from "./init.js";
+
+export {
+  initSessionLogging,
+  getCurrentLogPath,
+  flushAndCloseLogs,
+  redirectLogsToStderr,
+  getLogsDir,
+  getSessionLogPath,
+};
 
 export type Logger = pino.Logger;
 
@@ -19,42 +43,34 @@ interface TuiLogEntry {
 
 /**
  * Check if debug mode is enabled
- * Set DEBUG=1 to enable trace-level logging
  */
 export function isDebugEnabled(): boolean {
   return process.env["DEBUG"] === "1";
 }
 
 /**
- * Get debug log path from environment
+ * User-facing console output (not logs)
+ * Use this for commands that don't start a session
  */
-export function getDebugLogPath(): string {
-  return process.env["DEBUG_LOG"] ?? "./logs/debug.log";
-}
+export const userOutput = {
+  info: (message: string, ...args: unknown[]): void => {
+    console.log(message, ...args);
+  },
+  warn: (message: string, ...args: unknown[]): void => {
+    console.warn(message, ...args);
+  },
+  error: (message: string, ...args: unknown[]): void => {
+    console.error(message, ...args);
+  },
+  success: (message: string, ...args: unknown[]): void => {
+    console.log(`✅ ${message}`, ...args);
+  },
+};
 
 /**
- * Switchable stream that can redirect between stdout and stderr
+ * TUI log buffer for displaying logs in the terminal UI
  */
-class SwitchableStream extends Writable {
-  private useStderr = false;
-
-  setStderr(enabled: boolean) {
-    this.useStderr = enabled;
-  }
-
-  _write(chunk: unknown, encoding: BufferEncoding, callback: (error?: Error | null) => void): void {
-    const target = this.useStderr ? process.stderr : process.stdout;
-    target.write(chunk as string | Buffer, encoding, callback);
-  }
-}
-
-export const globalLogStream = new SwitchableStream();
-
-export function setLogToStderr(enabled: boolean): void {
-  globalLogStream.setStderr(enabled);
-}
-
-class TuiLogBuffer {
+class LogBuffer {
   private entries: TuiLogEntry[] = [];
   private maxSize: number;
   private subscribers: Set<(entry: TuiLogEntry) => void> = new Set();
@@ -89,126 +105,84 @@ class TuiLogBuffer {
   }
 }
 
-export const tuiLogBuffer = new TuiLogBuffer();
+export const logBuffer = new LogBuffer();
 
-let logWriteStream: ReturnType<typeof createWriteStream> | null = null;
-
-export function setLogWriteStream(stream: ReturnType<typeof createWriteStream>): void {
-  logWriteStream = stream;
-}
-
-export function flushLogs(): Promise<void> {
-  return new Promise((resolve) => {
-    if (logWriteStream) {
-      logWriteStream.once("finish", resolve);
-      logWriteStream.end();
-      logWriteStream = null;
-    } else {
-      resolve();
-    }
-  });
-}
-
-export interface LoggerOptions {
-  level?: LogLevel;
-  format?: LogFormat;
-  redact?: {
-    paths: string[];
-    remove?: boolean;
-  };
-  destinations?: NodeJS.WritableStream[];
-}
-
-// Cache for child loggers by component name
-const loggerCache = new Map<string, Logger>();
-
-function getConfigHash(options?: LoggerOptions): string {
-  return `${options?.level ?? "info"}:${options?.format ?? "json"}:${!!options?.redact}:${options?.redact?.paths?.length ?? 0}`;
-}
-
-export function createLogger(component: string, options?: LoggerOptions): Logger {
-  const configHash = getConfigHash(options);
-
-  // Check cache for this component with same config
-  const cacheKey = `${component}:${configHash}`;
-  const cached = loggerCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
-  // Check if DEBUG mode is enabled - use trace level if so
-  const isDebug = isDebugEnabled();
-  const level =
-    options?.level ?? (process.env["LOG_LEVEL"] as LogLevel) ?? (isDebug ? "trace" : "info");
-  const format = options?.format ?? "json";
+/**
+ * Create a pino logger with session-based file logging
+ */
+export function createLogger(component: string): Logger {
   const isDev = process.env["NODE_ENV"] !== "production";
-  const logPath = process.env["LOG_PATH"] ?? "./logs/app.log";
+  const isDebug = isDebugEnabled();
+
+  // Determine log level: env > config > debug > default
+  const level = (process.env["LOG_LEVEL"] as LogLevel | undefined) ?? (isDebug ? "trace" : "info");
+
+  // Determine format: env > config > default (pretty for dev, json for prod)
+  const format =
+    (process.env["LOG_FORMAT"] as LogFormat | undefined) ?? (isDev ? "pretty" : "json");
+
+  // Use pretty format for development (colorized output)
+  const usePretty = format === "pretty" && isDev;
+
+  // Sensitive paths to redact from logs
+  const redactPaths = [
+    "password",
+    "token",
+    "apiKey",
+    "accessToken",
+    "refreshToken",
+    "authorization",
+    "cookie",
+    "secret",
+    "env.*.API_KEY",
+    "env.*.TOKEN",
+    "env.*.PASSWORD",
+  ];
 
   const pinoOptions: pino.LoggerOptions = {
     name: "goblin",
     level,
     timestamp: pino.stdTimeFunctions.isoTime,
+    redact: {
+      paths: redactPaths,
+      remove: false,
+    },
+    // Pretty print for development
+    ...(usePretty && { colorize: true }),
   };
 
-  let destination: NodeJS.WritableStream | undefined;
+  // Get log state from init module
+  const { logWriteStream, isUsingStderr: stderrMode, pinoDestination } = getLogState();
 
-  if (format !== "pretty") {
-    let stream: ReturnType<typeof createWriteStream> | null = null;
-    try {
-      // Only try to open file if LOG_PATH is explicitly set or we're running in a mode where it makes sense
-      if (process.env["LOG_PATH"]) {
-        stream = createWriteStream(logPath, { flags: "a", encoding: "utf8" });
-        setLogWriteStream(stream);
-        // If file stream is successfully created, we use it
-        destination = stream;
-      }
-    } catch {
-      // If log directory doesn't exist, fall back
-    }
+  // Create the logger
+  let logger: pino.Logger;
 
-    if (!destination) {
-      // If no file stream, use global switchable stream
-      destination = globalLogStream;
-    }
+  if (pinoDestination) {
+    // Use pino's destination for synchronized writes
+    logger = pino(pinoOptions, pinoDestination);
+  } else if (logWriteStream) {
+    // Fallback to file stream
+    logger = pino(pinoOptions, logWriteStream);
+  } else if (stderrMode) {
+    // Write to stderr only (fallback)
+    logger = pino(pinoOptions, process.stderr);
+  } else {
+    // Fallback to stdout (should not happen in normal use)
+    logger = pino(pinoOptions);
   }
 
-  if (options?.redact) {
-    pinoOptions.redact = {
-      paths: options.redact.paths,
-      remove: options.redact.remove ?? false,
-    };
-  }
+  // Create child logger with component name
+  const childLogger = logger.child({ component });
 
-  if (format === "pretty" && isDev) {
-    pinoOptions.transport = {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "SYS:standard",
-        ignore: "pid,hostname",
-        levelFirst: true,
-      },
-    };
-  }
+  // Wrap to capture logs for TUI
+  const wrappedLogger = createTuiIntegratedLogger(childLogger, component);
 
-  if (options?.destinations && options.destinations.length > 0) {
-    pinoOptions.base = pinoOptions.base ?? {};
-    (pinoOptions.base as Record<string, unknown>)["destinations"] = options.destinations;
-  }
-
-  // If destination is set (file or globalLogStream), use it.
-  // If pretty, destination is undefined (pino-pretty transport used)
-  const baseLogger = destination ? pino(pinoOptions, destination) : pino(pinoOptions);
-  const childLogger = baseLogger.child({ component });
-
-  const result = createTuiIntegratedLogger(childLogger, component);
-
-  // Cache this logger
-  loggerCache.set(cacheKey, result);
-
-  return result;
+  return wrappedLogger;
 }
 
+/**
+ * Wrap logger to capture logs for TUI display
+ */
 function createTuiIntegratedLogger(logger: pino.Logger, component: string): pino.Logger {
   const originalMethods = {
     trace: logger.trace,
@@ -219,88 +193,60 @@ function createTuiIntegratedLogger(logger: pino.Logger, component: string): pino
     fatal: logger.fatal,
   };
 
+  const capture = (level: string, obj: unknown, msg?: string): void => {
+    const entry: TuiLogEntry = {
+      timestamp: new Date(),
+      level,
+      component,
+      message: typeof obj === "string" ? obj : (msg ?? ""),
+      data: typeof obj === "object" && obj !== null ? (obj as Record<string, unknown>) : undefined,
+    };
+    logBuffer.push(entry);
+  };
+
   logger.trace = ((obj: unknown, msg?: string) => {
-    captureLog("trace", component, obj, msg);
+    capture("trace", obj, msg);
     return originalMethods.trace.call(logger, obj, msg);
   }) as typeof logger.trace;
 
   logger.debug = ((obj: unknown, msg?: string) => {
-    captureLog("debug", component, obj, msg);
+    capture("debug", obj, msg);
     return originalMethods.debug.call(logger, obj, msg);
   }) as typeof logger.debug;
 
   logger.info = ((obj: unknown, msg?: string) => {
-    captureLog("info", component, obj, msg);
+    capture("info", obj, msg);
     return originalMethods.info.call(logger, obj, msg);
   }) as typeof logger.info;
 
   logger.warn = ((obj: unknown, msg?: string) => {
-    captureLog("warn", component, obj, msg);
+    capture("warn", obj, msg);
     return originalMethods.warn.call(logger, obj, msg);
   }) as typeof logger.warn;
 
   logger.error = ((obj: unknown, msg?: string) => {
-    captureLog("error", component, obj, msg);
+    capture("error", obj, msg);
     return originalMethods.error.call(logger, obj, msg);
   }) as typeof logger.error;
 
   logger.fatal = ((obj: unknown, msg?: string) => {
-    captureLog("fatal", component, obj, msg);
+    capture("fatal", obj, msg);
     return originalMethods.fatal.call(logger, obj, msg);
   }) as typeof logger.fatal;
 
   return logger;
 }
 
-function captureLog(level: string, component: string, obj: unknown, msg?: string): void {
-  const entry: TuiLogEntry = {
-    timestamp: new Date(),
-    level,
-    component,
-    message: typeof obj === "string" ? obj : (msg ?? ""),
-    data: typeof obj === "object" && obj !== null ? (obj as Record<string, unknown>) : undefined,
-  };
-  tuiLogBuffer.push(entry);
-}
-
-export function createLoggerWithConfig(component: string, config?: LoggingConfig): Logger {
-  if (!config) {
-    return createLogger(component);
-  }
-
-  const level = (process.env["LOG_LEVEL"] as LogLevel) ?? config.level;
-  const format =
-    config.format === "pretty" && process.env["NODE_ENV"] !== "production" ? "pretty" : "json";
-
-  return createLogger(component, {
-    level,
-    format,
-    redact: config.redact?.enabled
-      ? {
-          paths: config.redact.paths,
-          remove: config.redact.remove,
-        }
-      : undefined,
-  });
-}
-
-export const logger = createLogger("core");
-
+/**
+ * Get all captured log entries (for TUI display)
+ */
 export function getTuiLogs(): TuiLogEntry[] {
-  return tuiLogBuffer.getAll();
+  return logBuffer.getAll();
 }
 
-export function subscribeToTuiLogs(callback: (entry: TuiLogEntry) => void): () => void {
-  return tuiLogBuffer.subscribe(callback);
-}
-
-export function clearTuiLogs(): void {
-  tuiLogBuffer.clear();
-}
-
-export function setGlobalLogLevel(level: LogLevel): void {
-  process.env["LOG_LEVEL"] = level;
-  for (const logger of loggerCache.values()) {
-    logger.level = level;
-  }
+/**
+ * Clear the log buffer (for TUI)
+ */
+export function clearLogs(): void {
+  logBuffer.clear();
 }

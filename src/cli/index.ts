@@ -2,19 +2,11 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
-import { setGlobalLogLevel, setLogToStderr } from "../observability/logger.js";
-import { createCompleteCommand } from "./commands/complete.js";
+import { initSessionLogging } from "../observability/init.js";
 import { createCompletionCommand } from "./commands/completion.js";
-import { showConfigCommand, validateConfigCommand } from "./commands/config.js";
-import { healthCommand } from "./commands/health.js";
 import { logsCommand } from "./commands/logs.js";
-import { createServersCommand } from "./commands/servers.js";
 import { registerSlashCommands } from "./commands/slashes/index.js";
-import { startGateway } from "./commands/start.jsx";
-import { statusCommand } from "./commands/status.js";
-import { startStdioGateway } from "./commands/stdio.js";
 import { stopCommand } from "./commands/stop.js";
-import { createToolsCommand } from "./commands/tools.js";
 import { ExitCode } from "./exit-codes.js";
 import type { CliContext } from "./types.js";
 import { handleUnknownCommand } from "./utils/suggestions.js";
@@ -148,6 +140,7 @@ async function handleEmptyArgs(globalContext: CliContext): Promise<void> {
       return;
     }
   }
+  const { startStdioGateway } = await import("./commands/stdio.js");
   await startStdioGateway({});
 }
 
@@ -165,6 +158,7 @@ async function handleTuiFlag(args: string[], globalContext: CliContext): Promise
     tuiOptions.config = filteredArgs[configIndex + 1];
   }
 
+  const { startGateway } = await import("./commands/start.jsx");
   await startGateway(tuiOptions, globalContext);
 }
 
@@ -216,7 +210,9 @@ async function validateGlobalConfig(globalContext: CliContext): Promise<boolean>
 }
 
 async function main(): Promise<void> {
-  setLogToStderr(true);
+  // Initialize logging FIRST, before any module imports create loggers
+  const logPath = await initSessionLogging();
+  console.error(`[Goblin] Logging to ${logPath}`);
 
   const VERSION = await getVersion();
 
@@ -226,14 +222,14 @@ async function main(): Promise<void> {
 
   const args = process.argv.slice(2);
 
-  // Handle verbose flag logic
+  // Handle verbose flag logic - set LOG_LEVEL env var for verbose mode
   if (globalContext.verbose) {
     const command = args.find((arg) => !arg.startsWith("-"));
     const allowedVerboseCommands = ["start", "stdio"];
 
     // Enable verbose logging only for allowed commands or if no command is specified (root/default)
     if (!command || allowedVerboseCommands.includes(command)) {
-      setGlobalLogLevel("debug");
+      process.env["LOG_LEVEL"] = "debug";
     }
   }
 
@@ -253,6 +249,7 @@ async function main(): Promise<void> {
         process.exit(0);
       }
       // Default behavior: Start STDIO
+      const { startStdioGateway } = await import("./commands/stdio.js");
       await startStdioGateway({ config: globalContext.configPath });
     });
 
@@ -281,6 +278,7 @@ async function main(): Promise<void> {
       "\nExamples:\n  goblin start                    # Start gateway on default port 3000\n  goblin start --port 8080       # Start on port 8080\n  goblin start --tui             # Start with interactive TUI\n  goblin start --config ~/my-config.json  # Use custom config file",
     )
     .action(async (options: StartOptions) => {
+      const { startGateway } = await import("./commands/start.jsx");
       await startGateway(options, globalContext);
     });
 
@@ -289,6 +287,7 @@ async function main(): Promise<void> {
     .description("Start Goblin in STDIO mode")
     .option("--config <path>", "Path to config file")
     .action(async (options: { config?: string }) => {
+      const { startStdioGateway } = await import("./commands/stdio.js");
       await startStdioGateway(options);
     });
 
@@ -302,18 +301,24 @@ async function main(): Promise<void> {
       "\nExamples:\n  goblin status                   # Check gateway status\n  goblin status --url http://localhost:3000  # Check remote gateway\n  goblin status --json           # Output as JSON",
     )
     .action(async (options: { json?: boolean; url?: string }) => {
-      await statusCommand({ ...options, context: globalContext });
+      const { statusCommand: cmd } = await import("./commands/status.js");
+      await cmd({ ...options, context: globalContext });
     });
 
+  const { createToolsCommand } = await import("./commands/tools.js");
   program.addCommand(createToolsCommand(globalContext));
 
+  const { createServersCommand } = await import("./commands/servers.js");
   program.addCommand(createServersCommand(globalContext));
 
   program.addCommand(createCompletionCommand());
 
+  const { createCompleteCommand } = await import("./commands/complete.js");
   program.addCommand(createCompleteCommand());
 
   const config = program.command("config").description("Configuration management");
+
+  const { showConfigCommand, validateConfigCommand } = await import("./commands/config.js");
 
   config
     .command("validate")
@@ -366,7 +371,8 @@ async function main(): Promise<void> {
       "\nExamples:\n  goblin health                   # Check gateway health\n  goblin health --url http://localhost:3000  # Check remote gateway\n  goblin health --json           # Output as JSON",
     )
     .action(async (options: { json?: boolean; url?: string }) => {
-      await healthCommand({ ...options, context: globalContext });
+      const { healthCommand: cmd } = await import("./commands/health.js");
+      await cmd({ ...options, context: globalContext });
     });
 
   program
@@ -391,6 +397,7 @@ async function main(): Promise<void> {
       "\nExamples:\n  goblin tui                      # Launch TUI dashboard\n  goblin tui --port 8080        # Launch TUI on port 8080",
     )
     .action(async (options: { port?: string; config?: string }) => {
+      const { startGateway } = await import("./commands/start.jsx");
       await startGateway({ ...options, tui: true }, globalContext);
     });
 

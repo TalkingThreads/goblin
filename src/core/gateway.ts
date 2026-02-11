@@ -1,7 +1,7 @@
 import { type Config, ConfigWatcher, generateSchema } from "../config/index.js";
 import { getConfigManager } from "../config/manager.js";
 import { HttpGateway, Registry, Router } from "../gateway/index.js";
-import { createLogger, flushLogs } from "../observability/logger.js";
+import { createLogger, flushAndCloseLogs } from "../observability/logger.js";
 import { catalogList, catalogSearch } from "../tools/meta/catalog.js";
 import { health } from "../tools/meta/health.js";
 import { catalogPrompts, describePrompt, searchPrompts } from "../tools/meta/prompts.js";
@@ -183,7 +183,7 @@ export class GoblinGateway {
     const shutdown = async (signal: string): Promise<void> => {
       logger.info({ signal }, "Shutdown signal received");
       await this.stop();
-      await flushLogs();
+      await flushAndCloseLogs();
       setTimeout(() => {
         logger.info("Logs flushed, exiting");
         process.exit(0);

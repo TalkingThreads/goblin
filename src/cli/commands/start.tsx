@@ -7,8 +7,6 @@ import { setupShutdownHandlers } from "../../observability/utils.js";
 import App from "../../tui/App.js";
 import type { CliContext } from "../types.js";
 
-const logger = createLogger("cli-commands");
-
 interface StartOptions {
   tui?: boolean;
   port?: string;
@@ -22,6 +20,9 @@ export async function startGateway(
   options: StartOptions,
   globalContext: CliContext,
 ): Promise<void> {
+  // Logging is already initialized in CLI entry point
+  const logger = createLogger("cli-commands");
+
   try {
     logger.info({ options, globalContext }, "Starting Goblin Gateway...");
 

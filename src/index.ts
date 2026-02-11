@@ -1,5 +1,9 @@
-import { GoblinGateway } from "./core/gateway.js";
-import { createLogger } from "./observability/logger.js";
+import { initSessionLogging } from "./observability/init.js";
+
+await initSessionLogging();
+
+const { GoblinGateway } = await import("./core/gateway.js");
+const { createLogger } = await import("./observability/logger.js");
 
 const logger = createLogger("entry");
 

@@ -2,27 +2,30 @@ import { Command } from "commander";
 import { getConfigManager, initConfig } from "../../config/manager.js";
 import { GoblinGateway } from "../../core/gateway.js";
 import { GatewayServer } from "../../gateway/server.js";
-import { createLogger, setLogToStderr } from "../../observability/logger.js";
+import { redirectLogsToStderr } from "../../observability/init.js";
+import { createLogger } from "../../observability/logger.js";
 import { setupShutdownHandlers } from "../../observability/utils.js";
 import { StdioServerTransport } from "../../transport/stdio-server.js";
 
-const logger = createLogger("cli-stdio");
-
 interface StdioOptions {
   config?: string;
-  port?: string; // Kept for compatibility/config override if we support it
+  port?: string;
 }
 
 /**
  * Start Goblin in STDIO mode
  */
 export async function startStdioGateway(options: StdioOptions): Promise<void> {
+  // Logging is already initialized in CLI entry point
+  // Just redirect to stderr to keep stdout clean for JSON-RPC
+  redirectLogsToStderr();
+
+  const logger = createLogger("cli-stdio");
+
   try {
-    // 1. Force logs to stderr to keep stdout clean for JSON-RPC
-    setLogToStderr(true);
     logger.info({ options }, "Starting Goblin in STDIO mode...");
 
-    // 2. Initialize config via ConfigManager
+    // Initialize config via ConfigManager
     const config = await initConfig(options.config ? { customPath: options.config } : undefined);
 
     // Apply environment overrides
@@ -42,16 +45,16 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
       config.auth.apiKey = process.env["GOBLIN_AUTH_APIKEY"] as string;
     }
 
-    // 3. Initialize Core (Config, Registry, Router, Backends)
+    // Initialize Core (Config, Registry, Router, Backends)
     const gateway = new GoblinGateway();
 
     // Initialize with our overridden config
     await gateway.initialize(config);
 
-    // 4. Create STDIO Transport
+    // Create STDIO Transport
     const transport = new StdioServerTransport();
 
-    // 5. Create Gateway Server (MCP Server)
+    // Create Gateway Server (MCP Server)
     if (!gateway.router) {
       throw new Error("Router not initialized");
     }
@@ -59,11 +62,11 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
     // We explicitly create a single GatewayServer instance for the STDIO connection
     const server = new GatewayServer(gateway.registry, gateway.router, config);
 
-    // 6. Start the transport to begin listening for stdin
+    // Start the transport to begin listening for stdin
     logger.info("Starting STDIO transport...");
     await transport.start();
 
-    // 7. Connect Transport
+    // Connect Transport
     logger.info("Connecting to STDIO transport...");
     await server.connect(transport);
 
@@ -76,7 +79,7 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
       process.exit(0);
     };
 
-    // 7. Setup Shutdown
+    // Setup Shutdown
     setupShutdownHandlers(async () => {
       logger.info("Received shutdown signal");
       await server.close();
@@ -84,7 +87,7 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
       process.exit(0);
     });
 
-    // 8. Setup SIGHUP Config Reload (Unix-only)
+    // Setup SIGHUP Config Reload (Unix-only)
     if (process.platform !== "win32") {
       process.on("SIGHUP", async () => {
         logger.info("Received SIGHUP, reloading configuration...");
@@ -119,7 +122,7 @@ export async function startStdioGateway(options: StdioOptions): Promise<void> {
     logger.info("Goblin STDIO server running");
     process.stderr.write("Goblin STDIO server running\n");
 
-    // 8. Keep process alive
+    // Keep process alive
     await new Promise(() => {});
   } catch (error: unknown) {
     // Ensure we log to stderr even if logger fails (though logger is set to stderr)
