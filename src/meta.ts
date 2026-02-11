@@ -6,10 +6,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { join } from "node:path";
 
 export interface ProjectMeta {
   name: string;
@@ -23,8 +20,29 @@ export class VersionLoadError extends Error {
   }
 }
 
+function findPackageJson(): string {
+  let dir = process.cwd();
+  const root = dir;
+
+  for (let i = 0; i < 10; i++) {
+    const packageJsonPath = join(dir, "package.json");
+    try {
+      readFileSync(packageJsonPath, "utf-8");
+      return packageJsonPath;
+    } catch {
+      const parent = join(dir, "..");
+      if (parent === dir) break;
+      dir = parent;
+    }
+  }
+
+  throw new VersionLoadError(
+    `Could not find package.json in ${root} or any parent directory up to 10 levels`,
+  );
+}
+
 function loadProjectMeta(): ProjectMeta {
-  const packageJsonPath = join(__dirname, "..", "..", "package.json");
+  const packageJsonPath = findPackageJson();
 
   let content: string;
   try {
@@ -58,7 +76,7 @@ function loadProjectMeta(): ProjectMeta {
 
 /**
  * Synchronous access to project metadata from package.json
- * Reads from disk at module load time.
+ * Searches for package.json starting from current working directory.
  * Throws VersionLoadError if version cannot be determined.
  */
 export const PROJECT_META: ProjectMeta = loadProjectMeta();
