@@ -1,33 +1,48 @@
 /**
  * Configuration file path resolution
+ *
+ * Uses user-visible locations for cross-platform consistency:
+ * - Windows: %USERPROFILE%\.goblin\
+ * - Linux: ~/.goblin\
+ * - macOS: ~/.goblin\
+ *
+ * This ensures the config folder is easily accessible to users
+ * without needing to navigate to hidden system directories.
  */
 
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
+import { homedir } from "node:os";
 import { join } from "node:path";
-import envPaths from "env-paths";
 
-const paths = envPaths("goblin");
+/**
+ * Get the Goblin config directory path
+ * Uses user home directory with .goblin folder for cross-platform consistency
+ */
+function getGoblinDir(): string {
+  const home = homedir();
+  return join(home, ".goblin");
+}
 
 /**
  * Get the configuration directory path
  */
 export function getConfigDir(): string {
-  return paths.config;
+  return getGoblinDir();
 }
 
 /**
  * Get the configuration file path
  */
 export function getConfigPath(): string {
-  return join(paths.config, "config.json");
+  return join(getGoblinDir(), "config.json");
 }
 
 /**
  * Get the JSON Schema file path
  */
 export function getSchemaPath(): string {
-  return join(paths.config, "config.schema.json");
+  return join(getGoblinDir(), "config.schema.json");
 }
 
 /**

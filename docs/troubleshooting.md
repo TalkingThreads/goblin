@@ -110,10 +110,8 @@ Check your configuration against the [JSON Schema](docs/schema/config.schema.jso
 # Set config path explicitly
 GOBLIN_CONFIG_PATH=/path/to/config.json goblin start
 
-# Or use default location
-# Linux: ~/.config/goblin/config.json
-# macOS: ~/Library/Application Support/goblin/config.json
-# Windows: %APPDATA%\goblin\config.json
+# Or use default location (all platforms)
+# ~/.goblin/config.json
 ```
 
 ---

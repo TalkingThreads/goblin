@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Configuration System**:
-  - Default config file is now created on first run at OS-standard location (`~/.config/goblin/config.json` on Linux, `~/Library/Application Support/Goblin/config.json` on macOS, `%APPDATA%\Goblin\config.json` on Windows).
+  - Default config file is now created on first run at user-visible location (`~/.goblin/config.json` on all platforms).
   - User-facing warnings are now displayed when configuration files contain invalid data, with actionable guidance to run `goblin config validate`.
   - Improved error messages for config file creation failures with specific guidance for permission and path issues.
 

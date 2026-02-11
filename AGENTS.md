@@ -487,10 +487,14 @@ function getHomeDir(): string {
     process.cwd(); // Fallback
 }
 
-// For config/log paths, use env-paths library
-import envPaths from "env-paths";
-const paths = envPaths("goblin");
-// Returns platform-appropriate paths automatically
+// For config paths, use ~/.goblin for cross-platform consistency
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+function getConfigDir(): string {
+  return join(homedir(), ".goblin");
+}
+// Returns ~/.goblin on all platforms (Windows, Linux, macOS)
 ```
 
 ### Line Endings
