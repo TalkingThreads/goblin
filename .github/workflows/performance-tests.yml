@@ -51,6 +51,12 @@ jobs:
           PERFORMANCE_TEST_DURATION: "30000"
           PERFORMANCE_CONCURRENT_CLIENTS: "50"
 
+      - name: Run MCP protocol performance benchmarks
+        run: |
+          bun test tests/performance/protocol-overhead
+        env:
+          PERFORMANCE_GATEWAY_URL: "http://localhost:3000"
+
       - name: Upload performance results
         if: always()
         uses: actions/upload-artifact@v4
