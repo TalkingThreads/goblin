@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GOBLIN_CLI = join(__dirname, "..", "..", "..", "dist", "cli", "index.js");
+const GOBLIN_CLI = join(__dirname, "..", "..", "..", "dist", "index.js");
 
 async function runGoblin(
   args: string[],

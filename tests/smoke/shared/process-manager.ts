@@ -43,7 +43,7 @@ export class ProcessManager {
 
   constructor(config: ProcessManagerConfig = {}) {
     this.config = {
-      binaryPath: `bun ${resolve("dist/cli/index.js")}`,
+      binaryPath: `bun ${resolve("dist/index.js")}`,
       startupTimeout: 10000,
       shutdownTimeout: 5000,
       ...config,

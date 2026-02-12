@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { initConfig } from "../../config/index.js";
 import { GoblinGateway } from "../../core/gateway.js";
+import { LockServer } from "../../daemon/index.js";
 import { redirectLogsToStderr } from "../../observability/init.js";
 import { createLogger } from "../../observability/logger.js";
 import { setupShutdownHandlers } from "../../observability/utils.js";
@@ -62,6 +63,14 @@ async function runStdioMode(configPath?: string): Promise<void> {
   const { GatewayServer } = await import("../../gateway/server.js");
   const server = new GatewayServer(gateway.registry, gateway.router, config);
 
+  const lockServer = new LockServer(gateway, "stdio");
+  try {
+    await lockServer.start();
+  } catch (error: any) {
+    console.error(error.message);
+    process.exit(1);
+  }
+
   logger.info("Starting STDIO transport...");
   await transport.start();
 
@@ -77,6 +86,7 @@ async function runStdioMode(configPath?: string): Promise<void> {
 
   const shutdown = async () => {
     logger.info("Received shutdown signal");
+    await lockServer.stop();
     await server.close();
     await gateway.stop();
     process.exit(0);
@@ -143,8 +153,17 @@ async function runHttpMode(
 
   const gateway = new GoblinGateway();
 
+  const lockServer = new LockServer(gateway, transportType);
+  try {
+    await lockServer.start();
+  } catch (error: any) {
+    console.error(error.message);
+    process.exit(1);
+  }
+
   const shutdown = async () => {
     logger.info("Received shutdown signal");
+    await lockServer.stop();
     await gateway.stop();
     process.exit(0);
   };

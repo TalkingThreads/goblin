@@ -1,3 +1,4 @@
+import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
@@ -8,6 +9,8 @@ interface StatusOptions {
 }
 
 interface StatusData {
+  mode?: string;
+  pid?: number;
   servers: {
     total: number;
     online: number;
@@ -15,7 +18,7 @@ interface StatusData {
   };
   tools: number;
   uptime: number;
-  health: string;
+  health?: string;
 }
 
 /**
@@ -38,35 +41,73 @@ function formatUptime(seconds: number): string {
  * Execute the status command
  */
 export async function statusCommand(options: StatusOptions): Promise<void> {
-  // Use global json flag if command flag not provided
   const useJson = options.json ?? options.context?.json ?? false;
 
-  // Build URL from command flag or default
-  const url = options.url || "http://localhost:3000";
-  const statusUrl = `${url.replace(/\/$/, "")}/status`;
+  // If user provided a specific URL, use it
+  if (options.url && options.url !== "http://localhost:3000") {
+    const url = options.url.replace(/\/$/, "");
+    const statusUrl = `${url}/status`;
+    await tryGetStatus(statusUrl, url, useJson);
+    return;
+  }
 
+  // Try Lock Server first
+  const lockServerUrl = `http://127.0.0.1:${DEFAULT_LOCK_PORT}/status`;
   try {
-    const response = await fetch(statusUrl);
+    const response = await fetch(lockServerUrl);
+    if (response.ok) {
+      const data = (await response.json()) as StatusData;
+      printStatus(data, useJson);
+      return;
+    }
+  } catch (e) {
+    // Lock server not running or unreachable
+  }
+
+  // Fallback to default HTTP
+  const defaultUrl = "http://localhost:3000/status";
+  await tryGetStatus(defaultUrl, "http://localhost:3000", useJson, true);
+}
+
+function printStatus(data: StatusData, useJson: boolean) {
+  if (useJson) {
+    console.log(JSON.stringify(data));
+    return;
+  }
+
+  console.log("Gateway Status");
+  console.log("==============");
+  if (data.mode) {
+    console.log(`Mode: ${data.mode}`);
+  }
+  if (data.pid) {
+    console.log(`PID: ${data.pid}`);
+  }
+  console.log(
+    `Servers: ${data.servers.total} (${data.servers.online} online, ${data.servers.offline} offline)`,
+  );
+  console.log(`Tools: ${data.tools}`);
+  console.log(`Uptime: ${formatUptime(data.uptime)}`);
+  if (data.health) {
+    console.log(`Health: ${data.health}`);
+  }
+}
+
+async function tryGetStatus(
+  url: string,
+  displayUrl: string,
+  useJson: boolean,
+  isFallback = false,
+): Promise<void> {
+  try {
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error(`Gateway returned ${response.status}: ${response.statusText}`);
     }
 
     const data = (await response.json()) as StatusData;
-
-    if (useJson) {
-      console.log(JSON.stringify(data));
-      return;
-    }
-
-    console.log("Gateway Status");
-    console.log("==============");
-    console.log(
-      `Servers: ${data.servers.total} (${data.servers.online} online, ${data.servers.offline} offline)`,
-    );
-    console.log(`Tools: ${data.tools}`);
-    console.log(`Uptime: ${formatUptime(data.uptime)}`);
-    console.log(`Health: ${data.health}`);
+    printStatus(data, useJson);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const isConnectionRefused =
@@ -93,11 +134,17 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
       if (isConnectionRefused) {
         console.log("Gateway Status");
         console.log("==============");
-        console.log("Gateway is not running");
-        console.log("Use 'goblin start' to start the gateway");
+        if (isFallback) {
+          console.log(
+            "No Goblin server running. Start one with 'goblin start' or 'goblin start --transport http'",
+          );
+        } else {
+          console.log("Gateway is not running");
+          console.log("Use 'goblin start' to start the gateway");
+        }
         process.exit(ExitCode.SUCCESS);
       } else {
-        console.error(`Error: Could not connect to gateway at ${url}`);
+        console.error(`Error: Could not connect to gateway at ${displayUrl}`);
         console.error("Make sure the gateway is running (goblin start)");
         process.exit(ExitCode.CONNECTION_ERROR);
       }

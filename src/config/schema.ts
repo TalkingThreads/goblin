@@ -325,6 +325,16 @@ export const VirtualToolSchema = z.object({
 });
 
 /**
+ * Daemon configuration
+ */
+export const DaemonConfigSchema = z.object({
+  /**
+   * Port for the lock server (control plane)
+   */
+  lockPort: z.number().int().min(1).max(65535).default(12490),
+});
+
+/**
  * Root configuration schema
  */
 export const ConfigSchema = z.object({
@@ -345,6 +355,13 @@ export const ConfigSchema = z.object({
     port: 3000,
     host: "127.0.0.1",
     transport: "both",
+  }),
+
+  /**
+   * Daemon settings
+   */
+  daemon: DaemonConfigSchema.default({
+    lockPort: 12490,
   }),
 
   /**
@@ -394,6 +411,7 @@ export type LogRedactConfig = z.infer<typeof LogRedactConfigSchema>;
 export type LogSamplingConfig = z.infer<typeof LogSamplingConfigSchema>;
 export type RequestLoggingConfig = z.infer<typeof RequestLoggingConfigSchema>;
 export type LoggingConfig = z.infer<typeof LoggingConfigSchema>;
+export type DaemonConfig = z.infer<typeof DaemonConfigSchema>;
 export type VirtualToolOp = z.infer<typeof VirtualToolOpSchema>;
 export type VirtualTool = z.infer<typeof VirtualToolSchema>;
 export type Config = z.infer<typeof ConfigSchema>;

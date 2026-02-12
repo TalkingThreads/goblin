@@ -24,7 +24,7 @@ async function runCli(args: string[], timeout: number = 5000): Promise<CliResult
       reject(new Error(`Command timed out after ${timeout}ms`));
     }, timeout);
 
-    const childProcess = spawn("bun", ["dist/cli/index.js", ...args], {
+    const childProcess = spawn("bun", ["dist/index.js", ...args], {
       env: { ...process.env, NO_COLOR: "1" },
     });
 
@@ -68,7 +68,7 @@ async function runCliWithInput(
       reject(new Error(`Command timed out after ${timeout}ms`));
     }, timeout);
 
-    const childProcess = spawn("bun", ["dist/cli/index.js", ...args], {
+    const childProcess = spawn("bun", ["dist/index.js", ...args], {
       env: { ...process.env, NO_COLOR: "1" },
       stdio: ["pipe", "pipe", "pipe"],
     });

@@ -1,3 +1,4 @@
+import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
@@ -11,12 +12,34 @@ interface StopOptions {
  * Execute the stop command
  */
 export async function stopCommand(options: StopOptions): Promise<void> {
-  // Build URL from command flag or default
-  const url = options.url || "http://localhost:3000";
-  const shutdownUrl = `${url.replace(/\/$/, "")}/shutdown`;
+  // If user provided a specific URL, use it
+  if (options.url && options.url !== "http://localhost:3000") {
+    const url = options.url.replace(/\/$/, "");
+    const shutdownUrl = `${url}/shutdown`;
+    await tryStopUrl(shutdownUrl, url);
+    return;
+  }
 
+  // Otherwise, try the Lock Server first (covers stdio and http modes)
+  const lockServerUrl = `http://127.0.0.1:${DEFAULT_LOCK_PORT}/stop`;
   try {
-    const response = await fetch(shutdownUrl, {
+    const response = await fetch(lockServerUrl, { method: "POST" });
+    if (response.ok) {
+      console.log("Gateway stopped successfully (via Lock Server)");
+      process.exit(0);
+    }
+  } catch (e) {
+    // Lock server not running or unreachable
+  }
+
+  // Fallback to default HTTP port (in case lock server failed but HTTP didn't? Unlikely but safe)
+  const defaultUrl = "http://localhost:3000/shutdown";
+  await tryStopUrl(defaultUrl, "http://localhost:3000", true);
+}
+
+async function tryStopUrl(url: string, displayUrl: string, isFallback = false): Promise<void> {
+  try {
+    const response = await fetch(url, {
       method: "POST",
     });
 
@@ -25,8 +48,11 @@ export async function stopCommand(options: StopOptions): Promise<void> {
       process.exit(0);
     }
 
-    // Handle 404 or any "not found" response - gateway may not have /shutdown endpoint
     if (response.status === 404) {
+      if (isFallback) {
+        console.log("Gateway is not running");
+        process.exit(0);
+      }
       console.log("Gateway is not running (no shutdown endpoint)");
       process.exit(0);
     }
@@ -47,7 +73,7 @@ export async function stopCommand(options: StopOptions): Promise<void> {
       process.exit(0);
     }
 
-    console.error(`Error: Could not stop gateway at ${url}`);
+    console.error(`Error: Could not stop gateway at ${displayUrl}`);
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(ExitCode.CONNECTION_ERROR);
   }

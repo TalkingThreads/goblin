@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Port-as-Lock Control Plane**: Implemented unified singleton management via TCP port binding
+  - `LockServer` (default port 12490) acts as both atomic lock and admin API
+  - CLI commands (`stop`, `status`, `health`, `tools`, `servers`) connect via Control Plane
+  - Automatic singleton enforcement via EADDRINUSE detection
+  - Works across all transport modes: `stdio`, `http`, `sse`
+  - Port configurable via `daemon.lockPort` in config.json or `GOBLIN_LOCK_PORT` environment variable
+  - Provides consistent CLI experience regardless of main transport
+
+### Removed
+- **File-based Locking**: Removed `goblin.lock` file and PID-based stale lock detection
+  - Replaced with port-based locking for better cross-platform reliability
+  - Eliminates WSL file system synchronization issues
+
 ### Changed
 
 - **CLI Commands**:

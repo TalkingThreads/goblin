@@ -224,6 +224,11 @@ export class Registry extends EventEmitter {
     this.emit("change");
   }
 
+  getToolsForServer(serverId: string): string[] {
+    const ids = this.serverTools.get(serverId);
+    return ids ? Array.from(ids) : [];
+  }
+
   // --- Tools ---
 
   listTools(): ToolCard[] {

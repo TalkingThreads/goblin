@@ -165,6 +165,35 @@ const config = manager.getConfig();
 - `src/tui/app.tsx` - Main TUI application
 - `src/tui/panels/*` - Individual panels
 
+### 8. Daemon and Control Plane
+
+**Purpose**: Provide a persistent, single-instance management interface for the gateway.
+
+**Components**:
+- **LockServer**: HTTP server on port 12490 (configurable) acting as a singleton lock and control API.
+- **Control Plane API**: Endpoints for status, health, tool listing, and server management.
+
+**Key Files**:
+- `src/daemon/lock-server.ts` - Lock server implementation
+- `src/daemon/index.ts` - Daemon exports
+
+**Architecture**:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Goblin Process                         │
+│                                                             │
+│  ┌──────────────┐       ┌─────────────────┐                 │
+│  │ Lock Server  │◀─────▶│ Goblin Gateway  │                 │
+│  │ (Port 12490) │       │ (Main Logic)    │                 │
+│  └──────────────┘       └─────────────────┘                 │
+│         ▲                        ▲                          │
+│         │                        │                          │
+│    CLI Commands             MCP Clients                     │
+│  (stop, status, tools)    (Claude, etc.)                    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ## Data Flow
 
 ### Tool Invocation

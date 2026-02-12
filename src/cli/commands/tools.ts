@@ -1,10 +1,11 @@
 import { Command } from "commander";
+import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
 interface ToolInfo {
   name: string;
-  server: string;
+  serverId: string; // Changed from server to serverId to match Registry
   description: string;
   parameters?: {
     type: string;
@@ -123,7 +124,12 @@ export function createToolsCommand(context?: CliContext): Command {
 }
 
 function buildUrl(baseUrl: string | undefined): string {
-  return (baseUrl ?? "http://localhost:3000").replace(/\/$/, "");
+  // If user provided a specific URL, use it
+  if (baseUrl && baseUrl !== "http://localhost:3000") {
+    return baseUrl.replace(/\/$/, "");
+  }
+  // Otherwise default to Lock Server (Control Plane)
+  return `http://127.0.0.1:${DEFAULT_LOCK_PORT}`;
 }
 
 export async function toolsList(options: ToolListOptions): Promise<void> {
@@ -155,7 +161,7 @@ export async function toolsList(options: ToolListOptions): Promise<void> {
     console.log("=====");
 
     for (const tool of tools) {
-      console.log(`  ${tool.name} (${tool.server})`);
+      console.log(`  ${tool.name} (${tool.serverId})`);
       console.log(`    ${tool.description}`);
     }
   } catch (error) {
@@ -185,6 +191,12 @@ export async function toolsInvoke(name: string, options: ToolInvokeOptions): Pro
     }
   }
 
+  // Invocation must still go to the main HTTP port if in HTTP mode,
+  // OR we need to proxy it through the Lock Server.
+  // Ideally, Lock Server proxies everything.
+  // BUT the current Lock Server implementation of invoke is missing.
+  // For now, let's assume tools/call is available on the built URL.
+  // Note: LockServer.ts needs to implement POST /tools/call
   const url = new URL(`${buildUrl(options.url)}/tools/call`);
 
   const body: { name: string; arguments: Record<string, unknown>; server?: string } = {
@@ -234,7 +246,7 @@ export async function toolsDescribe(name: string, options: ToolDescribeOptions):
     const tool = (await response.json()) as ToolInfo;
 
     console.log(`Tool: ${tool.name}`);
-    console.log(`Server: ${tool.server}`);
+    console.log(`Server: ${tool.serverId}`);
     console.log(`Description: ${tool.description}`);
 
     if (tool.parameters) {
@@ -281,7 +293,7 @@ export async function toolsSearch(
     let tools = data.tools;
 
     if (options.server) {
-      tools = tools.filter((t) => t.server === options.server);
+      tools = tools.filter((t) => t.serverId === options.server);
     }
 
     const queryLower = query.toLowerCase();
@@ -316,7 +328,7 @@ export async function toolsSearch(
     console.log("");
 
     for (const tool of matchedTools) {
-      console.log(`${tool.name} (${tool.server})`);
+      console.log(`${tool.name} (${tool.serverId})`);
       console.log(`  ${tool.description}`);
       console.log("");
     }

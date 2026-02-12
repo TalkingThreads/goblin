@@ -30,7 +30,7 @@ export interface TestEnvironment {
  * Default smoke test configuration
  */
 export const DEFAULT_CONFIG: SmokeTestConfig = {
-  binaryPath: "node dist/cli/index.js",
+  binaryPath: "node dist/index.js",
   workingDir: "",
   gatewayPort: 0, // Random available port
   gatewayHost: "127.0.0.1",

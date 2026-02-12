@@ -8,7 +8,7 @@ import { join } from "node:path";
 
 describe("Simple CLI Test", () => {
   test("should run help command", async () => {
-    const binaryPath = join(process.cwd(), "dist/cli/index.js");
+    const binaryPath = join(process.cwd(), "dist/index.js");
 
     return new Promise((resolve, reject) => {
       const proc = spawn("bun", [binaryPath, "help"], {

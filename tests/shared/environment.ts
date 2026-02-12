@@ -120,7 +120,7 @@ export function createTestEnvironment(options: {
     const configHandle = await fileManager.createConfigFile(config, { prefix: "goblin" });
     const configPath = configHandle.path;
 
-    const goblinBinary = join(process.cwd(), "dist", "cli", "index.js");
+    const goblinBinary = join(process.cwd(), "dist", "index.js");
 
     const bunPath = process.env.BUN_PATH || join(process.cwd(), "node_modules", ".bin", "bun");
     const executablePath = existsSync(bunPath) ? bunPath : process.execPath;

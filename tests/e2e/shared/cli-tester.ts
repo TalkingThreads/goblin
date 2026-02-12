@@ -26,7 +26,7 @@ export interface CliTesterConfig {
 }
 
 const DEFAULT_CONFIG: Required<CliTesterConfig> = {
-  binaryPath: "bun dist/cli/index.js",
+  binaryPath: "bun dist/index.js",
   workingDir: "",
   env: {},
   timeout: 30000,
@@ -39,7 +39,7 @@ export interface CommandResult {
 }
 
 export function isCliBinaryAvailable(): boolean {
-  const binaryPath = "dist/cli/index.js";
+  const binaryPath = "dist/index.js";
   return existsSync(binaryPath);
 }
 
@@ -299,7 +299,7 @@ export class InteractiveSession {
   private process: ChildProcess | null = null;
   private output: string = "";
 
-  constructor(private binaryPath: string = "bun dist/cli/index.js") {}
+  constructor(private binaryPath: string = "bun dist/index.js") {}
 
   /**
    * Start interactive session

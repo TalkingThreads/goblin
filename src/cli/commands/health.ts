@@ -1,3 +1,4 @@
+import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
@@ -41,8 +42,11 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
   // Use global json flag if command flag not provided
   const useJson = options.json ?? options.context?.json ?? false;
 
-  // Build URL from command flag or default
-  const url = options.url || "http://localhost:3000";
+  let url = options.url;
+  // Use Lock Server (Control Plane) if no URL provided
+  if (!url) {
+    url = `http://127.0.0.1:${DEFAULT_LOCK_PORT}`;
+  }
   const baseUrl = url.replace(/\/$/, "");
 
   try {
@@ -81,7 +85,7 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
 
     console.log("Health Status");
     console.log("=============");
-    console.log(`Overall: ${statusData.health}`);
+    console.log(`Overall: ${statusData.health || "healthy"}`);
     console.log("");
 
     console.log("Per-Server:");

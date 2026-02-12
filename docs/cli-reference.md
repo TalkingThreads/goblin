@@ -556,6 +556,9 @@ Show recent logs.
 | `GOBLIN_HOST` | Gateway host | 127.0.0.1 |
 | `LOG_LEVEL` | Logging level | info |
 
+
+| `GOBLIN_LOCK_PORT` | Control Plane/Lock server port | 12490 |
+
 ### Authentication Variables
 
 | Variable | Description | Default |

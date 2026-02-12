@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getConfigPath } from "../../config/paths.js";
 import type { Config, ServerConfig } from "../../config/schema.js";
 import { writeConfig } from "../../config/writer.js";
+import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 import { addServerInteractive } from "./servers/add-interactive.js";
@@ -490,7 +491,13 @@ export function createServersCommand(context?: CliContext): Command {
  * Execute the servers command
  */
 export async function serversCommand(options: ServerOptions): Promise<void> {
-  const url = options.url || "http://localhost:3000";
+  let url = options.url;
+
+  // Use Lock Server (Control Plane) if no URL provided
+  if (!url) {
+    url = `http://127.0.0.1:${DEFAULT_LOCK_PORT}`;
+  }
+
   const serversUrl = new URL(`${url.replace(/\/$/, "")}/servers`);
 
   if (options.status && options.status !== "all") {

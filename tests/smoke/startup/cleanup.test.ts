@@ -19,7 +19,7 @@ import {
 describe("Gateway Cleanup", () => {
   let manager: ProcessManager;
   let env: TestEnvironment;
-  const binaryPath = resolve("dist/cli/index.js");
+  const binaryPath = resolve("dist/index.js");
 
   beforeAll(() => {
     env = createTestEnvironment("goblin-cleanup-test-");
