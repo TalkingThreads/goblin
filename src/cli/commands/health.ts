@@ -2,6 +2,12 @@ import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
+function getLockPort(): number {
+  return process.env["GOBLIN_LOCK_PORT"]
+    ? Number.parseInt(process.env["GOBLIN_LOCK_PORT"], 10)
+    : DEFAULT_LOCK_PORT;
+}
+
 interface HealthOptions {
   json?: boolean;
   url?: string;
@@ -45,7 +51,7 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
   let url = options.url;
   // Use Lock Server (Control Plane) if no URL provided
   if (!url) {
-    url = `http://127.0.0.1:${DEFAULT_LOCK_PORT}`;
+    url = `http://127.0.0.1:${getLockPort()}`;
   }
   const baseUrl = url.replace(/\/$/, "");
 

@@ -51,6 +51,11 @@ async function runStdioMode(configPath?: string): Promise<void> {
     config.auth.apiKey = process.env["GOBLIN_AUTH_APIKEY"] as string;
   }
 
+  // Determine lock port: env var > config > default
+  const lockPort = process.env["GOBLIN_LOCK_PORT"]
+    ? Number.parseInt(process.env["GOBLIN_LOCK_PORT"], 10)
+    : config.daemon?.lockPort || 12490;
+
   const gateway = new GoblinGateway();
   await gateway.initialize(config);
 
@@ -63,7 +68,7 @@ async function runStdioMode(configPath?: string): Promise<void> {
   const { GatewayServer } = await import("../../gateway/server.js");
   const server = new GatewayServer(gateway.registry, gateway.router, config);
 
-  const lockServer = new LockServer(gateway, "stdio");
+  const lockServer = new LockServer(gateway, "stdio", lockPort);
   try {
     await lockServer.start();
   } catch (error: any) {
@@ -151,9 +156,14 @@ async function runHttpMode(
     config.gateway.port = portValue;
   }
 
+  // Determine lock port: env var > config > default
+  const lockPort = process.env["GOBLIN_LOCK_PORT"]
+    ? Number.parseInt(process.env["GOBLIN_LOCK_PORT"], 10)
+    : config.daemon?.lockPort || 12490;
+
   const gateway = new GoblinGateway();
 
-  const lockServer = new LockServer(gateway, transportType);
+  const lockServer = new LockServer(gateway, transportType, lockPort);
   try {
     await lockServer.start();
   } catch (error: any) {

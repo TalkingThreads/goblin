@@ -2,6 +2,12 @@ import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
+function getLockPort(): number {
+  return process.env["GOBLIN_LOCK_PORT"]
+    ? Number.parseInt(process.env["GOBLIN_LOCK_PORT"], 10)
+    : DEFAULT_LOCK_PORT;
+}
+
 interface StatusOptions {
   json?: boolean;
   url?: string;
@@ -52,7 +58,7 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
   }
 
   // Try Lock Server first
-  const lockServerUrl = `http://127.0.0.1:${DEFAULT_LOCK_PORT}/status`;
+  const lockServerUrl = `http://127.0.0.1:${getLockPort()}/status`;
   try {
     const response = await fetch(lockServerUrl);
     if (response.ok) {

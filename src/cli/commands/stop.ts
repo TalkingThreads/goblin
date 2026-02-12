@@ -2,6 +2,12 @@ import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
+function getLockPort(): number {
+  return process.env["GOBLIN_LOCK_PORT"]
+    ? Number.parseInt(process.env["GOBLIN_LOCK_PORT"], 10)
+    : DEFAULT_LOCK_PORT;
+}
+
 interface StopOptions {
   url?: string;
   timeout?: number;
@@ -21,7 +27,7 @@ export async function stopCommand(options: StopOptions): Promise<void> {
   }
 
   // Otherwise, try the Lock Server first (covers stdio and http modes)
-  const lockServerUrl = `http://127.0.0.1:${DEFAULT_LOCK_PORT}/stop`;
+  const lockServerUrl = `http://127.0.0.1:${getLockPort()}/stop`;
   try {
     const response = await fetch(lockServerUrl, { method: "POST" });
     if (response.ok) {

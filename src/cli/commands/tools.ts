@@ -3,6 +3,12 @@ import { DEFAULT_LOCK_PORT } from "../../daemon/index.js";
 import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 
+function getLockPort(): number {
+  return process.env["GOBLIN_LOCK_PORT"]
+    ? Number.parseInt(process.env["GOBLIN_LOCK_PORT"], 10)
+    : DEFAULT_LOCK_PORT;
+}
+
 interface ToolInfo {
   name: string;
   serverId: string; // Changed from server to serverId to match Registry
@@ -129,7 +135,7 @@ function buildUrl(baseUrl: string | undefined): string {
     return baseUrl.replace(/\/$/, "");
   }
   // Otherwise default to Lock Server (Control Plane)
-  return `http://127.0.0.1:${DEFAULT_LOCK_PORT}`;
+  return `http://127.0.0.1:${getLockPort()}`;
 }
 
 export async function toolsList(options: ToolListOptions): Promise<void> {

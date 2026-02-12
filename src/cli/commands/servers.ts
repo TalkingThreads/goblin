@@ -10,6 +10,12 @@ import { ExitCode } from "../exit-codes.js";
 import type { CliContext } from "../types.js";
 import { addServerInteractive } from "./servers/add-interactive.js";
 
+function getLockPort(): number {
+  return process.env["GOBLIN_LOCK_PORT"]
+    ? Number.parseInt(process.env["GOBLIN_LOCK_PORT"], 10)
+    : DEFAULT_LOCK_PORT;
+}
+
 const TransportTypeSchema = z.enum(["stdio", "http", "sse", "streamablehttp"]);
 
 interface ServerOptions {
@@ -495,7 +501,7 @@ export async function serversCommand(options: ServerOptions): Promise<void> {
 
   // Use Lock Server (Control Plane) if no URL provided
   if (!url) {
-    url = `http://127.0.0.1:${DEFAULT_LOCK_PORT}`;
+    url = `http://127.0.0.1:${getLockPort()}`;
   }
 
   const serversUrl = new URL(`${url.replace(/\/$/, "")}/servers`);
