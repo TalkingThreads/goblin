@@ -7,21 +7,13 @@
  */
 export interface CliContext {
   /**
-   * Gateway port override
-   */
-  port?: number;
-  /**
-   * Gateway host override
-   */
-  host?: string;
-  /**
    * Enable verbose logging
    */
-  verbose: boolean;
+  verbose?: boolean;
   /**
    * Output in JSON format
    */
-  json: boolean;
+  json?: boolean;
   /**
    * Custom config file path
    */

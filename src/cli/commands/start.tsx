@@ -180,13 +180,7 @@ export async function startGateway(
   try {
     const transportType = validateTransport(options.transport);
     const configPath = globalContext.configPath ?? options.config;
-    let portNum: number | undefined;
-
-    if (typeof globalContext.port === "number") {
-      portNum = globalContext.port;
-    } else if (typeof options.port === "string") {
-      portNum = parseInt(options.port, 10);
-    }
+    const portNum = typeof options.port === "string" ? parseInt(options.port, 10) : undefined;
 
     if (transportType === undefined || transportType === "stdio") {
       await runStdioMode(configPath);

@@ -20,7 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--transport sse`: Only exposes `/sse` and `/messages` endpoints (SSE transport)
   - Both modes include all REST API endpoints (`/api/v1/*`, `/tools`, `/servers`, `/health`, etc.)
 
+- **CLI Global Options Cleanup**:
+  - Removed `--port`, `--host`, `--verbose`, `--config` from global options
+  - `--port` and `--host` are now command-specific options for `goblin start`
+  - `--verbose` is now a command-specific option for `goblin start`
+  - `--config` remains available but is now command-specific where applicable
+  - `--json` is now available on output commands: `servers`, `tools`, `status`, `health`, `logs`, `config`
+
 ### Added
+
+- `goblin start --verbose`: Enable verbose logging for the start command
+- `goblin start --port <number>`: Set gateway port (default: 3000)
+- `goblin start --host <host>`: Set gateway host (default: 127.0.0.1)
+- `goblin start --config <path>`: Use custom config file
+- `goblin servers --json`: Output server list as JSON
 
 - **Configuration System**:
   - Default config file is now created on first run at user-visible location (`~/.goblin/config.json` on all platforms).

@@ -122,17 +122,14 @@ export function createToolsCommand(context?: CliContext): Command {
   return command;
 }
 
-function buildUrl(baseUrl: string | undefined, context: CliContext | undefined): string {
-  const url = new URL(`${(baseUrl ?? "http://localhost:3000").replace(/\/$/, "")}`);
-  if (context?.host) url.hostname = context.host;
-  if (context?.port) url.port = context.port.toString();
-  return url.toString();
+function buildUrl(baseUrl: string | undefined): string {
+  return (baseUrl ?? "http://localhost:3000").replace(/\/$/, "");
 }
 
 export async function toolsList(options: ToolListOptions): Promise<void> {
   const globalJson = options.context?.json;
   const useJson = options.json ?? globalJson ?? false;
-  const url = new URL(`${buildUrl(options.url, options.context)}/tools`);
+  const url = new URL(`${buildUrl(options.url)}/tools`);
 
   try {
     const response = await fetch(url.toString());
@@ -188,7 +185,7 @@ export async function toolsInvoke(name: string, options: ToolInvokeOptions): Pro
     }
   }
 
-  const url = new URL(`${buildUrl(options.url, options.context)}/tools/call`);
+  const url = new URL(`${buildUrl(options.url)}/tools/call`);
 
   const body: { name: string; arguments: Record<string, unknown>; server?: string } = {
     name,
@@ -218,9 +215,7 @@ export async function toolsInvoke(name: string, options: ToolInvokeOptions): Pro
 }
 
 export async function toolsDescribe(name: string, options: ToolDescribeOptions): Promise<void> {
-  const url = new URL(
-    `${buildUrl(options.url, options.context)}/tools/${encodeURIComponent(name)}`,
-  );
+  const url = new URL(`${buildUrl(options.url)}/tools/${encodeURIComponent(name)}`);
 
   if (options.server) {
     url.searchParams.append("server", options.server);
@@ -273,7 +268,7 @@ export async function toolsSearch(
   options: { server?: string; json?: boolean; url?: string; context?: CliContext },
 ): Promise<void> {
   const useJson = options.json ?? options.context?.json ?? false;
-  const url = new URL(`${buildUrl(options.url, options.context)}/tools`);
+  const url = new URL(`${buildUrl(options.url)}/tools`);
 
   try {
     const response = await fetch(url.toString());

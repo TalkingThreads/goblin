@@ -207,7 +207,8 @@ export function createServersCommand(context?: CliContext): Command {
   command
     .description("List and manage configured servers")
     .option("--url <url>", "Gateway URL", "http://localhost:3000")
-    .option("--status <status>", "Filter by status", "all");
+    .option("--status <status>", "Filter by status", "all")
+    .option("--json", "Output as JSON", false);
 
   // Helper to get config path from command option or global context
   const getConfigPath = (cmdConfig?: string): string | undefined => {
@@ -476,9 +477,11 @@ export function createServersCommand(context?: CliContext): Command {
       }
     });
 
-  command.action(async (options: { url?: string; status?: "online" | "offline" | "all" }) => {
-    await serversCommand({ ...options, json: false });
-  });
+  command.action(
+    async (options: { url?: string; status?: "online" | "offline" | "all"; json?: boolean }) => {
+      await serversCommand({ ...options, json: options.json ?? false });
+    },
+  );
 
   return command;
 }

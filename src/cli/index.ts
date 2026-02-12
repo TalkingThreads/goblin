@@ -38,20 +38,14 @@ Usage: goblin <command> [options]
 
 Common Commands:
   goblin start              Start gateway (defaults to STDIO mode)
-  goblin start --transport http  Start with HTTP server + REST API
-  goblin start --transport sse   Start with SSE server + REST API
   goblin servers            List and manage configured servers
   goblin tools              List available tools
+  goblin status             Show gateway status
   goblin tui                Launch interactive TUI (coming soon)
 
 Global Flags:
   -h, --help         Show this help message
   -v, --version      Show version information
-  --verbose          Enable verbose logging
-  --port <number>    Gateway port (default: 3000)
-  --host <host>      Gateway host (default: 127.0.0.1)
-  --json             Output in JSON format
-  --config <path>    Path to config file
 
 Documentation:
   https://goblin.sh/docs
@@ -68,39 +62,14 @@ interface StartOptions {
 }
 
 function parseGlobalFlags(args: string[]): CliContext {
-  const context: CliContext = {
-    verbose: false,
-    json: false,
-  };
+  const context: CliContext = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    const nextArg = args[i + 1];
 
     switch (arg) {
-      case "--verbose":
-        context.verbose = true;
-        break;
       case "--json":
         context.json = true;
-        break;
-      case "--port":
-        if (nextArg && !nextArg.startsWith("-")) {
-          context.port = parseInt(nextArg, 10);
-          i++;
-        }
-        break;
-      case "--host":
-        if (nextArg && !nextArg.startsWith("-")) {
-          context.host = nextArg;
-          i++;
-        }
-        break;
-      case "--config":
-        if (nextArg && !nextArg.startsWith("-")) {
-          context.configPath = nextArg;
-          i++;
-        }
         break;
     }
   }
@@ -201,27 +170,10 @@ async function main(): Promise<void> {
 
   const args = process.argv.slice(2);
 
-  // Handle verbose flag logic - set LOG_LEVEL env var for verbose mode
-  if (globalContext.verbose) {
-    const command = args.find((arg) => !arg.startsWith("-"));
-    const allowedVerboseCommands = ["start"];
-
-    // Enable verbose logging only for allowed commands or if no command is specified (root/default)
-    if (!command || allowedVerboseCommands.includes(command)) {
-      process.env["LOG_LEVEL"] = "debug";
-    }
-  }
-
   program
     .name("goblin")
     .description("Goblin MCP Gateway CLI")
     .option("-v, --version", "output version number")
-    .option("--verbose", "Enable verbose logging")
-    .option("--json", "Output in JSON format")
-    .option("--port <number>", "Gateway port")
-    .option("--host <host>", "Gateway host")
-    .option("--config <path>", "Path to config file")
-    .option("--tui", "Launch TUI dashboard")
     .action(async (options) => {
       if (options.version) {
         console.log(VERSION);
@@ -250,14 +202,21 @@ async function main(): Promise<void> {
     .command("start")
     .description("Start the Gateway")
     .option("-t, --transport <type>", "Transport type: http, sse, stdio (default: stdio)")
-    .option("--tui", "Enable TUI mode")
-    .option("--port <number>", "Port to listen on")
+    .option("--verbose", "Enable verbose logging")
+    .option("--port <number>", "Port to listen on (default: 3000)")
+    .option("--host <host>", "Host to bind to (default: 127.0.0.1)")
     .option("--config <path>", "Path to config file")
+    .option("--tui", "Enable TUI mode")
     .addHelpText(
       "after",
-      "\nExamples:\n  goblin start                    # Start in STDIO mode (default)\n  goblin start --transport http   # Start HTTP gateway with REST API\n  goblin start --transport sse    # Start SSE gateway with REST API\n  goblin start --port 8080        # Start on port 8080\n  goblin start --tui              # Start with interactive TUI\n  goblin start --config ~/my-config.json  # Use custom config file",
+      "\nExamples:\n  goblin start                    # Start in STDIO mode (default)\n  goblin start --transport http   # Start HTTP gateway with REST API\n  goblin start --transport sse    # Start SSE gateway with REST API\n  goblin start --port 8080        # Start on port 8080\n  goblin start --host 0.0.0.0     # Bind to all interfaces\n  goblin start --verbose          # Enable verbose logging\n  goblin start --config ~/my-config.json  # Use custom config file\n  goblin start --tui              # Start with interactive TUI",
     )
-    .action(async (options: StartOptions & { transport?: string }) => {
+    .action(async (options: StartOptions & { transport?: string; verbose?: boolean }) => {
+      // Handle verbose flag for start command
+      if (options.verbose) {
+        process.env["LOG_LEVEL"] = "debug";
+      }
+
       const { startGateway } = await import("./commands/start.jsx");
       const startOptions: StartOptions = {
         ...options,
