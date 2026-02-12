@@ -16,7 +16,7 @@ import {
 } from "../errors/types.js";
 import { getRequestId } from "../observability/correlation.js";
 import { createLogger, isDebugEnabled } from "../observability/logger.js";
-import { mcpToolCallsTotal, mcpToolDuration } from "../observability/metrics.js";
+import { mcpTimeoutsTotal, mcpToolCallsTotal, mcpToolDuration } from "../observability/metrics.js";
 import type { TransportPool } from "../transport/index.js";
 import type { Registry } from "./registry.js";
 import { parseNamespacedUri } from "./types.js";
@@ -259,6 +259,7 @@ export class Router {
     } catch (error) {
       // Handle timeout errors specifically
       if (error instanceof DOMException && error.name === "AbortError") {
+        mcpTimeoutsTotal.inc({ type, id });
         throw new RequestTimeoutError(timeoutMs, `${type}: ${id}`);
       }
 

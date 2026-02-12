@@ -334,6 +334,44 @@ export const mcpActiveConnections = metricsRegistry.gauge(
   "Active MCP connections",
 );
 
+// MCP Protocol Compliance Metrics
+export const mcpInitializationDuration = metricsRegistry.histogram(
+  "goblin_mcp_initialization_duration_seconds",
+  [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
+  "Duration of MCP initialization handshake",
+);
+export const mcpInitializationFailuresTotal = metricsRegistry.counter(
+  "goblin_mcp_initialization_failures_total",
+  "Total failed MCP initializations",
+);
+export const mcpActiveSessions = metricsRegistry.gauge(
+  "goblin_mcp_active_sessions",
+  "Number of active MCP sessions",
+);
+export const mcpSessionDuration = metricsRegistry.histogram(
+  "goblin_mcp_session_duration_seconds",
+  [1, 5, 15, 30, 60, 300, 600, 1800, 3600],
+  "Duration of MCP sessions",
+);
+export const mcpRequestDuration = metricsRegistry.histogram(
+  "goblin_mcp_request_duration_seconds",
+  [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0],
+  "Duration of MCP requests by method",
+);
+export const mcpTimeoutsTotal = metricsRegistry.counter(
+  "goblin_mcp_timeouts_total",
+  "Total MCP request timeouts",
+);
+export const mcpCancellationsTotal = metricsRegistry.counter(
+  "goblin_mcp_cancellations_total",
+  "Total MCP request cancellations",
+);
+export const mcpPingPongDuration = metricsRegistry.histogram(
+  "goblin_mcp_ping_pong_duration_seconds",
+  [0.001, 0.005, 0.01, 0.025, 0.05, 0.1],
+  "Duration of MCP ping/pong round trips",
+);
+
 // Helper to get formatted metrics for debugging
 export function getMetricsJSON(): string {
   return JSON.stringify(metricsRegistry.toJSON(), null, 2);

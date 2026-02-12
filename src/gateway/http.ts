@@ -527,8 +527,32 @@ export class HttpGateway {
   private async handleStreamableHttpRequest(request: Request): Promise<Response> {
     const requestId = getRequestId();
     const sessionId = request.headers.get("mcp-session-id") || undefined;
+    const protocolVersion = request.headers.get("MCP-Protocol-Version");
 
-    logger.info({ requestId, sessionId }, "Streamable HTTP request received");
+    logger.info({ requestId, sessionId, protocolVersion }, "Streamable HTTP request received");
+
+    // Validate MCP Protocol Version header (per MCP 2025-11-25 spec)
+    if (protocolVersion) {
+      const supportedVersions = ["2025-11-25", "2024-11-05"];
+      if (!supportedVersions.includes(protocolVersion)) {
+        logger.warn(
+          { requestId, protocolVersion, supportedVersions },
+          "Unsupported protocol version",
+        );
+        return new Response(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            error: {
+              code: -32602,
+              message: "Unsupported protocol version",
+              data: { supported: supportedVersions, requested: protocolVersion },
+            },
+            id: null,
+          }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
 
     if (this.streamableHttpSessions.size >= this.maxSessions) {
       logger.warn(

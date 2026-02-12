@@ -59,8 +59,6 @@ async function runStdioMode(configPath?: string): Promise<void> {
   const gateway = new GoblinGateway();
   await gateway.initialize(config);
 
-  const transport = new StdioServerTransport();
-
   if (!gateway.router) {
     throw new Error("Router not initialized");
   }
@@ -68,19 +66,31 @@ async function runStdioMode(configPath?: string): Promise<void> {
   const { GatewayServer } = await import("../../gateway/server.js");
   const server = new GatewayServer(gateway.registry, gateway.router, config);
 
+  // CRITICAL: Start transport FIRST before any other operations
+  // This ensures we can receive the initialize request immediately
+  const transport = new StdioServerTransport();
+  logger.info("Starting STDIO transport...");
+  await transport.start();
+
+  // Signal readiness immediately to stderr (MCP clients monitor this)
+  const readyMessage = JSON.stringify({
+    status: "ready",
+    timestamp: Date.now(),
+    protocolVersion: "2025-11-25",
+  });
+  process.stderr.write(`${readyMessage}\n`);
+
+  logger.info("Connecting to STDIO transport...");
+  await server.connect(transport);
+
+  // Start LockServer AFTER transport is ready (separate concern, shouldn't block MCP)
   const lockServer = new LockServer(gateway, "stdio", lockPort);
   try {
     await lockServer.start();
   } catch (error: any) {
-    console.error(error.message);
-    process.exit(1);
+    // Log error but don't exit - MCP server is already running
+    logger.warn({ error: error.message }, "LockServer failed to start, continuing without it");
   }
-
-  logger.info("Starting STDIO transport...");
-  await transport.start();
-
-  logger.info("Connecting to STDIO transport...");
-  await server.connect(transport);
 
   const originalOnClose = transport.onclose;
   transport.onclose = () => {
@@ -91,7 +101,12 @@ async function runStdioMode(configPath?: string): Promise<void> {
 
   const shutdown = async () => {
     logger.info("Received shutdown signal");
-    await lockServer.stop();
+    try {
+      await lockServer.stop();
+    } catch (error) {
+      // LockServer might not have started, ignore error
+      logger.debug({ error }, "LockServer stop error (may not have started)");
+    }
     await server.close();
     await gateway.stop();
     process.exit(0);

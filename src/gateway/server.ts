@@ -18,16 +18,45 @@ import {
   SubscribeRequestSchema,
   UnsubscribeRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
 import type { Config } from "../config/index.js";
 import { isGoblinError } from "../errors/types.js";
 import { SERVER_NAME, SERVER_VERSION } from "../meta.js";
 import { getRequestId } from "../observability/correlation.js";
 import { createLogger } from "../observability/logger.js";
+import {
+  mcpActiveSessions,
+  mcpCancellationsTotal,
+  mcpInitializationDuration,
+  mcpRequestDuration,
+  mcpSessionDuration,
+} from "../observability/metrics.js";
 import type { Registry } from "./registry.js";
 import type { Router } from "./router.js";
 import { SubscriptionManager } from "./subscription-manager.js";
 
 const logger = createLogger("gateway-server");
+
+// MCP Protocol Version Support
+export const SUPPORTED_PROTOCOL_VERSIONS = ["2025-11-25", "2024-11-05"];
+export const DEFAULT_PROTOCOL_VERSION = "2025-11-25";
+
+// Notification Schemas
+const InitializedNotificationSchema = z.object({
+  method: z.literal("notifications/initialized"),
+});
+
+const CancelledNotificationSchema = z.object({
+  method: z.literal("notifications/cancelled"),
+  params: z.object({
+    requestId: z.union([z.string(), z.number()]),
+    reason: z.optional(z.string()),
+  }),
+});
+
+const PingRequestSchema = z.object({
+  method: z.literal("ping"),
+});
 
 export class GatewayServer {
   private server: Server;
@@ -37,6 +66,12 @@ export class GatewayServer {
   private cachedResourceTemplateList: ResourceTemplate[] | null = null;
   private subscriptionManager: SubscriptionManager;
 
+  // MCP Protocol State
+  private clientInitialized = false;
+  private initializationStartTime: number | null = null;
+  private activeRequests = new Map<string | number, AbortController>();
+  private sessionStartTime: number;
+
   constructor(
     private registry: Registry,
     private router: Router,
@@ -44,6 +79,7 @@ export class GatewayServer {
   ) {
     void config; // Suppress unused warning
 
+    this.sessionStartTime = Date.now();
     this.subscriptionManager = new SubscriptionManager();
 
     this.server = new Server(
@@ -63,10 +99,12 @@ export class GatewayServer {
             listChanged: true,
             subscribe: true,
           },
+          logging: {},
         },
       },
     );
 
+    this.setupProtocolHandlers();
     this.setupHandlers();
     this.setupEvents();
     this.setupBackendNotificationHandlers();
@@ -80,10 +118,65 @@ export class GatewayServer {
   }
 
   /**
+   * Validate that client has sent initialized notification
+   */
+  private validateClientInitialized(): void {
+    if (!this.clientInitialized) {
+      throw new McpError(
+        ErrorCode.InvalidRequest,
+        "Client not initialized. Send 'notifications/initialized' before making requests.",
+      );
+    }
+  }
+
+  /**
    * Close the server
    */
   async close(): Promise<void> {
+    const sessionDuration = (Date.now() - this.sessionStartTime) / 1000;
+    mcpSessionDuration.observe(sessionDuration);
+    mcpActiveSessions.dec();
+    logger.info({ sessionDuration }, "MCP session ended");
     await this.server.close();
+  }
+
+  /**
+   * Set up MCP protocol compliance handlers
+   * These handlers manage initialization, ping/pong, and cancellation
+   */
+  private setupProtocolHandlers(): void {
+    mcpActiveSessions.inc();
+
+    // Handle initialized notification
+    this.server.setNotificationHandler(InitializedNotificationSchema, async () => {
+      this.clientInitialized = true;
+
+      if (this.initializationStartTime) {
+        const duration = (Date.now() - this.initializationStartTime) / 1000;
+        mcpInitializationDuration.observe(duration);
+        logger.info({ duration }, "Client initialized notification received");
+      }
+    });
+
+    // Handle cancellation notifications
+    this.server.setNotificationHandler(CancelledNotificationSchema, async (notification) => {
+      const { requestId } = notification.params;
+      const controller = this.activeRequests.get(requestId);
+
+      if (controller) {
+        controller.abort();
+        mcpCancellationsTotal.inc();
+        logger.info({ requestId }, "Request cancelled by client");
+      } else {
+        logger.debug({ requestId }, "Cancellation received for unknown request");
+      }
+    });
+
+    // Handle ping requests
+    this.server.setRequestHandler(PingRequestSchema, async () => {
+      logger.debug({ requestId: getRequestId() }, "Ping received");
+      return {}; // Empty response per MCP spec
+    });
   }
 
   private setupHandlers(): void {
@@ -101,10 +194,18 @@ export class GatewayServer {
     });
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      this.validateClientInitialized();
       const { name, arguments: args } = request.params;
-      logger.info({ toolName: name, requestId: getRequestId() }, "Tool called");
+      const requestId = getRequestId() ?? crypto.randomUUID();
+      const startTime = performance.now();
+
+      logger.info({ toolName: name, requestId }, "Tool called");
+
       try {
-        return await this.router.callTool(name, args || {});
+        const result = await this.router.callTool(name, args || {});
+        const duration = (performance.now() - startTime) / 1000;
+        mcpRequestDuration.observe(duration, { method: "tools/call" });
+        return result;
       } catch (error) {
         throw this.mapError(error);
       }
