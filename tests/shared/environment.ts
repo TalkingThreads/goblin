@@ -24,7 +24,7 @@ export interface GatewayConfig {
     enabled?: boolean;
   }>;
   gateway: {
-    port: number;
+    port?: number;
     host: string;
   };
   auth?: {
@@ -50,7 +50,7 @@ export interface TestEnvironment {
   ) => GatewayConfig;
   getFreePort: () => Promise<number>;
   startGoblinGateway: (config: GatewayConfig) => Promise<ChildProcess>;
-  waitForGatewayReady: (port: number, timeout?: number) => Promise<void>;
+  waitForGatewayReady: (port: number, timeout?: number) => Promise<number>;
 }
 
 /**
@@ -103,7 +103,6 @@ export function createTestEnvironment(options: {
       $schema: "./config.schema.json",
       servers: servers || [],
       gateway: {
-        port: 0,
         host: "127.0.0.1",
       },
       auth: {
@@ -125,20 +124,35 @@ export function createTestEnvironment(options: {
     const bunPath = process.env.BUN_PATH || join(process.cwd(), "node_modules", ".bin", "bun");
     const executablePath = existsSync(bunPath) ? bunPath : process.execPath;
 
-    const childProcess = spawn(executablePath, [goblinBinary, "start", "--config", configPath], {
-      stdio: ["ignore", "pipe", "pipe"] as ["ignore", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        LOG_LEVEL: "warn",
-      },
-    });
+    // Use a unique lock port for tests to avoid conflicts
+    const testLockPort = 12490 + Math.floor(Math.random() * 1000);
 
-    childProcess.stderr?.on("data", (data) => {
-      process.stderr.write(data.toString());
-    });
+    const childProcess = spawn(
+      executablePath,
+      [goblinBinary, "start", "--config", configPath, "--transport", "http"],
+      {
+        stdio: ["ignore", "pipe", "pipe"] as ["ignore", "pipe", "pipe"],
+        env: {
+          ...process.env,
+          LOG_LEVEL: "warn",
+          GOBLIN_LOCK_PORT: String(testLockPort),
+        },
+      },
+    );
+
+    let actualPort: number | null = null;
 
     childProcess.stdout?.on("data", (data) => {
-      process.stdout.write(`[GATEWAY] ${data.toString()}`);
+      const text = data.toString();
+      process.stdout.write(`[GATEWAY] ${text}`);
+
+      // Extract port from startup message
+      const portMatch = text.match(/MCP:\s*http:\/\/[^:]+:(\d+)\//);
+      if (portMatch && !actualPort) {
+        actualPort = parseInt(portMatch[1], 10);
+        // Update config with actual port for tests to use
+        config.gateway.port = actualPort;
+      }
     });
 
     childProcess.stderr?.on("data", (data) => {
@@ -158,7 +172,7 @@ export function createTestEnvironment(options: {
     return childProcess;
   };
 
-  const waitForGatewayReady = async (port: number, timeout = 10000): Promise<void> => {
+  const waitForGatewayReady = async (port: number, timeout = 10000): Promise<number> => {
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeout) {
@@ -187,7 +201,7 @@ export function createTestEnvironment(options: {
           });
           req.end();
         });
-        return;
+        return port;
       } catch {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }

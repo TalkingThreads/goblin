@@ -182,8 +182,8 @@ async function runHttpMode(
   try {
     await lockServer.start();
   } catch (error: any) {
-    console.error(error.message);
-    process.exit(1);
+    // Lock server failure is non-fatal - log and continue
+    logger.warn({ error: error.message }, "LockServer failed to start, continuing without it");
   }
 
   const shutdown = async () => {
