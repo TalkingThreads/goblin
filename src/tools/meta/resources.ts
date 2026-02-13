@@ -73,6 +73,10 @@ export const describeResource = defineMetaTool({
       ),
   }),
   execute: async ({ uri }, { registry }) => {
+    if (!uri || uri.trim() === "") {
+      throw new Error("Missing required parameter: 'uri' - the resource URI to describe");
+    }
+
     const resource = registry.getResource(uri);
     if (!resource) {
       throw new Error(`Resource not found: ${uri}`);
@@ -96,6 +100,8 @@ export const searchResources = defineMetaTool({
   parameters: z.object({
     query: z
       .string()
+      .optional()
+      .default("")
       .describe("What you're searching for. File names, paths, or content descriptions work best."),
     mimeType: z.string().optional().describe("Optional. Limit search to specific file types."),
   }),

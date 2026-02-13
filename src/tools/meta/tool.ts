@@ -16,6 +16,10 @@ export const describeTool = defineMetaTool({
       ),
   }),
   execute: async ({ name }, { registry }) => {
+    if (!name || name.trim() === "") {
+      throw new Error("Missing required parameter: 'name' - the tool name to describe");
+    }
+
     const tool = registry.getTool(name);
     if (!tool) {
       throw new Error(`Tool not found: ${name}`);

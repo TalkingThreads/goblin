@@ -31,8 +31,11 @@ export const catalogList = defineMetaTool({
     // We need full details to generate the card (args list)
     const allTools = registry.getAllTools();
 
-    // Filter
-    const filtered = serverId ? allTools.filter((t) => t.serverId === serverId) : allTools;
+    // Filter out meta-tools (goblin's internal tools) unless specifically requested
+    const isMetaTool = (sid: string) => sid === "goblin";
+    const filtered = serverId
+      ? allTools.filter((t) => t.serverId === serverId)
+      : allTools.filter((t) => !isMetaTool(t.serverId));
 
     // Map to Compact Card
     const tools = filtered.map((t) => ({
@@ -56,6 +59,8 @@ export const catalogSearch = defineMetaTool({
   parameters: z.object({
     query: z
       .string()
+      .optional()
+      .default("")
       .describe(
         "What you're looking for. Use natural language ('read a file') or keywords ('file read'). The search is fuzzy - partial matches work.",
       ),
@@ -64,8 +69,11 @@ export const catalogSearch = defineMetaTool({
     // Use the Registry's cached search index
     const results = registry.searchTools(query);
 
+    // Filter out meta-tools (goblin's internal tools)
+    const filtered = results.filter((r) => r.serverId !== "goblin");
+
     // Map to Compact Card
-    const tools = results.map((r) => ({
+    const tools = filtered.map((r) => ({
       name: r.name,
       summary: getSmartSummary(r.description),
       args: [], // Search results don't include full schema - would need additional lookup

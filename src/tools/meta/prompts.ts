@@ -56,6 +56,10 @@ export const describePrompt = defineMetaTool({
       ),
   }),
   execute: async ({ name }, { registry }) => {
+    if (!name || name.trim() === "") {
+      throw new Error("Missing required parameter: 'name' - the prompt name to describe");
+    }
+
     const prompt = registry.getPrompt(name);
     if (!prompt) {
       throw new Error(`Prompt not found: ${name}`);
@@ -79,6 +83,8 @@ export const searchPrompts = defineMetaTool({
   parameters: z.object({
     query: z
       .string()
+      .optional()
+      .default("")
       .describe(
         "What you need help with. Keywords like 'review', 'debug', 'generate', 'explain' work well.",
       ),

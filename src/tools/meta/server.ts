@@ -30,6 +30,12 @@ export const describeServer = defineMetaTool({
     name: z.string().describe("The server name as configured in the gateway."),
   }),
   execute: async ({ name }, { config, registry }) => {
+    if (!name || name.trim() === "") {
+      throw new Error(
+        "Missing required parameter: 'name' - the server name as configured in the gateway",
+      );
+    }
+
     const serverConfig = config.servers.find((s) => s.name === name);
     if (!serverConfig) {
       throw new Error(`Server not found: ${name}`);
@@ -53,7 +59,7 @@ export const searchServers = defineMetaTool({
   description:
     "FIND CONFIGURED SERVERS. Searches for MCP servers by name or description. Returns matching servers with tool counts. USE THIS when you want to see which backends match certain criteria or understand the gateway's configuration.",
   parameters: z.object({
-    query: z.string().describe("Server name or description to search for."),
+    query: z.string().optional().default("").describe("Server name or description to search for."),
   }),
   execute: async ({ query }, { config, registry }) => {
     // Build Index
