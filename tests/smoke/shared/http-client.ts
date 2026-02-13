@@ -52,7 +52,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
         method,
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
+          Accept: "application/json, text/event-stream",
           ...config.headers,
         },
       };

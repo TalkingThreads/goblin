@@ -56,7 +56,7 @@ export class StdioServerTransport implements Transport {
     try {
       // Serialize message as single-line JSON with newline delimiter
       const json = JSON.stringify(message);
-      const line = json + "\n";
+      const line = `${json}\n`;
       process.stdout.write(line);
     } catch (e) {
       logger.error({ error: e }, "Failed to send message to stdout");

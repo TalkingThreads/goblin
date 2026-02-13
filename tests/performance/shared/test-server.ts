@@ -44,9 +44,7 @@ export async function startTestServer(config: TestServerConfig = {}): Promise<st
   const binaryExists = existsSync(join(process.cwd(), "dist/index.js"));
 
   if (!binaryExists) {
-    throw new Error(
-      "Gateway binary not found at dist/index.js. Run 'bun run build:cli' first.",
-    );
+    throw new Error("Gateway binary not found at dist/index.js. Run 'bun run build:cli' first.");
   }
 
   const command = "bun";

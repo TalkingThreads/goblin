@@ -22,8 +22,9 @@ import {
   SlashCommandNotFoundError,
   SlashCommandRouter,
 } from "../slashes/router.js";
+import { isAcceptHeaderValid, isSseAcceptHeaderValid } from "../transport/accept-header.js";
 import { createHonoSseTransport } from "../transport/hono-adapter.js";
-import { StreamableHttpServerTransport } from "../transport/http-server.js";
+import { LenientHttpServerTransport } from "../transport/lenient-http-server.js";
 import type { Registry } from "./registry.js";
 import type { Router } from "./router.js";
 import { GatewayServer } from "./server.js";
@@ -43,7 +44,7 @@ export class HttpGateway {
   >();
   private streamableHttpSessions = new Map<
     string,
-    { transport: StreamableHttpServerTransport; server: GatewayServer; lastActivity: number }
+    { transport: LenientHttpServerTransport; server: GatewayServer; lastActivity: number }
   >();
   private sessionTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private server: ReturnType<typeof Bun.serve> | null = null;
@@ -303,10 +304,19 @@ export class HttpGateway {
     if (this.transportMode === "sse") {
       // SSE Endpoint
       this.app.get("/sse", async (c) => {
+        const accept = c.req.header("Accept") ?? null;
+        const requestId = getRequestId();
+
+        if (!isSseAcceptHeaderValid(accept)) {
+          logger.warn(
+            { requestId, accept, path: "/sse" },
+            "Non-compliant Accept header for SSE, allowing for compatibility",
+          );
+        }
+
         const sessionId = crypto.randomUUID();
 
         return streamSSE(c, async (stream) => {
-          const requestId = getRequestId();
           logger.info({ sessionId, requestId }, "SSE connection established");
 
           // Create transport
@@ -347,6 +357,16 @@ export class HttpGateway {
 
       // Messages Endpoint
       this.app.post("/messages", async (c) => {
+        const accept = c.req.header("Accept") ?? null;
+        const requestId = getRequestId();
+
+        if (!isAcceptHeaderValid(accept)) {
+          logger.warn(
+            { requestId, accept, path: "/messages" },
+            "Non-compliant Accept header for SSE messages, allowing for compatibility",
+          );
+        }
+
         const sessionId = c.req.query("sessionId");
 
         if (!sessionId || !this.sessions.has(sessionId)) {
@@ -569,7 +589,7 @@ export class HttpGateway {
       );
     }
 
-    let transport: StreamableHttpServerTransport;
+    let transport: LenientHttpServerTransport;
     let server: GatewayServer;
     const now = Date.now();
 
@@ -581,7 +601,7 @@ export class HttpGateway {
         existing.lastActivity = now;
         this.setSessionTimeout(sessionId);
       } else {
-        transport = new StreamableHttpServerTransport({
+        transport = new LenientHttpServerTransport({
           sessionIdGenerator: () => crypto.randomUUID(),
         });
         server = new GatewayServer(this.registry, this.router, this.config);
@@ -597,7 +617,7 @@ export class HttpGateway {
         );
       }
     } else {
-      transport = new StreamableHttpServerTransport({
+      transport = new LenientHttpServerTransport({
         sessionIdGenerator: () => crypto.randomUUID(),
       });
       server = new GatewayServer(this.registry, this.router, this.config);

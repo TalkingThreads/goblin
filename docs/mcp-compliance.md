@@ -111,13 +111,50 @@ Supported notifications:
 - Returns 400 with error -32602 for unsupported versions
 - Supports session management via `mcp-session-id` header
 
+#### Accept Header Handling
+
+⚠️ **Lenient Mode** - For broader client compatibility
+
+Per MCP spec, clients MUST include `Accept: application/json, text/event-stream`. However, many MCP clients (browsers, opencode, etc.) don't comply with this requirement.
+
+Goblin's HTTP transport uses a **lenient Accept header validation** that accepts:
+
+| Accept Header | Behavior |
+|--------------|----------|
+| `application/json, text/event-stream` | ✅ Fully compliant |
+| `application/json` | ✅ Accepted (lenient) |
+| `*/*` | ✅ Accepted (wildcard) |
+| `application/*` | ✅ Accepted (wildcard) |
+| Any valid combination | ✅ Accepted |
+
+This ensures Goblin works with a wider range of MCP clients while maintaining compatibility with spec-compliant clients.
+
 ### SSE
 
-✅ **Fully Compliant**
+⚠️ **Deprecated** - Supported for backward compatibility
+
+The SSE transport is deprecated since MCP protocol version 2025-03-26. Streamable HTTP is the recommended transport. However, Goblin continues to support SSE for legacy clients.
+
+✅ **Supported** (legacy)
 
 - Bidirectional communication via SSE stream
 - Proper event formatting per MCP spec
 - Session timeout and cleanup
+- Lenient Accept header validation (same as Streamable HTTP)
+
+#### SSE Accept Header Handling
+
+⚠️ **Lenient Mode** - For broader client compatibility
+
+Per MCP spec, SSE clients MUST include `Accept: text/event-stream`. Goblin accepts:
+
+| Accept Header | Behavior |
+|--------------|----------|
+| `text/event-stream` | ✅ Fully compliant |
+| `*/*` | ✅ Accepted (wildcard) |
+| Any valid combination | ✅ Accepted |
+
+This ensures Goblin works with legacy SSE clients that may not send fully compliant Accept headers.
 
 ## Performance Benchmarks
 
