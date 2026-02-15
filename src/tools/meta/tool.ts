@@ -24,7 +24,11 @@ export const describeTool = defineMetaTool({
     if (!tool) {
       throw new Error(`Tool not found: ${name}`);
     }
-    return { tool: tool.def };
+    return {
+      name: tool.id,
+      description: tool.def.description,
+      inputSchema: tool.def.inputSchema,
+    };
   },
 });
 
