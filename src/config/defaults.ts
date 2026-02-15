@@ -31,6 +31,7 @@ export const DEFAULT_CONFIG: Config = {
   policies: {
     outputSizeLimit: 65536,
     defaultTimeout: 30000,
+    normalizePaths: true,
   },
 };
 

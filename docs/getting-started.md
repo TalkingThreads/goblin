@@ -277,6 +277,29 @@ The Gateway will automatically resolve the alias to the correct tool.
 }
 ```
 
+### Path Normalization
+
+Goblin automatically normalizes Windows paths (backslashes) to forward slashes in tool arguments.
+This prevents common JSON escape sequence errors and ensures cross-platform compatibility.
+
+For example, `C:\Users\name` becomes `C:/Users/name`.
+
+You can disable this behavior globally or per-server if needed:
+
+```json
+{
+  "policies": {
+    "normalizePaths": false
+  },
+  "servers": [
+    {
+      "name": "legacy-windows-tool",
+      "normalizePaths": false
+    }
+  ]
+}
+```
+
 ### Production with Authentication
 
 ```json

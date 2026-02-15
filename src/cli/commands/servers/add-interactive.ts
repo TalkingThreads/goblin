@@ -84,7 +84,7 @@ export async function addServerInteractive(options?: AddServerInteractiveOptions
       streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
       daemon: { lockPort: 12490 },
       auth: { mode: "dev" },
-      policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
+      policies: { outputSizeLimit: 65536, defaultTimeout: 30000, normalizePaths: true },
     };
   }
 

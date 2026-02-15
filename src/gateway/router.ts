@@ -18,6 +18,7 @@ import { getRequestId } from "../observability/correlation.js";
 import { createLogger, isDebugEnabled } from "../observability/logger.js";
 import { mcpTimeoutsTotal, mcpToolCallsTotal, mcpToolDuration } from "../observability/metrics.js";
 import type { TransportPool } from "../transport/index.js";
+import { normalizeArgs } from "../utils/path-normalization.js";
 import type { Registry } from "./registry.js";
 import { parseNamespacedUri } from "./types.js";
 
@@ -44,6 +45,15 @@ export class Router {
   updateConfig(newConfig: Config): void {
     this.config = newConfig;
     this.rebuildServerMap();
+  }
+
+  private shouldNormalizePaths(serverId: string): boolean {
+    const server = this.serverMap.get(serverId);
+    if (server?.normalizePaths !== undefined) {
+      return server.normalizePaths;
+    }
+    // Default to global policy (defaulting to true if undefined for safety)
+    return this.config.policies.normalizePaths ?? true;
   }
 
   /**
@@ -101,10 +111,15 @@ export class Router {
         const resolvedName = this.registry.resolveAlias(name);
         return this.registry.getTool(resolvedName);
       },
-      (client, originalName, signal) =>
-        client.callTool({ name: originalName, arguments: args }, CallToolResultSchema, {
+      (client, originalName, signal, serverId) => {
+        let toolArgs = args;
+        if (this.shouldNormalizePaths(serverId)) {
+          toolArgs = normalizeArgs(args) as Record<string, unknown>;
+        }
+        return client.callTool({ name: originalName, arguments: toolArgs }, CallToolResultSchema, {
           signal,
-        }) as Promise<CallToolResult>,
+        }) as Promise<CallToolResult>;
+      },
     );
   }
 
@@ -167,7 +182,12 @@ export class Router {
     id: string,
     lookupFn: () => { serverId: string; def?: { name?: string } } | undefined,
     // biome-ignore lint/suspicious/noExplicitAny: SDK Client type mismatch - requires SDK version alignment
-    executeFn: (client: any, originalName: string, signal: AbortSignal) => Promise<T>,
+    executeFn: (
+      client: any,
+      originalName: string,
+      signal: AbortSignal,
+      serverId: string,
+    ) => Promise<T>,
   ): Promise<T> {
     const start = performance.now();
     const timeoutMs = this.config.policies.defaultTimeout;
@@ -238,7 +258,7 @@ export class Router {
 
       try {
         const startTool = performance.now();
-        const result = await executeFn(client, originalName, abortController.signal);
+        const result = await executeFn(client, originalName, abortController.signal, serverId);
         duration = (performance.now() - startTool) / 1000;
 
         mcpToolCallsTotal.inc({ server: serverId, tool: id, status: "success" });

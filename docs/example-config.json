@@ -24,7 +24,8 @@
         "read": "read_file",
         "write": "write_file",
         "ls": "list_directory"
-      }
+      },
+      "normalizePaths": true
     },
     {
       "name": "example-http",
@@ -70,6 +71,7 @@
   "policies": {
     "outputSizeLimit": 65536,
     "defaultTimeout": 30000,
+    "normalizePaths": true,
     "maxConnections": 1000,
     "rateLimit": {
       "requestsPerMinute": 600,

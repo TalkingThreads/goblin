@@ -270,6 +270,26 @@ Use unique names for each server:
 
 ---
 
+## Path Issues
+
+### JSON Path Errors
+
+**Error**: `Invalid input: expected record, received string` or similar JSON parsing errors when passing paths.
+
+**Cause**: Windows paths use backslashes (`\`), which are escape characters in JSON strings.
+
+**Solution**:
+Goblin automatically normalizes Windows paths to forward slashes. If you disabled this feature, you must escape backslashes manually.
+
+1. **Enable Path Normalization** (Default):
+   Ensure `normalizePaths` is not set to `false` in your config.
+
+2. **Manual Escaping**:
+   If normalization is disabled, use double backslashes:
+   `"path": "C:\\Users\\name\\file.txt"`
+
+---
+
 ## CLI Problems
 
 ### Command Not Found

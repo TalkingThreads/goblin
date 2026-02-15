@@ -68,6 +68,11 @@ export const ServerConfigSchema = z.object({
    * Example: {"read": "filesystem_read_file", "write": "filesystem_write_file"}
    */
   aliases: z.record(z.string(), z.string()).optional(),
+
+  /**
+   * Whether to normalize file paths in arguments (overrides global policy)
+   */
+  normalizePaths: z.boolean().optional(),
 });
 
 /**
@@ -138,6 +143,11 @@ export const PoliciesConfigSchema = z.object({
    * Default timeout in milliseconds
    */
   defaultTimeout: z.number().int().positive().default(30000),
+
+  /**
+   * Whether to normalize file paths in arguments
+   */
+  normalizePaths: z.boolean().default(true),
 });
 
 /**
@@ -392,6 +402,7 @@ export const ConfigSchema = z.object({
   policies: PoliciesConfigSchema.default({
     outputSizeLimit: 65536,
     defaultTimeout: 30000,
+    normalizePaths: true,
   }),
 
   /**
