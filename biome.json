@@ -119,7 +119,7 @@
       "expand": "auto",
       "operatorLinebreak": "after"
     },
-    "globals": [],
+    "globals": ["Bun"],
     "jsxRuntime": "transparent"
   },
   "json": {
