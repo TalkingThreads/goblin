@@ -5,11 +5,20 @@
 # Exit on any error
 set -e
 
+# Debug: show what $0 is
+echo "📝 Script path (\$0): $0"
+echo "📂 dirname of \$0: $(dirname "$0")"
+
 # Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+echo "📁 SCRIPT_DIR: $SCRIPT_DIR"
 
 # Change to the repository root
 cd "$SCRIPT_DIR/../.."
+
+# Debug: show current directory and git status
+echo "📁 Current directory after cd: $(pwd)"
+echo "🔍 Git directory: $(git rev-parse --git-dir 2>&1 || echo 'FAILED')"
 
 # Run lint-staged to check only staged files
 echo "🔍 Running pre-commit checks on staged files..."
