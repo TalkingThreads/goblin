@@ -129,7 +129,7 @@ export class Registry extends EventEmitter {
   /**
    * Set aliases for a server
    * @param serverId - The server ID
-   * @param aliases - Map of alias -> full tool name
+   * @param aliases - Map of alias -> raw tool name (from config)
    */
   setServerAliases(serverId: string, aliases: Record<string, string> | undefined): void {
     if (!aliases || Object.keys(aliases).length === 0) {
@@ -140,23 +140,30 @@ export class Registry extends EventEmitter {
     const aliasMap = new Map<string, string>();
     const validTools = this.serverTools.get(serverId);
 
-    for (const [alias, toolName] of Object.entries(aliases)) {
+    for (const [alias, rawToolName] of Object.entries(aliases)) {
+      // Construct the namespaced ID that the Registry uses internally
+      // The config provides "read_file", but the registry stores "filesystem_read_file"
+      const fullToolId = `${serverId}_${rawToolName}`;
+
       // Validate: tool must exist
-      if (validTools && !validTools.has(toolName)) {
-        logger.warn({ serverId, alias, toolName }, "Alias points to non-existent tool, skipping");
+      if (validTools && !validTools.has(fullToolId)) {
+        logger.warn(
+          { serverId, alias, rawToolName, fullToolId },
+          "Alias points to non-existent tool, skipping",
+        );
         continue;
       }
 
       // Check for conflicts
       if (aliasMap.has(alias)) {
         logger.warn(
-          { serverId, alias, existing: aliasMap.get(alias), new: toolName },
+          { serverId, alias, existing: aliasMap.get(alias), new: fullToolId },
           "Alias conflict, skipping",
         );
         continue;
       }
 
-      aliasMap.set(alias, toolName);
+      aliasMap.set(alias, fullToolId);
     }
 
     this.serverAliases.set(serverId, aliasMap);
@@ -166,7 +173,7 @@ export class Registry extends EventEmitter {
   /**
    * Resolve an alias to the full tool name
    * @param name - The name to resolve (could be alias or full name)
-   * @returns The full tool name, or original if not an alias
+   * @returns The full tool name (namespaced ID), or original if not an alias
    */
   resolveAlias(name: string): string {
     // Check if it's an alias in any server
@@ -345,6 +352,20 @@ export class Registry extends EventEmitter {
       this.cachedTools = Array.from(this.tools.values());
     }
     return this.cachedTools;
+  }
+
+  /**
+   * Get all tools with aliases applied.
+   * This returns the full Tool definition suitable for MCP protocol responses.
+   */
+  getAliasedTools(): Tool[] {
+    return Array.from(this.tools.values()).map((entry) => {
+      const alias = this.getAliasForTool(entry.id);
+      return {
+        ...entry.def,
+        name: alias || entry.id, // Use alias if available, otherwise namespaced ID
+      };
+    });
   }
 
   /**

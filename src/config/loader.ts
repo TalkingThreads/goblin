@@ -26,6 +26,9 @@ const DEFAULT_CONFIG: Config = {
     sessionTimeout: 300000,
     maxSessions: 1000,
   },
+  daemon: {
+    lockPort: 12490,
+  },
   auth: {
     mode: "dev",
   },

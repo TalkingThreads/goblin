@@ -18,6 +18,7 @@ const mockSetRequestHandler = mock();
 const mockConnect = mock();
 const mockClose = mock();
 const mockNotification = mock();
+const mockSetNotificationHandler = mock();
 
 mock.module("@modelcontextprotocol/sdk/server/index.js", () => ({
   Server: class {
@@ -25,12 +26,15 @@ mock.module("@modelcontextprotocol/sdk/server/index.js", () => ({
     connect = mockConnect;
     close = mockClose;
     notification = mockNotification;
+    setNotificationHandler = mockSetNotificationHandler;
   },
 }));
 
 const testConfig: Config = {
   servers: [],
-  gateway: { port: 3000, host: "127.0.0.1" },
+  gateway: { port: 3000, host: "127.0.0.1", transport: "both" },
+  streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
+  daemon: { lockPort: 12490 },
   auth: { mode: "dev" },
   policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
 };
@@ -41,6 +45,7 @@ describe("GatewayServer", () => {
     mockConnect.mockClear();
     mockClose.mockClear();
     mockNotification.mockClear();
+    mockSetNotificationHandler.mockClear();
   });
 
   test("should initialize and register handlers", () => {
@@ -61,6 +66,7 @@ describe("GatewayServer", () => {
     const registry = {
       listTools: mock(() => [{ name: "t1" }]),
       getAllTools: mock(() => [{ id: "t1", def: { description: "d", inputSchema: {} } }]),
+      getAliasedTools: mock(() => [{ name: "t1", description: "d", inputSchema: {} }]),
       getTool: mock(() => ({ id: "t1", def: { description: "d", inputSchema: {} } })),
       on: mock(),
     } as unknown as Registry;

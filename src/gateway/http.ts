@@ -241,30 +241,33 @@ export class HttpGateway {
       const search = c.req.query("search");
       const server = c.req.query("server");
 
-      let tools = this.registry.getAllTools();
+      const allTools = this.registry.getAllTools();
+
+      let tools = allTools.map((t) => {
+        const alias = this.registry.getAliasForTool(t.id);
+        return {
+          name: alias || t.id,
+          description: t.def.description,
+          serverId: t.serverId,
+          inputSchema: t.def.inputSchema,
+          originalId: t.id, // Keep track of ID for filtering if needed
+        };
+      });
 
       if (server) {
         tools = tools.filter((t) => t.serverId === server);
       }
 
       if (search) {
-        // Use registry search if available, but registry search returns different format
-        // For simplicity and consistency in the API, we can filter here or return search results
-        // Let's use the registry's fuzzy search if it's just a search query
+        // Use registry search if available
         const results = this.registry.searchTools(search);
-        // Map back to ToolEntry-like objects or just return results
-        // If we want schema summary, we need the full ToolEntry
         const resultIds = new Set(results.map((r) => r.id));
-        tools = tools.filter((t) => resultIds.has(t.id));
+        // Filter based on original ID since search returns IDs
+        tools = tools.filter((t) => resultIds.has(t.originalId));
       }
 
       return c.json({
-        tools: tools.map((t) => ({
-          name: t.id,
-          description: t.def.description,
-          serverId: t.serverId,
-          inputSchema: t.def.inputSchema,
-        })),
+        tools: tools.map(({ originalId, ...t }) => t), // Remove internal originalId
       });
     });
 

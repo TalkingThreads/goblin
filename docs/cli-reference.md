@@ -48,6 +48,7 @@ Global options are available for all commands:
 Start the MCP gateway. This is the main command to run the gateway server.
 
 **Basic Usage**:
+
 ```bash
 goblin start                    # Start in STDIO mode (default)
 goblin start --transport http   # Start with HTTP server + REST API
@@ -72,6 +73,7 @@ goblin start --transport sse    # Start with SSE server + REST API
 - **`sse`**: Start SSE gateway with REST API. Exposes `/sse` and `/messages` endpoints for SSE transport.
 
 **Examples**:
+
 ```bash
 # Start in STDIO mode (default)
 goblin start
@@ -96,6 +98,7 @@ goblin start --tui
 ```
 
 **Output (HTTP/SSE mode)**:
+
 ```
 🟢 Goblin Gateway is running
    REST API: http://127.0.0.1:3000/
@@ -109,16 +112,19 @@ Press Ctrl+C to stop
 Show CLI version information.
 
 **Basic Usage**:
+
 ```bash
 goblin version
 ```
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--json` | Output JSON | - |
 
 **Examples**:
+
 ```bash
 # Show version
 goblin version
@@ -128,6 +134,7 @@ goblin version --json
 ```
 
 **JSON Output**:
+
 ```json
 {
   "version": "0.3.0-rc.5",
@@ -140,6 +147,7 @@ goblin version --json
 Show help information.
 
 **Basic Usage**:
+
 ```bash
 goblin help
 goblin --help
@@ -154,17 +162,20 @@ goblin --help
 Show gateway status with server information.
 
 **Basic Usage**:
+
 ```bash
 goblin status
 ```
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--json` | Output JSON | - |
-| `--url <url>` | Gateway URL | http://localhost:3000 |
+| `--url <url>` | Gateway URL | <http://localhost:3000> |
 
 **Examples**:
+
 ```bash
 # Basic status
 goblin status
@@ -177,6 +188,7 @@ goblin status --url http://localhost:8080
 ```
 
 **JSON Structure**:
+
 ```json
 {
   "servers": {
@@ -195,16 +207,19 @@ goblin status --url http://localhost:8080
 Stop the running gateway gracefully.
 
 **Basic Usage**:
+
 ```bash
 goblin stop
 ```
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--url <url>` | Gateway URL | http://localhost:3000 |
+| `--url <url>` | Gateway URL | <http://localhost:3000> |
 
 **Examples**:
+
 ```bash
 # Stop gateway
 goblin stop
@@ -218,17 +233,20 @@ goblin stop --url http://localhost:8080
 Check gateway health and metrics.
 
 **Basic Usage**:
+
 ```bash
 goblin health
 ```
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--json` | Output JSON | - |
-| `--url <url>` | Gateway URL | http://localhost:3000 |
+| `--url <url>` | Gateway URL | <http://localhost:3000> |
 
 **Examples**:
+
 ```bash
 # Basic health
 goblin health
@@ -241,6 +259,7 @@ goblin health --url http://localhost:8080
 ```
 
 **JSON Structure**:
+
 ```json
 {
   "status": "healthy",
@@ -266,6 +285,7 @@ goblin health --url http://localhost:8080
 List, invoke, and describe tools from registered MCP servers.
 
 **Basic Usage**:
+
 ```bash
 goblin tools list           # List all available tools
 goblin tools invoke <name>  # Invoke a tool with arguments
@@ -277,12 +297,14 @@ goblin tools describe <name>  # Describe tool schema
 List all available tools from registered servers.
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--json` | Output JSON | - |
-| `--url <url>` | Gateway URL | http://localhost:3000 |
+| `--url <url>` | Gateway URL | <http://localhost:3000> |
 
 **Examples**:
+
 ```bash
 # List all tools
 goblin tools list
@@ -295,6 +317,7 @@ goblin tools list --url http://localhost:8080
 ```
 
 **JSON Structure**:
+
 ```json
 {
   "tools": [
@@ -312,13 +335,15 @@ goblin tools list --url http://localhost:8080
 Invoke a tool with the given name and arguments.
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--args <json>` | JSON arguments for the tool | {} |
 | `--server <name>` | Server to use | - |
-| `--url <url>` | Gateway URL | http://localhost:3000 |
+| `--url <url>` | Gateway URL | <http://localhost:3000> |
 
 **Examples**:
+
 ```bash
 # Invoke tool with arguments
 goblin tools invoke list_files --args '{"path": "/tmp"}'
@@ -332,12 +357,14 @@ goblin tools invoke search --server web-server --args '{"query": "test"}'
 Describe a tool's schema and documentation.
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--server <name>` | Server to use | - |
-| `--url <url>` | Gateway URL | http://localhost:3000 |
+| `--url <url>` | Gateway URL | <http://localhost:3000> |
 
 **Examples**:
+
 ```bash
 # Describe a tool
 goblin tools describe list_files
@@ -351,18 +378,21 @@ goblin tools describe search --server web-server
 List configured servers with status.
 
 **Basic Usage**:
+
 ```bash
 goblin servers
 ```
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--json` | Output JSON | - |
-| `--url <url>` | Gateway URL | http://localhost:3000 |
+| `--url <url>` | Gateway URL | <http://localhost:3000> |
 | `--status` | Filter by status (online/offline/all) | all |
 
 **Examples**:
+
 ```bash
 # List all servers
 goblin servers
@@ -375,6 +405,7 @@ goblin servers --json
 ```
 
 **JSON Structure**:
+
 ```json
 {
   "servers": [
@@ -394,6 +425,7 @@ goblin servers --json
 Add a new server to the configuration dynamically.
 
 **Basic Usage**:
+
 ```bash
 # Interactive mode
 goblin servers add --interactive
@@ -403,6 +435,7 @@ goblin servers add <name> <transport>
 ```
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--interactive` | Run in interactive mode | - |
@@ -416,6 +449,7 @@ goblin servers add <name> <transport>
 | `--config <path>` | Path to config file | OS default |
 
 **Examples**:
+
 ```bash
 # Add STDIO server
 goblin servers add filesystem stdio --command "npx" --args "-y,@modelcontextprotocol/server-filesystem,/tmp"
@@ -432,6 +466,7 @@ goblin servers add my-server stdio --command "npx" --args "-y,my-server" --yes
 Remove a server from the configuration.
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--yes` | Skip confirmation | false |
@@ -454,12 +489,14 @@ Disable an enabled server without removing it.
 Validate configuration file.
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--json` | Output JSON | - |
 | `--path <path>` | Path to config file | OS default |
 
 **Examples**:
+
 ```bash
 # Validate current config
 goblin config validate
@@ -476,12 +513,14 @@ goblin config validate --path /path/to/config.json
 Display current configuration.
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--json` | Output JSON | - |
 | `--path <path>` | Path to config file | OS default |
 
 **Examples**:
+
 ```bash
 # Show current config
 goblin config show
@@ -524,6 +563,7 @@ Goblin uses session-based file logging. All logs are written to `~/.goblin/logs/
 Show recent logs.
 
 **Options**:
+
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--path <path>` | Path to log file | Latest log |
@@ -555,7 +595,6 @@ Show recent logs.
 | `GOBLIN_PORT` | Gateway port | 3000 |
 | `GOBLIN_HOST` | Gateway host | 127.0.0.1 |
 | `LOG_LEVEL` | Logging level | info |
-
 
 | `GOBLIN_LOCK_PORT` | Control Plane/Lock server port | 12490 |
 

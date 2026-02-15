@@ -19,6 +19,11 @@
       "auth": {
         "mode": "apikey",
         "apiKey": "server-filesystem-key"
+      },
+      "aliases": {
+        "read": "read_file",
+        "write": "write_file",
+        "ls": "list_directory"
       }
     },
     {

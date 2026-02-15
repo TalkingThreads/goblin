@@ -1,7 +1,6 @@
 ---
 name: developer
-description: |
-Use for any coding work beyond trivial changes - writing, modifying, reviewing, or debugging code. Provides professional development workflow emphasizing careful analysis before coding, iterative implementation with testing, proper error handling, following project conventions, and maintaining quality standards. Essential for implementing features, refactoring, bug fixes, or code review. Skip only for one-line changes or truly trivial modifications.
+description: Use for any coding work beyond trivial changes - writing, modifying, reviewing, or debugging code. Provides professional development workflow emphasizing careful analysis before coding, iterative implementation with testing, proper error handling, following project conventions, and maintaining quality standards. Essential for implementing features, refactoring, bug fixes, or code review. Skip only for one-line changes or truly trivial modifications.
 license: MIT
 metadata:
   author: AI Agent

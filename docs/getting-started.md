@@ -253,6 +253,30 @@ const response = await fetch("http://127.0.0.1:3000/messages", {
 }
 ```
 
+### Tool Aliasing
+
+You can define friendly aliases for tools to make them easier to use or to resolve naming conflicts.
+Aliases map a friendly name (e.g., `read`) to the original tool name (e.g., `read_file`).
+The Gateway will automatically resolve the alias to the correct tool.
+
+```json
+{
+  "servers": [
+    {
+      "name": "filesystem",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allow"],
+      "aliases": {
+        "read": "read_file",
+        "write": "write_file",
+        "ls": "list_directory"
+      }
+    }
+  ]
+}
+```
+
 ### Production with Authentication
 
 ```json

@@ -184,11 +184,7 @@ export class GatewayServer {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       logger.debug({ requestId: getRequestId() }, "Tools listed");
       if (!this.cachedToolList) {
-        this.cachedToolList = this.registry.getAllTools().map((entry) => ({
-          name: entry.id,
-          description: entry.def.description,
-          inputSchema: entry.def.inputSchema,
-        }));
+        this.cachedToolList = this.registry.getAliasedTools();
       }
       return { tools: this.cachedToolList };
     });

@@ -82,6 +82,7 @@ export async function addServerInteractive(options?: AddServerInteractiveOptions
       servers: [],
       gateway: { port: 3000, host: "127.0.0.1", transport: "both" },
       streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
+      daemon: { lockPort: 12490 },
       auth: { mode: "dev" },
       policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
     };
@@ -300,6 +301,7 @@ export async function addServerInteractive(options?: AddServerInteractiveOptions
     servers,
     gateway: config.gateway,
     streamableHttp: config.streamableHttp,
+    daemon: config.daemon,
     auth: config.auth,
     policies: config.policies,
     virtualTools: config.virtualTools,

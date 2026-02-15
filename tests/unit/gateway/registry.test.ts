@@ -115,4 +115,43 @@ describe("Registry", () => {
     const resourceEntry = registry.getResource("mcp://server1/res%3A%2F%2F1");
     expect(resourceEntry?.def).toEqual(resourceDef);
   });
+
+  test("should apply and resolve aliases correctly", async () => {
+    const registry = new Registry();
+
+    const client = {
+      listTools: mock(async () => ({
+        tools: [{ name: "read_file", description: "Reads a file", inputSchema: {} }],
+      })),
+      listPrompts: mock(async () => ({ prompts: [] })),
+      listResources: mock(async () => ({ resources: [] })),
+      listResourceTemplates: mock(async () => ({ resourceTemplates: [] })),
+      setNotificationHandler: mock(),
+    } as unknown as Client;
+
+    await registry.addServer("filesystem", client);
+
+    // Apply alias: "read" -> "read_file" (raw tool name)
+    registry.setServerAliases("filesystem", { read: "read_file" });
+
+    // Verify alias applied in listing
+    const tools = registry.listTools();
+    expect(tools.length).toBe(1);
+    expect(tools[0].name).toBe("read"); // Should be the alias
+    expect(tools[0].serverId).toBe("filesystem");
+
+    // Verify resolution
+    expect(registry.resolveAlias("read")).toBe("filesystem_read_file");
+
+    // Verify direct access via alias
+    const tool = registry.getTool("read");
+    expect(tool).toBeDefined();
+    expect(tool?.id).toBe("filesystem_read_file");
+
+    // Verify getAliasedTools returns full definition with alias
+    const aliasedTools = registry.getAliasedTools();
+    expect(aliasedTools.length).toBe(1);
+    expect(aliasedTools[0].name).toBe("read");
+    expect(aliasedTools[0].description).toBe("Reads a file");
+  });
 });
