@@ -34,7 +34,7 @@ export async function stopCommand(options: StopOptions): Promise<void> {
       console.log("Gateway stopped successfully (via Lock Server)");
       process.exit(0);
     }
-  } catch (e) {
+  } catch {
     // Lock server not running or unreachable
   }
 

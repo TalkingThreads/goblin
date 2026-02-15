@@ -66,7 +66,7 @@ export async function statusCommand(options: StatusOptions): Promise<void> {
       printStatus(data, useJson);
       return;
     }
-  } catch (e) {
+  } catch {
     // Lock server not running or unreachable
   }
 

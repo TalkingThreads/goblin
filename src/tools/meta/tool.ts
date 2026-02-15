@@ -38,17 +38,19 @@ export const invokeTool = defineMetaTool({
   parameters: z.object({
     name: z
       .string()
+      .min(1, "need the name of the tool at least")
       .describe(
         "Which tool to run. Include server prefix if needed (e.g., 'filesystem_list_files').",
       ),
     args: z
       .record(z.string(), z.unknown())
+      .optional()
       .describe(
         "Input parameters matching the tool's schema. Omit optional parameters. Use describe_tool to verify the required schema.",
       ),
   }),
   execute: async ({ name, args }, { router }) => {
     // We delegate to the router to handle routing, caching, and execution
-    return await router.callTool(name, args as Record<string, unknown>);
+    return await router.callTool(name, args ?? {});
   },
 });

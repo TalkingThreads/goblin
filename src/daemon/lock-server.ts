@@ -4,7 +4,7 @@ import { createLogger } from "../observability/logger.js";
 export const DEFAULT_LOCK_PORT = 12490;
 
 export class LockServer {
-  private server: any; // Bun server instance
+  private server: ReturnType<typeof Bun.serve> | null = null;
   private logger = createLogger("lock-server");
   private gateway: GoblinGateway;
   private startTime: number;
@@ -26,8 +26,13 @@ export class LockServer {
         fetch: this.handleRequest.bind(this),
       });
       this.logger.info({ port: this.port }, "Lock server started");
-    } catch (error: any) {
-      if (error.code === "EADDRINUSE") {
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "EADDRINUSE"
+      ) {
         throw new Error(`Goblin is already running (Port ${this.port} is busy)`);
       }
       throw error;
