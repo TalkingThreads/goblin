@@ -84,13 +84,15 @@ export const searchPrompts = defineMetaTool({
     query: z
       .string()
       .optional()
-      .default("")
       .describe(
         "What you need help with. Keywords like 'review', 'debug', 'generate', 'explain' work well.",
       ),
   }),
   execute: async ({ query }, { registry }) => {
     const allPrompts = registry.getAllPrompts();
+
+    // Add default handling
+    const searchQuery = query ?? "";
 
     // Build Index
     const minisearch = new MiniSearch({
@@ -115,7 +117,7 @@ export const searchPrompts = defineMetaTool({
     );
 
     // Search
-    const results = minisearch.search(query);
+    const results = minisearch.search(searchQuery);
 
     // Map to Compact Card
     const prompts = results.map((r) => {

@@ -101,7 +101,6 @@ export const searchResources = defineMetaTool({
     query: z
       .string()
       .optional()
-      .default("")
       .describe("What you're searching for. File names, paths, or content descriptions work best."),
     mimeType: z.string().optional().describe("Optional. Limit search to specific file types."),
   }),
@@ -112,6 +111,9 @@ export const searchResources = defineMetaTool({
     if (mimeType) {
       allResources = allResources.filter((r) => r.def.mimeType === mimeType);
     }
+
+    // Add default handling
+    const searchQuery = query ?? "";
 
     // Build Index
     const minisearch = new MiniSearch({
@@ -136,7 +138,7 @@ export const searchResources = defineMetaTool({
     );
 
     // Search
-    const results = minisearch.search(query);
+    const results = minisearch.search(searchQuery);
 
     // Map to Compact Card
     const resources = results.map((r) => {

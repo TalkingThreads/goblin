@@ -59,7 +59,7 @@ export const searchServers = defineMetaTool({
   description:
     "FIND CONFIGURED SERVERS. Searches for MCP servers by name or description. Returns matching servers with tool counts. USE THIS when you want to see which backends match certain criteria or understand the gateway's configuration.",
   parameters: z.object({
-    query: z.string().optional().default("").describe("Server name or description to search for."),
+    query: z.string().optional().describe("Server name or description to search for."),
   }),
   execute: async ({ query }, { config, registry }) => {
     // Build Index
@@ -73,6 +73,9 @@ export const searchServers = defineMetaTool({
       },
     });
 
+    // Add search with default
+    const searchQuery = query ?? "";
+
     minisearch.addAll(
       config.servers.map((s) => ({
         id: s.name, // MiniSearch needs 'id'
@@ -84,7 +87,7 @@ export const searchServers = defineMetaTool({
       })),
     );
 
-    const results = minisearch.search(query);
+    const results = minisearch.search(searchQuery);
 
     // Build Compact Cards
     const servers = results.map((r) => {

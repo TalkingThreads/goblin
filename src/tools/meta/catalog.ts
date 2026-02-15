@@ -60,14 +60,13 @@ export const catalogSearch = defineMetaTool({
     query: z
       .string()
       .optional()
-      .default("")
       .describe(
         "What you're looking for. Use natural language ('read a file') or keywords ('file read'). The search is fuzzy - partial matches work.",
       ),
   }),
   execute: async ({ query }, { registry }) => {
     // Use the Registry's cached search index
-    const results = registry.searchTools(query);
+    const results = registry.searchTools(query ?? "");
 
     // Filter out meta-tools (goblin's internal tools)
     const filtered = results.filter((r) => r.serverId !== "goblin");
