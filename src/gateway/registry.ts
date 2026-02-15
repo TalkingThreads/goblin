@@ -106,6 +106,9 @@ export class Registry extends EventEmitter {
   private serverResources = new Map<string, Set<string>>(); // serverId -> Set<uri>
   private serverTemplates = new Map<string, Set<string>>(); // serverId -> Set<uriTemplate>
 
+  // Aliases: serverId -> Map<aliasName, fullToolName>
+  private serverAliases = new Map<string, Map<string, string>>();
+
   // Search index for tool catalog (lazy initialized)
   private searchIndex: MiniSearch<ToolSearchDocument> | null = null;
 
@@ -121,6 +124,88 @@ export class Registry extends EventEmitter {
     this.cachedResources = null;
     this.cachedResourceTemplates = null;
     this.searchIndex = null; // Invalidate search index too
+  }
+
+  /**
+   * Set aliases for a server
+   * @param serverId - The server ID
+   * @param aliases - Map of alias -> full tool name
+   */
+  setServerAliases(serverId: string, aliases: Record<string, string> | undefined): void {
+    if (!aliases || Object.keys(aliases).length === 0) {
+      this.serverAliases.delete(serverId);
+      return;
+    }
+
+    const aliasMap = new Map<string, string>();
+    const validTools = this.serverTools.get(serverId);
+
+    for (const [alias, toolName] of Object.entries(aliases)) {
+      // Validate: tool must exist
+      if (validTools && !validTools.has(toolName)) {
+        logger.warn({ serverId, alias, toolName }, "Alias points to non-existent tool, skipping");
+        continue;
+      }
+
+      // Check for conflicts
+      if (aliasMap.has(alias)) {
+        logger.warn(
+          { serverId, alias, existing: aliasMap.get(alias), new: toolName },
+          "Alias conflict, skipping",
+        );
+        continue;
+      }
+
+      aliasMap.set(alias, toolName);
+    }
+
+    this.serverAliases.set(serverId, aliasMap);
+    this.invalidateCache();
+  }
+
+  /**
+   * Resolve an alias to the full tool name
+   * @param name - The name to resolve (could be alias or full name)
+   * @returns The full tool name, or original if not an alias
+   */
+  resolveAlias(name: string): string {
+    // Check if it's an alias in any server
+    for (const [, aliasMap] of this.serverAliases) {
+      if (aliasMap.has(name)) {
+        return aliasMap.get(name)!;
+      }
+    }
+    return name;
+  }
+
+  /**
+   * Get the alias for a tool name (if it exists)
+   * @param toolName - The full tool name
+   * @returns The alias, or undefined if no alias exists
+   */
+  getAliasForTool(toolName: string): string | undefined {
+    for (const [, aliasMap] of this.serverAliases) {
+      for (const [alias, fullName] of aliasMap) {
+        if (fullName === toolName) {
+          return alias;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Check if a name is an alias
+   * @param name - The name to check
+   * @returns true if the name is an alias
+   */
+  isAlias(name: string): boolean {
+    for (const [, aliasMap] of this.serverAliases) {
+      if (aliasMap.has(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -232,15 +317,27 @@ export class Registry extends EventEmitter {
   // --- Tools ---
 
   listTools(): ToolCard[] {
-    return Array.from(this.tools.values()).map((entry) => ({
-      name: entry.id,
-      description: entry.def.description,
-      serverId: entry.serverId,
-    }));
+    return Array.from(this.tools.values()).map((entry) => {
+      // Check if there's an alias for this tool
+      const alias = this.getAliasForTool(entry.id);
+      const displayName = alias || entry.id;
+      return {
+        name: displayName,
+        description: entry.def.description,
+        serverId: entry.serverId,
+      };
+    });
   }
 
   getTool(id: string): ToolEntry | undefined {
-    return this.tools.get(id);
+    // First try direct lookup
+    let tool = this.tools.get(id);
+    if (!tool) {
+      // Try resolving as alias
+      const resolvedId = this.resolveAlias(id);
+      tool = this.tools.get(resolvedId);
+    }
+    return tool;
   }
 
   getAllTools(): ToolEntry[] {
@@ -287,13 +384,18 @@ export class Registry extends EventEmitter {
   searchTools(query: string): ToolSearchResult[] {
     const index = this.ensureSearchIndex();
     const results = index.search(query);
-    return results.map((r) => ({
-      id: String(r["id"]),
-      name: String(r["name"]),
-      description: String(r["description"]),
-      serverId: String(r["serverId"]),
-      score: r.score,
-    }));
+    return results.map((r) => {
+      const fullName = String(r["name"]);
+      const alias = this.getAliasForTool(fullName);
+      const displayName = alias || fullName;
+      return {
+        id: String(r["id"]),
+        name: displayName,
+        description: String(r["description"]),
+        serverId: String(r["serverId"]),
+        score: r.score,
+      };
+    });
   }
 
   // --- Prompts ---

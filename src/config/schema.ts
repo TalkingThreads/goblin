@@ -62,6 +62,12 @@ export const ServerConfigSchema = z.object({
    * Whether the server is enabled
    */
   enabled: z.boolean().default(true),
+
+  /**
+   * Tool aliases for this server (friendly name → full tool name)
+   * Example: {"read": "filesystem_read_file", "write": "filesystem_write_file"}
+   */
+  aliases: z.record(z.string(), z.string()).optional(),
 });
 
 /**

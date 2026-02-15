@@ -11,6 +11,7 @@ describe("Router", () => {
       servers: [
         { name: "server1", transport: "stdio", command: "echo", enabled: true, mode: "stateful" },
       ],
+      daemon: { lockPort: 12490 },
       gateway: { port: 3000, host: "127.0.0.1", transport: "both" },
       streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
       auth: { mode: "dev" },
@@ -51,6 +52,9 @@ describe("Router", () => {
         return undefined;
       }),
       getLocalTool: mock(() => undefined),
+      resolveAlias: mock((name: string) => name),
+      getAliasForTool: mock((_toolName: string) => undefined),
+      isAlias: mock((_name: string) => false),
     } as unknown as Registry;
 
     const router = new Router(mockRegistry, mockPool, config);
@@ -66,13 +70,20 @@ describe("Router", () => {
   test("should throw if tool not found", async () => {
     const config: Config = {
       servers: [],
+      daemon: { lockPort: 12490 },
       gateway: { port: 3000, host: "127.0.0.1", transport: "both" },
       streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
       auth: { mode: "dev" },
       policies: { outputSizeLimit: 65536, defaultTimeout: 30000 },
     };
     const router = new Router(
-      { getTool: () => undefined, getLocalTool: () => undefined } as unknown as Registry,
+      {
+        getTool: () => undefined,
+        getLocalTool: () => undefined,
+        resolveAlias: (name: string) => name,
+        getAliasForTool: (_toolName: string) => undefined,
+        isAlias: (_name: string) => false,
+      } as unknown as Registry,
       { isDraining: () => false } as unknown as TransportPool,
       config,
     );
@@ -83,6 +94,7 @@ describe("Router", () => {
   test("should throw if server config not found", async () => {
     const config: Config = {
       servers: [],
+      daemon: { lockPort: 12490 },
       gateway: { port: 3000, host: "127.0.0.1", transport: "both" },
       streamableHttp: { sseEnabled: true, sessionTimeout: 300000, maxSessions: 1000 },
       auth: { mode: "dev" },
@@ -91,6 +103,9 @@ describe("Router", () => {
     const registry = {
       getTool: () => ({ serverId: "missing", def: { name: "tool" } }),
       getLocalTool: () => undefined,
+      resolveAlias: (name: string) => name,
+      getAliasForTool: (_toolName: string) => undefined,
+      isAlias: (_name: string) => false,
     } as unknown as Registry;
 
     const router = new Router(

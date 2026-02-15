@@ -79,6 +79,8 @@ export class GoblinGateway {
         try {
           const transport = await this.transportPool.getTransport(server);
           await this.registry.addServer(server.name, transport.getClient());
+          // Set up aliases for this server
+          this.registry.setServerAliases(server.name, server.aliases);
         } catch (error) {
           logger.error({ server: server.name, error }, "Failed to connect to server");
         }
@@ -119,10 +121,15 @@ export class GoblinGateway {
         try {
           const transport = await this.transportPool.getTransport(server);
           await this.registry.addServer(server.name, transport.getClient());
+          this.registry.setServerAliases(server.name, server.aliases);
           logger.info({ server: server.name }, "Added new server via config reload");
         } catch (error) {
           logger.error({ server: server.name, error }, "Failed to add server during config reload");
         }
+      }
+      // Update aliases for existing servers
+      if (currentServers.has(server.name)) {
+        this.registry.setServerAliases(server.name, server.aliases);
       }
     }
 

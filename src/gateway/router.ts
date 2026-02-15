@@ -96,7 +96,11 @@ export class Router {
     return this.executeRequest(
       "tool",
       name,
-      () => this.registry.getTool(name),
+      () => {
+        // Resolve alias to full tool name
+        const resolvedName = this.registry.resolveAlias(name);
+        return this.registry.getTool(resolvedName);
+      },
       (client, originalName, signal) =>
         client.callTool({ name: originalName, arguments: args }, CallToolResultSchema, {
           signal,
