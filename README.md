@@ -302,6 +302,37 @@ Stateful HTTP transport with session management, automatic reconnection, and cus
 
 ---
 
+## Server Lifecycle Modes
+
+Goblin supports three connection lifecycle modes for backend MCP servers:
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `stateful` (default) | Connections kept alive indefinitely, reused across requests | High-frequency tool calls, persistent sessions |
+| `smart` | Connections kept alive, evicted after 60 seconds of idle time | Balance between responsiveness and resource efficiency |
+| `stateless` | Connections created per request, evicted quickly after use | Low-frequency calls, resource-constrained environments |
+
+### Mode Configuration
+
+Add the `mode` property to your server configuration:
+
+```json
+{
+  "name": "filesystem",
+  "transport": "stdio",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+  "mode": "smart",
+  "enabled": true
+}
+```
+
+- **stateful** (default): Best for servers that are called frequently
+- **smart**: Recommended default - auto-cleanup after 60s idle
+- **stateless**: Best for minimizing memory usage with occasional calls
+
+---
+
 ## Technology Stack
 
 | Component | Technology | Purpose |

@@ -7,6 +7,7 @@
       "transport": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allow"],
+      "mode": "stateful",
       "enabled": true,
       "policies": {
         "outputSizeLimit": 131072,
@@ -32,6 +33,7 @@
       "description": "Example HTTP MCP server",
       "transport": "http",
       "url": "https://api.example.com/mcp",
+      "mode": "smart",
       "enabled": true,
       "headers": {
         "Authorization": "Bearer {{OAUTH_TOKEN}}"
