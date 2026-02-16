@@ -77,6 +77,69 @@ Create a configuration file to define your MCP servers:
 
 Save this as `config.json` in your Goblin directory.
 
+## Coverage Configuration
+
+Goblin includes built-in test coverage tracking to help maintain code quality. Coverage is automatically checked during git hooks and CI/CD pipelines.
+
+### Configuration File
+
+Create a `coverage.config.json` file in your project root:
+
+```json
+{
+  "$schema": "./coverage.config.schema.json",
+  "thresholds": {
+    "warning": 70,
+    "blocking": 60
+  },
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/*.d.ts",
+    "**/*.test.ts",
+    "**/tests/**",
+    "**/*.config.ts"
+  ],
+  "reporter": "text",
+  "reporters": ["text", "json"],
+  "outputDir": "coverage"
+}
+```
+
+### Threshold Settings
+
+| Threshold | Default | Description |
+|-----------|---------|-------------|
+| `warning` | 70% | Shows warning but allows commits |
+| `blocking` | 60% | Blocks push or CI failure |
+
+### Running Coverage
+
+```bash
+# Run tests with coverage
+bun test --coverage
+
+# Analyze coverage results
+bun run coverage:analyze
+
+# Check current coverage status
+bun run coverage:check
+```
+
+### Git Hooks
+
+Coverage checks run automatically:
+
+- **Pre-commit**: Shows warning if below 70%
+- **Pre-push**: Blocks if below 60%
+
+Install hooks with:
+
+```bash
+bun run hooks:install
+```
+
 ## Starting Goblin
 
 ### Development Mode (with hot reload)
