@@ -3,16 +3,8 @@ name: Code Quality
 on:
   push:
     branches: [main, develop]
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "openspec/**"
   pull_request:
     branches: [main, develop]
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "openspec/**"
 
 permissions:
   contents: read
@@ -132,10 +124,88 @@ jobs:
       - name: Check formatting
         run: biome format --check .
 
+  docs-validate:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+          cache: true
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Validate test READMEs exist
+        run: |
+          echo "Validating test documentation..."
+          
+          # Check required README files exist
+          required_readmes=(
+            "tests/README.md"
+            "tests/unit/README.md"
+            "tests/integration/README.md"
+            "tests/smoke/README.md"
+            "tests/e2e/README.md"
+            "tests/performance/README.md"
+          )
+          
+          missing=()
+          for readme in "${required_readmes[@]}"; do
+            if [ ! -f "$readme" ]; then
+              missing+=("$readme")
+            fi
+          done
+          
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "ERROR: Missing test READMEs:"
+            for m in "${missing[@]}"; do
+              echo "  - $m"
+            done
+            exit 1
+          fi
+          
+          echo "All required test READMEs exist"
+
+      - name: Check docs links in tests/README
+        run: |
+          # Check that tests/README.md links to category READMEs
+          if grep -q "tests/unit/README.md" tests/README.md && \
+             grep -q "tests/integration/README.md" tests/README.md && \
+             grep -q "tests/smoke/README.md" tests/README.md; then
+            echo "tests/README.md links to all category READMEs"
+          else
+            echo "ERROR: tests/README.md should link to all category READMEs"
+            exit 1
+          fi
+
+      - name: Validate documentation structure
+        run: |
+          # Verify key docs exist
+          key_docs=(
+            "docs/testing.md"
+            "docs/getting-started.md"
+            "docs/architecture.md"
+          )
+          
+          for doc in "${key_docs[@]}"; do
+            if [ ! -f "$doc" ]; then
+              echo "WARNING: Key documentation missing: $doc"
+            fi
+          done
+          
+          echo "Documentation validation complete"
+
   quality-summary:
     name: Quality Summary
     runs-on: ubuntu-latest
-    needs: [biome-check, typecheck, lint, format]
+    needs: [biome-check, typecheck, lint, format, docs-validate]
     if: always()
     steps:
       - name: Summary
@@ -148,3 +218,4 @@ jobs:
           echo "| TypeScript | ${{ needs.typecheck.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Linting | ${{ needs.lint.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Formatting | ${{ needs.format.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docs Validation | ${{ needs.docs-validate.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
