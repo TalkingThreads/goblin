@@ -26,8 +26,8 @@ logs
 #Benchmarks
 benchmarks
 
-# Test coverage
-coverage
+# Test coverage output (directory)
+coverage/
 
 # Bun
 bun.lockb

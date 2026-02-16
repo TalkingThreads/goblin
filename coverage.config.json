@@ -1,0 +1,23 @@
+{
+  "$schema": "./coverage.config.schema.json",
+  "thresholds": {
+    "warning": 70,
+    "blocking": 60
+  },
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/*.d.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/tests/**",
+    "**/*.config.ts",
+    "**/*.config.js",
+    "**/test-config.ts",
+    "**/smoke.config.ts"
+  ],
+  "reporter": "text",
+  "reporters": ["text", "json"],
+  "outputDir": "coverage"
+}

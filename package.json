@@ -52,7 +52,10 @@
     "coverage": "bun test --coverage",
     "coverage:unit": "bun test tests/unit --coverage",
     "coverage:report": "bun test --coverage && open coverage/index.html",
-    "prepare": "husky"
+    "coverage:analyze": "bun run scripts/coverage-report/analyze.ts",
+    "coverage:check": "bun run scripts/coverage-report/analyze.ts --quiet",
+    "prepare": "husky",
+    "postinstall": "bun run prepare"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,jsonc}": [

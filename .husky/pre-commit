@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
 # Husky pre-commit hook
 # Runs lint-staged which executes Biome on staged files
+# Also runs coverage check (non-blocking warning)
 
-# Exit on any error
+# Exit on any error, but we want to continue for warnings
 set -e
 
 # Get the directory of this script
@@ -16,3 +17,11 @@ echo "🔍 Running pre-commit checks on staged files..."
 npx lint-staged
 
 echo "✅ Pre-commit checks passed!"
+
+# Run coverage check (non-blocking)
+echo "📊 Running coverage check..."
+if bun run scripts/coverage-report/analyze.ts --quiet 2>&1; then
+  echo "✅ Coverage check passed!"
+else
+  echo "⚠️  Coverage below threshold - commit allowed but please address coverage gaps"
+fi

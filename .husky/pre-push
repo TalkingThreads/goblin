@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+# Husky pre-push hook
+# Blocks push if coverage falls below blocking threshold
+
+# Exit on any error
+set -e
+
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Change to the repository root (one level up from .husky)
+cd "$SCRIPT_DIR/.."
+
+# Run coverage check
+echo "📊 Running coverage check..."
+if bun run scripts/coverage-report/analyze.ts --quiet 2>&1; then
+  echo "✅ Coverage check passed! Push allowed."
+else
+  echo ""
+  echo "❌ Push blocked: Coverage below blocking threshold!"
+  echo ""
+  echo "Please improve test coverage before pushing."
+  echo "Run 'bun run coverage:analyze' to see detailed coverage report."
+  echo ""
+  exit 1
+fi

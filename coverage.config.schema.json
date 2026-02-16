@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Coverage Configuration",
+  "type": "object",
+  "properties": {
+    "thresholds": {
+      "type": "object",
+      "properties": {
+        "warning": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Coverage percentage that triggers a warning but allows commit"
+        },
+        "blocking": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum coverage percentage required for push"
+        }
+      },
+      "required": ["warning", "blocking"],
+      "additionalProperties": false
+    },
+    "exclude": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Glob patterns for files to exclude from coverage"
+    },
+    "reporter": {
+      "type": "string",
+      "enum": ["text", "lcov", "json"],
+      "description": "Coverage reporter to use"
+    },
+    "reporters": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["text", "lcov", "json"]
+      },
+      "description": "Multiple reporters to generate"
+    },
+    "outputDir": {
+      "type": "string",
+      "description": "Directory for coverage output files"
+    }
+  },
+  "required": ["thresholds"],
+  "additionalProperties": false
+}

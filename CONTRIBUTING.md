@@ -347,6 +347,51 @@ describe("Feature Name", () => {
 });
 ```
 
+### Test Coverage Requirements
+
+Goblin enforces minimum test coverage through git hooks:
+
+- **Pre-commit**: Warns if coverage drops below 70% (commit still allowed)
+- **Pre-push**: Blocks push if coverage falls below 60%
+- **CI**: Fails if coverage is below blocking threshold
+
+#### Running Coverage Checks
+
+```bash
+# Run full coverage analysis
+bun run coverage:analyze
+
+# Run quick coverage check (exit code reflects threshold)
+bun run coverage:check
+
+# View detailed coverage report
+bun run coverage:report
+```
+
+#### Configuring Coverage
+
+Edit `coverage.config.json` to customize:
+
+```json
+{
+  "thresholds": {
+    "warning": 70,
+    "blocking": 60
+  },
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.test.ts"
+  ]
+}
+```
+
+#### Troubleshooting Coverage
+
+- **Coverage too low for new files**: Add tests for new source files
+- **Excluded files still showing**: Check glob patterns in `coverage.config.json`
+- **Coverage differs locally vs CI**: Ensure consistent Bun versions
+
 ## Documentation Guidelines
 
 - Write clear, concise documentation
