@@ -181,8 +181,8 @@ export class Router {
     type: string,
     id: string,
     lookupFn: () => { serverId: string; def?: { name?: string } } | undefined,
-    // biome-ignore lint/suspicious/noExplicitAny: SDK Client type mismatch - requires SDK version alignment
     executeFn: (
+      // biome-ignore lint/suspicious/noExplicitAny: SDK Client type mismatch - requires SDK version alignment
       client: any,
       originalName: string,
       signal: AbortSignal,

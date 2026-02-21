@@ -178,8 +178,9 @@ export class Registry extends EventEmitter {
   resolveAlias(name: string): string {
     // Check if it's an alias in any server
     for (const [, aliasMap] of this.serverAliases) {
-      if (aliasMap.has(name)) {
-        return aliasMap.get(name)!;
+      const alias = aliasMap.get(name);
+      if (alias !== undefined) {
+        return alias;
       }
     }
     return name;

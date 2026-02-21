@@ -44,11 +44,27 @@ export class LenientHttpServerTransport extends WebStandardStreamableHTTPServerT
     const accept = request.headers.get("Accept");
     const requestId = request.headers.get("mcp-request-id") || crypto.randomUUID();
 
+    // If Accept header is not MCP-compliant, modify it to be compliant
+    // before passing to parent (which has strict validation)
     if (!isAcceptHeaderValid(accept)) {
       logger.warn(
         { requestId, accept, path: request.url },
-        "Non-compliant Accept header received, allowing request for compatibility",
+        "Non-compliant Accept header received, modifying for compatibility",
       );
+
+      // Create a new request with a compliant Accept header
+      const modifiedHeaders = new Headers(request.headers);
+      modifiedHeaders.set("Accept", "application/json, text/event-stream");
+
+      const modifiedRequest = new Request(request.url, {
+        method: request.method,
+        headers: modifiedHeaders,
+        body: request.body,
+        redirect: request.redirect,
+        signal: request.signal,
+      });
+
+      return super.handleRequest(modifiedRequest);
     }
 
     return super.handleRequest(request);

@@ -39,11 +39,17 @@ test-results
 test-output
 
 # AI Context & Development Tools
+data
 .octocode
 .opencode
+.kilocode
+.continue
 .dev_docs
 
 # OpenSpec Development Workflow
 openspec
+
+
+
 
 
